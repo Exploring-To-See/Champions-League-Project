@@ -730,7 +730,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
     background-position: center top;
   }
 
-  /* Display full-page magnified blurred background watermark on mobile */
+  /* Display full-page transparent mascot watermark background on mobile */
   .mobile-mascot-bg {
     display: block;
     position: fixed;
@@ -747,18 +747,18 @@ input[type="range"]::-webkit-slider-thumb:hover {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -45%) scale(1.35);
-    width: 90vw;
-    max-width: 500px;
+    transform: translate(-50%, -42%) scale(1.35);
+    width: 92vw;
+    max-width: 520px;
     height: auto;
-    opacity: 0.16;
-    filter: blur(5px) drop-shadow(0 0 40px rgba(0, 229, 255, 0.4));
+    opacity: 0.18;
+    filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.9));
     animation: floatMascotMobile 6s ease-in-out infinite;
   }
 
   @keyframes floatMascotMobile {
-    0%, 100% { transform: translate(-50%, -45%) scale(1.35); }
-    50% { transform: translate(-50%, -45%) scale(1.40); }
+    0%, 100% { transform: translate(-50%, -42%) scale(1.35); }
+    50% { transform: translate(-50%, -42%) scale(1.40); }
   }
 
   .header-banner {
