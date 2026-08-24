@@ -1,6 +1,5 @@
 /* ============================================================
-   1727 CHAMPION'S LEAGUE — ADMIN CONSOLE LOGIC
-   Features: Supabase Auth Login, Realtime Listener, Full CRUD
+   1727 CHAMPION'S LEAGUE 2.0 — ORGANISER ADMIN LOGIC
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -14,28 +13,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       supabaseClient = window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
     } catch (e) {
-      console.error("Supabase admin initialization failed", e);
+      console.error("Supabase Init Error in Admin Console:", e);
     }
   }
 
+  // DOM Elements
   const loginModal = document.getElementById('login-modal');
   const loginForm = document.getElementById('login-form');
   const loginErr = document.getElementById('login-error-msg');
   const loginSubmitBtn = document.getElementById('btn-login-submit');
 
   const mainContent = document.getElementById('admin-main-content');
-  const userEmailDisplay = document.getElementById('admin-email-display');
   const logoutBtn = document.getElementById('btn-logout-admin');
-
   const tableBody = document.getElementById('admin-table-body');
   const searchInput = document.getElementById('admin-search');
   const filterStatus = document.getElementById('admin-filter-status');
-
   const playerModal = document.getElementById('player-modal');
   const playerForm = document.getElementById('player-form');
   const modalTitle = document.getElementById('modal-title');
 
-  // 1. Session Check & Auth Logic
+  // 1. Session Check & Auth Guard
   async function checkSession() {
     if (!supabaseClient) return false;
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -128,22 +125,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // 2. Fetch Data from Supabase
+  // 2. Fetch Registration Records from Supabase
   async function loadData() {
     if (!supabaseClient) return;
+
     const { data, error } = await supabaseClient
       .from('registrations')
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (!error && data) {
+    if (error) {
+      console.error("Error loading data:", error);
+    } else {
       registrationsData = data;
       renderStats();
       renderTable();
     }
   }
 
-  // 3. Supabase Realtime Listener (Updates Table Instantly)
+  // 3. Supabase Realtime Listener
   function setupRealtime() {
     if (!supabaseClient) return;
     supabaseClient
@@ -155,33 +155,27 @@ document.addEventListener('DOMContentLoaded', async () => {
       .subscribe();
   }
 
-  // 4. Render Stats
+  // 4. Render Stats Summary
   function renderStats() {
     const total = registrationsData.length;
-    let sumRating = 0;
     let debutCount = 0;
     let previousCount = 0;
 
     registrationsData.forEach(r => {
-      sumRating += parseFloat(r.combined_rating || 0);
       if (r.tournament_status === 'Debut') debutCount++;
       else previousCount++;
     });
 
-    const avg = total > 0 ? (sumRating / total).toFixed(1) : "0.0";
-
     const statTotal = document.getElementById('stat-total');
-    const statAvg = document.getElementById('stat-avg');
     const statDebut = document.getElementById('stat-debut');
     const statPrevious = document.getElementById('stat-previous');
 
     if (statTotal) statTotal.textContent = total;
-    if (statAvg) statAvg.textContent = avg;
     if (statDebut) statDebut.textContent = debutCount;
     if (statPrevious) statPrevious.textContent = previousCount;
   }
 
-  // 5. Render Data Table
+  // 5. Render Data Table with Individual Sports Ratings
   function renderTable() {
     if (!tableBody) return;
     tableBody.innerHTML = '';
@@ -193,7 +187,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       const matchQuery = !query || 
         r.full_name?.toLowerCase().includes(query) ||
         r.jersey_name?.toLowerCase().includes(query) ||
-        r.previous_competition_name?.toLowerCase().includes(query) ||
         r.reg_code?.toLowerCase().includes(query);
 
       const matchStatus = statusFilter === 'ALL' || r.tournament_status === statusFilter;
@@ -201,7 +194,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     if (filtered.length === 0) {
-      tableBody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding:2.5rem; color:var(--text-muted);">No registration records found.</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding:2.5rem; color:var(--text-muted);">No registration records found.</td></tr>`;
       return;
     }
 
@@ -215,17 +208,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         ? `<span style="background:rgba(0,229,255,0.15); color:var(--primary-cyan); border:1px solid var(--primary-cyan); padding:0.2rem 0.6rem; border-radius:12px; font-size:0.75rem; font-weight:700;">DEBUT</span>`
         : `<span style="background:rgba(245,197,24,0.15); color:var(--primary-gold); border:1px solid var(--primary-gold); padding:0.2rem 0.6rem; border-radius:12px; font-size:0.75rem; font-weight:700;">VETERAN</span>`;
 
+      // 7 Individual Sports Ratings Badge Display
+      const ratingsBadge = `
+        <div style="font-size:0.75rem; line-height:1.45;">
+          🏓 <b>${parseFloat(r.rating_pickleball || 0).toFixed(1)}</b> &nbsp;|&nbsp;
+          ♠️ <b>${parseFloat(r.rating_poker || 0).toFixed(1)}</b> &nbsp;|&nbsp;
+          🏏 <b>${parseFloat(r.rating_cricket || 0).toFixed(1)}</b> &nbsp;|&nbsp;
+          🏃 <b>${parseFloat(r.rating_triathlon || 0).toFixed(1)}</b> <br>
+          🎯 <b>${parseFloat(r.rating_archery_shooting || 0).toFixed(1)}</b> &nbsp;|&nbsp;
+          🏸 <b>${parseFloat(r.rating_badminton || 0).toFixed(1)}</b> &nbsp;|&nbsp;
+          🏓 <b>${parseFloat(r.rating_table_tennis || 0).toFixed(1)}</b>
+        </div>
+      `;
+
       tr.innerHTML = `
         <td style="font-family:monospace; font-weight:700; color:var(--primary-cyan);">${r.reg_code || '-'}</td>
         <td>${photoHtml}</td>
         <td style="font-weight:700;">${r.full_name || '-'}</td>
         <td>${r.age || '-'} / ${r.sex || '-'}</td>
         <td>${statusBadge}</td>
-        <td style="font-size:0.85rem; color:var(--text-muted);">${r.previous_competition_name || 'N/A'}</td>
         <td style="font-family:var(--font-heading); font-weight:800;">${r.jersey_name || '-'}</td>
         <td style="font-weight:800; color:var(--primary-gold);">#${r.jersey_number || '-'}</td>
         <td><strong style="color:var(--primary-red);">${r.jersey_size || '-'}</strong></td>
-        <td style="font-weight:900; color:var(--primary-cyan);">${parseFloat(r.combined_rating || 0).toFixed(1)} / 10</td>
+        <td>${ratingsBadge}</td>
         <td style="font-size:0.8rem; color:var(--text-muted);">${r.created_at ? new Date(r.created_at).toLocaleDateString() : '-'}</td>
         <td>
           <button class="action-btn-sm btn-edit" data-id="${r.id}" title="Edit Player"><i class="fa-solid fa-pen"></i></button>
@@ -276,17 +281,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('modal_age').value = player.age || 24;
     document.getElementById('modal_sex').value = player.sex || 'Male';
     document.getElementById('modal_status').value = player.tournament_status || 'Debut';
-    document.getElementById('modal_previous_comp').value = player.previous_competition_name || '';
     document.getElementById('modal_jersey_name').value = player.jersey_name || '';
     document.getElementById('modal_jersey_number').value = player.jersey_number || '';
     document.getElementById('modal_jersey_size').value = player.jersey_size || 'L';
-    document.getElementById('modal_combined_rating').value = player.combined_rating || 0.0;
 
-    if (modalTitle) modalTitle.textContent = `EDIT PLAYER (${player.reg_code})`;
+    if (modalTitle) modalTitle.textContent = `EDIT PLAYER — ${player.reg_code}`;
     if (playerModal) playerModal.classList.add('active');
   }
 
-  // Handle Add/Edit Form Save
   if (playerForm) {
     playerForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -295,13 +297,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       const age = parseInt(document.getElementById('modal_age').value);
       const sex = document.getElementById('modal_sex').value;
       const status = document.getElementById('modal_status').value;
-      const prevComp = document.getElementById('modal_previous_comp')?.value.trim() || null;
       const jerseyName = document.getElementById('modal_jersey_name').value.trim();
-      const jerseyNumber = document.getElementById('modal_jersey_number')?.value.trim() || null;
+      const jerseyNumber = document.getElementById('modal_jersey_number').value.trim();
       const jerseySize = document.getElementById('modal_jersey_size').value;
-      const combinedRating = parseFloat(document.getElementById('modal_combined_rating').value || 0);
 
-      if (!fullName || !jerseyName) return;
+      if (!fullName || !age || !jerseyName || !jerseyNumber) {
+        alert("Please fill in all required fields.");
+        return;
+      }
 
       if (editId) {
         // Update existing record
@@ -312,11 +315,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             age: age,
             sex: sex,
             tournament_status: status,
-            previous_competition_name: prevComp,
             jersey_name: jerseyName,
             jersey_number: jerseyNumber,
-            jersey_size: jerseySize,
-            combined_rating: combinedRating
+            jersey_size: jerseySize
           })
           .eq('id', editId);
 
@@ -332,18 +333,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             age: age,
             sex: sex,
             tournament_status: status,
-            previous_competition_name: prevComp,
             jersey_name: jerseyName,
             jersey_number: jerseyNumber,
             jersey_size: jerseySize,
-            combined_rating: combinedRating,
-            rating_pickleball: combinedRating,
-            rating_poker: combinedRating,
-            rating_cricket: combinedRating,
-            rating_triathlon: combinedRating,
-            rating_archery_shooting: combinedRating,
-            rating_badminton: combinedRating,
-            rating_table_tennis: combinedRating,
             created_at: new Date().toISOString()
           }]);
 
@@ -371,7 +363,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // 8. Export CSV
+  // 8. Export CSV with Individual Sports Ratings
   const exportBtn = document.getElementById('btn-export-csv');
   if (exportBtn) {
     exportBtn.addEventListener('click', () => {
@@ -380,18 +372,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      const headers = ["Reg Code", "Full Name", "Age", "Sex", "Status", "Prev Competition", "Jersey Name", "Jersey Number", "Jersey Size", "Combined Rating", "Created At"];
+      const headers = [
+        "Reg Code", "Full Name", "Age", "Sex", "Status", 
+        "Jersey Name", "Jersey Number", "Jersey Size", 
+        "Pickleball", "Poker", "Cricket", "Triathlon", "Archery Shooting", "Badminton", "Table Tennis", 
+        "Created At"
+      ];
+
       const rows = registrationsData.map(r => [
         `"${r.reg_code || ''}"`,
         `"${r.full_name || ''}"`,
         r.age || '',
         `"${r.sex || ''}"`,
         `"${r.tournament_status || ''}"`,
-        `"${r.previous_competition_name || ''}"`,
         `"${r.jersey_name || ''}"`,
         `"${r.jersey_number || ''}"`,
         `"${r.jersey_size || ''}"`,
-        r.combined_rating || '',
+        r.rating_pickleball || 0,
+        r.rating_poker || 0,
+        r.rating_cricket || 0,
+        r.rating_triathlon || 0,
+        r.rating_archery_shooting || 0,
+        r.rating_badminton || 0,
+        r.rating_table_tennis || 0,
         `"${r.created_at || ''}"`
       ]);
 
@@ -399,7 +402,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
       link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `1727_Champion_League_Registrations_${Date.now()}.csv`);
+      link.setAttribute("download", `1727_Champion_League_2.0_Registrations_${Date.now()}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

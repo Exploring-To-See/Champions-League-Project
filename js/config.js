@@ -1,5 +1,5 @@
 /* ============================================================
-   1727 CHAMPION'S LEAGUE — SITE & BACKEND CONFIG
+   1727 CHAMPION'S LEAGUE 2.0 — SITE & BACKEND CONFIG
    ============================================================ */
 
 window.CLP_CONFIG = {
@@ -12,7 +12,7 @@ window.CLP_CONFIG = {
 
   /* ---- Event Details ---------------------------------------- */
   EVENT: {
-    name: "1727 Champion's League",
+    name: "1727 Champion's League 2.0",
     tagline: "Unleash the Champion Within",
     dates: "October 15–18, 2026",
     venue: "Grand Champions Sports Arena",
@@ -21,13 +21,13 @@ window.CLP_CONFIG = {
 
   /* ---- 7 Official Sports List for Skill Ratings (out of 10) --- */
   SPORTS: [
-    { id: "pickleball", name: "Pickleball", icon: "fa-solid fa-table-tennis-paddle-ball", emoji: "🏓" },
-    { id: "poker", name: "Poker", icon: "fa-solid fa-dice", emoji: "♠️" },
-    { id: "cricket", name: "Cricket", icon: "fa-solid fa-baseball-bat-ball", emoji: "🏏" },
-    { id: "triathlon", name: "Triathlon", icon: "fa-solid fa-person-running", emoji: "🏃" },
-    { id: "archery_shooting", name: "Archery & Shooting", icon: "fa-solid fa-bullseye", emoji: "🎯" },
-    { id: "badminton", name: "Badminton", icon: "fa-solid fa-feather-pointed", emoji: "🏸" },
-    { id: "table_tennis", name: "Table Tennis", icon: "fa-solid fa-table-tennis-paddle-ball", emoji: "🏓" }
+    { id: "pickleball", name: "Pickleball", emoji: "🏓" },
+    { id: "poker", name: "Poker", emoji: "♠️" },
+    { id: "cricket", name: "Cricket", emoji: "🏏" },
+    { id: "triathlon", name: "Triathlon", emoji: "🏃" },
+    { id: "archery_shooting", name: "Archery & Shooting", emoji: "🎯" },
+    { id: "badminton", name: "Badminton", emoji: "🏸" },
+    { id: "table_tennis", name: "Table Tennis", emoji: "🏓" }
   ],
 
   /* Jersey Sizes */

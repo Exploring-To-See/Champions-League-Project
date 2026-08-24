@@ -3,39 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>1727 Champion's League — Official Registration</title>
-  <meta name="description" content="Register now for the official 1727 Champion's League. Compete across 7 sports disciplines and claim glory.">
-  
-  <!-- Domain Router: If accessed via championsadmin domain, immediately load Admin Console -->
-  <script>
-    if (window.location.hostname.toLowerCase().includes('championsadmin')) {
-      if (!window.location.pathname.startsWith('/admin')) {
-        window.location.replace('/admin/');
-      }
-    }
-  </script>
-  
+  <title>Official Player Registration — 1727 Champion's League 2.0</title>
+
   <!-- Favicon & Official Web App Icons -->
-  <link rel="icon" type="image/png" href="/assets/champions-logo.png">
-  <link rel="shortcut icon" href="/assets/champions-logo.png">
-  <link rel="apple-touch-icon" href="/assets/champions-logo.png">
-  
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="shortcut icon" href="favicon.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
   <!-- OpenGraph Social Link Preview Meta Tags -->
-  <meta property="og:title" content="1727 Champion's League — Official Registration">
-  <meta property="og:description" content="Register now for the official 1727 Champion's League. Compete across 7 sports disciplines and claim glory.">
+  <meta property="og:title" content="Official Player Registration — 1727 Champion's League 2.0">
+  <meta property="og:description" content="Register now for the 1727 Champion's League 2.0. Submit your player profile, sport ratings, and jersey customization.">
   <meta property="og:image" content="https://1727championsleague.vercel.app/assets/champions-logo.png">
   <meta property="og:url" content="https://1727championsleague.vercel.app">
   <meta property="og:type" content="website">
   
   <!-- Twitter Card Meta Tags -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="1727 Champion's League — Official Registration">
-  <meta name="twitter:description" content="Register now for the official 1727 Champion's League.">
+  <meta name="twitter:title" content="Official Player Registration — 1727 Champion's League 2.0">
+  <meta name="twitter:description" content="Register now for the 1727 Champion's League 2.0.">
   <meta name="twitter:image" content="https://1727championsleague.vercel.app/assets/champions-logo.png">
-  
+
+  <!-- Google Fonts: Orbitron & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  
+
   <!-- Main Stylesheet -->
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -49,9 +44,9 @@
   <!-- Top Header Banner with Official Logo -->
   <header class="header-banner">
     <div class="logo-container">
-      <img src="assets/champions-logo.png?v=3" alt="1727 Champion's League Logo" class="logo-img">
+      <img src="assets/champions-logo.png?v=3" alt="1727 Champion's League 2.0 Logo" class="logo-img">
     </div>
-    <div class="event-tagline"><i class="fa-solid fa-trophy"></i> Official Player Registration — 1727 Champion's League</div>
+    <div class="event-tagline"><i class="fa-solid fa-trophy"></i> Official Player Registration — 1727 Champion's League 2.0</div>
   </header>
 
   <!-- Main Content Grid -->
@@ -63,9 +58,9 @@
         
         <!-- Section 1: Player Profile -->
         <div class="form-section-title">
-          <i class="fa-solid fa-user-astronaut"></i> 1. Player Profile
+          <i class="fa-solid fa-user-gear"></i> 1. Player Profile
         </div>
-        
+
         <div class="form-grid">
           <!-- Full Name -->
           <div class="form-group full-width">
@@ -111,19 +106,12 @@
           </div>
         </div>
 
-        <!-- Section 2: 7 Sports Combined Ratings -->
+        <!-- Section 2: 7 Sports Ratings (Out of 10) -->
         <div class="form-section-title" style="margin-top: 1.75rem;">
-          <i class="fa-solid fa-medal"></i> 2. Skill Ratings (7 Sports Combined)
+          <i class="fa-solid fa-medal"></i> 2. Skill Ratings (7 Sports)
         </div>
 
         <div class="sports-ratings-container">
-          <div class="combined-score-header">
-            <div class="score-title">
-              <i class="fa-solid fa-bolt" style="color:var(--primary-cyan);"></i> OVERALL COMBINED RATING
-            </div>
-            <div class="score-value-badge" id="combined-score-badge">0.0 / 10</div>
-          </div>
-
           <!-- 7 Sports Sliders Grid (Populated by app.js) -->
           <div class="sports-grid" id="sports-ratings-grid">
             <!-- Dynamic sliders inserted here -->
@@ -136,7 +124,7 @@
         </div>
 
         <div class="form-grid">
-          <!-- Previous Tournament / Debut -->
+          <!-- Tournament History (Binary Option: Debut or Previous Participant) -->
           <div class="form-group full-width">
             <label>Tournament History <span class="required-star">*</span></label>
             <div class="pill-selector">
@@ -149,12 +137,6 @@
                 <label for="status_previous" class="pill-label"><i class="fa-solid fa-clock-rotate-left"></i> Previous Participant</label>
               </div>
             </div>
-          </div>
-
-          <!-- Conditional Field: Previous Competition Name -->
-          <div class="form-group full-width" id="previous-comp-wrapper" style="display:none;">
-            <label for="previous_competition_name">Previous Competition Name <span class="required-star">*</span></label>
-            <input type="text" id="previous_competition_name" name="previous_competition_name" placeholder="Enter previous competition / tournament name">
           </div>
 
           <!-- Jersey Name -->
@@ -178,55 +160,92 @@
               <option value="M">M (Medium)</option>
               <option value="L" selected>L (Large)</option>
               <option value="XL">XL (Extra Large)</option>
-              <option value="XXL">XXL (2X Large)</option>
-              <option value="3XL">3XL (3X Large)</option>
+              <option value="XXL">XXL (Extra Extra Large)</option>
+              <option value="3XL">3XL (Triple Extra Large)</option>
             </select>
+          </div>
+
+          <!-- Live Jersey Customizer Graphic View -->
+          <div class="form-group full-width" style="margin-top: 0.5rem;">
+            <label><i class="fa-solid fa-shirt"></i> Live Jersey Customizer Preview</label>
+            <div class="jersey-preview-container">
+              <svg class="jersey-svg" viewBox="0 0 300 320" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="jerseyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#00E5FF" />
+                    <stop offset="50%" stop-color="#092952" />
+                    <stop offset="100%" stop-color="#040d1a" />
+                  </linearGradient>
+                  <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#FF3B5C" />
+                    <stop offset="100%" stop-color="#F5C518" />
+                  </linearGradient>
+                </defs>
+                <!-- Shirt Body & Sleeves -->
+                <path d="M 90 20 L 40 50 L 10 110 L 55 135 L 75 90 L 75 290 L 225 290 L 225 90 L 245 135 L 290 110 L 260 50 L 210 20 C 180 45 120 45 90 20 Z" fill="url(#jerseyGrad)" stroke="rgba(0, 229, 255, 0.6)" stroke-width="3"/>
+                <!-- Collar Accent -->
+                <path d="M 90 20 C 120 45 180 45 210 20 C 190 60 110 60 90 20 Z" fill="url(#accentGrad)"/>
+                <!-- Side Piping Stripes -->
+                <path d="M 75 90 L 75 290" stroke="#FF3B5C" stroke-width="4"/>
+                <path d="M 225 90 L 225 290" stroke="#FF3B5C" stroke-width="4"/>
+              </svg>
+
+              <!-- Overlay Text Container -->
+              <div class="jersey-text-overlay">
+                <div class="jersey-name-display" id="jersey-name-preview">YOUR NAME</div>
+                <div class="jersey-num-display" id="jersey-num-preview">00</div>
+                <div class="jersey-league-tag">1727 CHAMPION'S LEAGUE 2.0</div>
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- Submit Button -->
-        <button type="submit" class="btn-submit" id="btn-submit-form">
+        <button type="submit" class="btn-submit" id="submit-btn" style="margin-top: 2rem;">
           <i class="fa-solid fa-trophy"></i> COMPLETE REGISTRATION
         </button>
+
+        <div id="form-error-msg" style="display:none; color:var(--primary-red); margin-top:1rem; text-align:center; font-weight:700;"></div>
       </form>
     </section>
 
-    <!-- Right Column: Official Mascot Display -->
+    <!-- Right Column: Mascot Display -->
     <aside class="sidebar-panel">
       <div class="mascot-card">
-        <img src="assets/pug-tiger-mascot.png" alt="1727 Champion's League Mascot" class="mascot-img">
+        <img src="assets/pug-tiger-mascot.png" alt="1727 Champion's League 2.0 Mascot" class="mascot-img">
       </div>
     </aside>
   </main>
 
-  <!-- Success Confirmation Modal -->
+  <!-- Organiser Admin Footer Link -->
+  <footer style="text-align: center; margin: 2rem 0 3rem;">
+    <a href="https://championsadmin.vercel.app" target="_blank" style="color: var(--text-muted); font-size: 0.85rem; text-decoration: none; transition: color var(--transition);">
+      <i class="fa-solid fa-lock"></i> Organiser Admin Console
+    </a>
+  </footer>
+
+  <!-- Confirmation / Success Modal Overlay -->
   <div class="modal-overlay" id="success-modal">
     <div class="modal-content">
-      <div class="success-icon-box">
+      <div class="modal-success-icon">
         <i class="fa-solid fa-circle-check"></i>
       </div>
-      <div style="font-family: var(--font-heading); font-weight: 900; font-size: 1.6rem; color: #fff; margin-bottom: 0.5rem;">REGISTRATION SUCCESSFUL!</div>
-      <p style="color:var(--text-muted); font-size:0.95rem; margin-bottom: 1.25rem;">You are officially registered for the 1727 Champion's League.</p>
-
-      <div style="margin-bottom: 1.5rem; text-align: left; background: rgba(6, 10, 20, 0.7); padding: 1rem; border-radius: var(--radius-md); border: 1px solid rgba(0, 229, 255, 0.2);">
-        <div style="font-size:0.85rem; color:var(--text-muted);">Player Name: <strong id="modal-player-name" style="color:#fff;">ALEX MORGAN</strong></div>
-        <div style="font-size:0.85rem; color:var(--text-muted); margin-top:0.3rem;">Status: <strong style="color:var(--primary-cyan);"><i class="fa-solid fa-circle-check"></i> CONFIRMED & VERIFIED</strong></div>
+      <h2 style="font-family:var(--font-heading); font-size:1.6rem; color:var(--primary-cyan); margin-bottom:0.5rem;">REGISTRATION SUCCESSFUL!</h2>
+      <p style="color:var(--text-muted); font-size:0.95rem;">Congratulations, <span id="confirmed-player-name" style="color:#fff; font-weight:700;">Player</span>! Your profile has been registered for 1727 Champion's League 2.0.</p>
+      
+      <div style="background:rgba(0,229,255,0.08); border:1px solid rgba(0,229,255,0.25); border-radius:12px; padding:1.25rem; margin:1.5rem 0;">
+        <div style="font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Registration Status</div>
+        <div style="font-family:var(--font-heading); font-size:1.4rem; color:var(--primary-cyan); font-weight:800; margin-top:0.25rem;">CONFIRMED & VERIFIED</div>
       </div>
 
-      <button type="button" class="btn-submit" id="btn-close-modal">
-        <i class="fa-solid fa-thumbs-up"></i> DONE
+      <button class="btn-submit" id="btn-close-modal">
+        <i class="fa-solid fa-check"></i> DONE
       </button>
     </div>
   </div>
 
-  <footer class="footer-admin-link">
-    <a href="https://championsadmin.vercel.app" target="_blank"><i class="fa-solid fa-lock"></i> Organiser Admin Console</a>
-  </footer>
-
-  <!-- Supabase JS Client CDN -->
+  <!-- Supabase JS Client & Main Logic -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- App Configuration & Main Logic -->
   <script src="js/config.js"></script>
   <script src="js/app.js"></script>
 </body>

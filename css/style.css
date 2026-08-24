@@ -501,98 +501,72 @@ input[type="range"]::-webkit-slider-thumb:hover {
   color: var(--text-muted);
 }
 
-/* Jersey Preview Card */
-.jersey-preview-card {
-  background: rgba(8, 14, 28, 0.85);
-  border: 1px solid rgba(255, 59, 92, 0.3);
-  border-radius: var(--radius-lg);
-  padding: 1.5rem;
-  text-align: center;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease;
-}
-
-.jersey-preview-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 45px rgba(0, 229, 255, 0.25);
-}
-
-.jersey-card-title {
-  font-family: var(--font-heading);
-  font-size: 1rem;
-  font-weight: 800;
-  color: var(--primary-red);
-  margin-bottom: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.jersey-graphics {
+/* Live Jersey Customizer Preview Component */
+.jersey-preview-container {
+  position: relative;
   width: 100%;
-  height: 230px;
+  max-width: 280px;
+  margin: 0.75rem auto 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   background: radial-gradient(circle at center, rgba(0, 229, 255, 0.08) 0%, rgba(5, 9, 20, 0.95) 100%);
   border-radius: var(--radius-md);
   border: 1px solid rgba(0, 229, 255, 0.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-  padding: 10px;
+  padding: 1rem;
 }
 
-.jersey-shirt-body {
-  position: relative;
-  width: 175px;
-  height: 205px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.jersey-svg-shape {
+.jersey-svg {
   width: 100%;
-  height: 100%;
-  filter: drop-shadow(0 8px 22px rgba(0, 229, 255, 0.35));
+  height: auto;
+  max-height: 250px;
+  filter: drop-shadow(0 10px 25px rgba(0, 229, 255, 0.35));
 }
 
-.jersey-printed-text-overlay {
+.jersey-text-overlay {
   position: absolute;
-  top: 48px;
-  left: 0;
-  width: 100%;
+  top: 25%;
+  left: 50%;
+  transform: translate(-50%, 0);
+  width: 65%;
+  text-align: center;
+  pointer-events: none;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-  pointer-events: none;
-  padding: 0 20px;
 }
 
-.jersey-print-name {
+.jersey-name-display {
   font-family: var(--font-heading);
   font-weight: 900;
-  font-size: 0.92rem;
+  font-size: 1rem;
   color: #ffffff;
-  letter-spacing: 1.5px;
   text-transform: uppercase;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+  letter-spacing: 2px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 229, 255, 0.8);
   white-space: nowrap;
-  max-width: 125px;
+  max-width: 140px;
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 1.1;
 }
 
-.jersey-print-number {
+.jersey-num-display {
   font-family: var(--font-heading);
   font-weight: 900;
-  font-size: 2.2rem;
+  font-size: 2.8rem;
+  line-height: 1;
   color: var(--primary-gold);
-  text-shadow: 0 3px 10px rgba(0, 0, 0, 0.9);
+  margin-top: 0.25rem;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.9), 0 0 15px rgba(245, 197, 24, 0.6);
+}
+
+.jersey-league-tag {
+  font-size: 0.55rem;
+  font-weight: 800;
+  color: var(--primary-cyan);
   letter-spacing: 1px;
-  margin-top: 4px;
+  margin-top: 0.35rem;
+  opacity: 0.85;
 }
 
 .jersey-size-badge {

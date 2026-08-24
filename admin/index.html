@@ -391,16 +391,16 @@
   <!-- Top Header Banner with Official Logo -->
   <header class="header-banner">
     <div class="logo-container">
-      <img src="/assets/champions-logo.png?v=3" alt="1727 Champion's League Logo" class="logo-img">
+      <img src="/assets/champions-logo.png?v=3" alt="1727 Champion's League 2.0 Logo" class="logo-img">
     </div>
-    <div class="event-tagline"><i class="fa-solid fa-trophy"></i> Organiser Console — 1727 Champion's League</div>
+    <div class="event-tagline"><i class="fa-solid fa-trophy"></i> Organiser Console — 1727 Champion's League 2.0</div>
   </header>
 
   <!-- Auth Login Modal Overlay (Password Only) -->
   <div class="login-modal-overlay" id="login-modal" style="display: flex;">
     <div class="login-card">
       <div style="text-align: center; margin-bottom: 1.5rem;">
-        <img src="/assets/champions-logo.png?v=3" alt="1727 Champion's League Logo" style="max-width: 180px; height: auto;">
+        <img src="/assets/champions-logo.png?v=3" alt="1727 Champion's League 2.0 Logo" style="max-width: 180px; height: auto;">
         <div style="font-family: var(--font-heading); font-weight: 900; font-size: 1.3rem; color: var(--primary-cyan); margin-top: 0.75rem;">ORGANISER LOGIN</div>
         <div style="font-size: 0.82rem; color: var(--text-muted);">Enter Organiser Password to Access Console</div>
       </div>
@@ -430,7 +430,7 @@
     <header class="admin-header">
       <div class="admin-title-box">
         <h1><i class="fa-solid fa-shield-halved"></i> Organiser Console</h1>
-        <p>1727 Champion's League — Live Player Registrations</p>
+        <p>1727 Champion's League 2.0 — Live Player Registrations</p>
       </div>
       <div class="admin-user-info">
         <a href="https://1727championsleague.vercel.app" class="btn-submit" style="width:auto; padding:0.5rem 1rem; font-size:0.85rem; text-decoration:none;">
@@ -447,8 +447,8 @@
         <div class="stat-lbl">Total Registrations</div>
       </div>
       <div class="stat-card">
-        <div class="stat-val" id="stat-avg" style="color:var(--primary-gold);">0.0</div>
-        <div class="stat-lbl">Average Skill Index</div>
+        <div class="stat-val" id="stat-avg" style="color:var(--primary-gold);">7 Sports</div>
+        <div class="stat-lbl">Rated Disciplines</div>
       </div>
       <div class="stat-card">
         <div class="stat-val" id="stat-debut" style="color:#a855f7;">0</div>
@@ -490,11 +490,10 @@
             <th>Player Name</th>
             <th>Age / Sex</th>
             <th>History</th>
-            <th>Prev. Competition</th>
             <th>Jersey Name</th>
             <th>Jersey #</th>
             <th>Size</th>
-            <th>Combined Rating</th>
+            <th>7 Sports Ratings</th>
             <th>Reg Date</th>
             <th>Actions</th>
           </tr>
@@ -538,10 +537,6 @@
             </select>
           </div>
           <div class="form-group">
-            <label for="modal_previous_comp">Prev. Competition Name</label>
-            <input type="text" id="modal_previous_comp" placeholder="e.g. Champions Cup 2025">
-          </div>
-          <div class="form-group">
             <label for="modal_jersey_name">Jersey Name <span class="required-star">*</span></label>
             <input type="text" id="modal_jersey_name" maxlength="12" required>
           </div>
@@ -549,7 +544,7 @@
             <label for="modal_jersey_number">Jersey Number <span class="required-star">*</span></label>
             <input type="number" id="modal_jersey_number" min="0" max="999" required>
           </div>
-          <div class="form-group">
+          <div class="form-group full-width">
             <label for="modal_jersey_size">Jersey Size <span class="required-star">*</span></label>
             <select id="modal_jersey_size">
               <option value="XS">XS</option>
@@ -560,10 +555,6 @@
               <option value="XXL">XXL</option>
               <option value="3XL">3XL</option>
             </select>
-          </div>
-          <div class="form-group full-width">
-            <label for="modal_combined_rating">Combined Rating (0-10)</label>
-            <input type="number" id="modal_combined_rating" min="0" max="10" step="0.1" value="0.0">
           </div>
         </div>
 
