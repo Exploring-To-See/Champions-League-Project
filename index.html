@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Champions League Sports Tournament — Official Registration 2026</title>
-  <meta name="description" content="Register now for the official Champions League Sports Tournament 2026. Compete across 8 sports disciplines and claim victory.">
+  <title>1727 Champions League 2.0 — Official Registration</title>
+  <meta name="description" content="Register now for the official 1727 Champions League 2.0 Sports Tournament. Compete across 8 sports disciplines and claim glory.">
   
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -14,19 +14,18 @@
 </head>
 <body>
 
-  <!-- Top Header Banner -->
+  <!-- Top Header Banner with Official Logo -->
   <header class="header-banner">
     <div class="logo-container">
-      <img src="assets/champions-logo.png" alt="Champions League Logo" class="logo-img">
+      <img src="assets/champions-logo.png" alt="1727 Champions League Logo" class="logo-img">
     </div>
-    <div class="event-subtitle">Official Player Registration 2026</div>
-    <div class="event-badge"><i class="fa-solid fa-crown"></i> Season 2026 Championship</div>
+    <div class="event-tagline"><i class="fa-solid fa-trophy"></i> Official Player Registration — Season 2.0</div>
   </header>
 
-  <!-- Main Content Layout -->
+  <!-- Main Content Grid -->
   <main class="main-wrapper">
     
-    <!-- Left Column: Registration Form -->
+    <!-- Left Column: Glassmorphism Registration Form -->
     <section class="form-card">
       <form id="registration-form">
         
@@ -76,7 +75,7 @@
                 <img id="avatar-preview-img" style="display:none;" alt="Player Photo Preview">
               </div>
               <div class="upload-text">
-                Drag & drop your player photo here or <span>browse files</span>
+                Drag & drop your player photo here or <span style="color:var(--primary-cyan); font-weight:700;">browse files</span>
                 <br><small style="color:var(--text-muted); font-size:0.75rem;">JPG, PNG or WebP up to 8MB</small>
               </div>
               <input type="file" id="photo-input" accept="image/*" style="display:none;">
@@ -85,26 +84,26 @@
         </div>
 
         <!-- Section 2: 8 Sports Combined Ratings -->
-        <div class="form-section-title" style="margin-top: 2rem;">
+        <div class="form-section-title" style="margin-top: 1.75rem;">
           <i class="fa-solid fa-medal"></i> 2. Skill Ratings (8 Sports Combined)
         </div>
 
         <div class="sports-ratings-container">
           <div class="combined-score-header">
             <div class="score-title">
-              <i class="fa-solid fa-bolt" style="color:var(--primary-gold);"></i> OVERALL COMBINED RATING
+              <i class="fa-solid fa-bolt" style="color:var(--primary-cyan);"></i> OVERALL COMBINED RATING
             </div>
             <div class="score-value-badge" id="combined-score-badge">5.0 / 10</div>
           </div>
 
           <!-- 8 Sports Sliders Grid (Populated by app.js) -->
           <div class="sports-grid" id="sports-ratings-grid">
-            <!-- Dynamic sliders insert here -->
+            <!-- Dynamic sliders inserted here -->
           </div>
         </div>
 
         <!-- Section 3: Tournament Experience & Jersey -->
-        <div class="form-section-title" style="margin-top: 2rem;">
+        <div class="form-section-title" style="margin-top: 1.75rem;">
           <i class="fa-solid fa-shirt"></i> 3. Tournament & Jersey Gear
         </div>
 
@@ -152,14 +151,14 @@
       </form>
     </section>
 
-    <!-- Right Column: Pug Tiger Mascot & Live Jersey Card -->
+    <!-- Right Column: Official Mascot & Live Jersey Card -->
     <aside class="sidebar-panel">
       
-      <!-- Pug Tiger Mascot Card -->
+      <!-- Official Mascot Card -->
       <div class="mascot-card">
-        <img src="assets/pug-tiger-mascot.png" alt="Pug Tiger Mascot" class="mascot-img">
-        <div class="mascot-title">THE CHAMPION PUG TIGER</div>
-        <div class="mascot-tagline">Official Mascot of the Champions League 2026</div>
+        <img src="assets/pug-tiger-mascot.png" alt="Champions League Mascot" class="mascot-img">
+        <div class="mascot-title">CHAMPIONS LEAGUE 2.0</div>
+        <div class="mascot-tagline">Official Tournament Mascot</div>
       </div>
 
       <!-- Live Jersey Preview Card -->
@@ -173,11 +172,11 @@
       </div>
 
       <!-- Live Rating Stats Card -->
-      <div class="jersey-preview-card" style="border-color: rgba(245, 197, 24, 0.3);">
-        <div class="jersey-card-title" style="color: var(--primary-gold);">
+      <div class="jersey-preview-card" style="border-color: rgba(0, 229, 255, 0.4);">
+        <div class="jersey-card-title" style="color: var(--primary-cyan);">
           <i class="fa-solid fa-chart-simple"></i> Combined Skill Index
         </div>
-        <div style="font-family: var(--font-heading); font-size: 2.8rem; font-weight: 900; color: var(--primary-gold);" id="sidebar-combined-score">
+        <div style="font-family: var(--font-heading); font-size: 2.8rem; font-weight: 900; color: var(--primary-cyan);" id="sidebar-combined-score">
           5.0
         </div>
         <div style="font-size:0.8rem; color:var(--text-muted);">Calculated real-time across 8 sports</div>
@@ -192,14 +191,14 @@
       <div class="success-icon-box">
         <i class="fa-solid fa-circle-check"></i>
       </div>
-      <div class="modal-title">REGISTRATION SUCCESSFUL!</div>
-      <p style="color:var(--text-muted); font-size:0.95rem;">You are officially registered for the Champions League Sports Tournament 2026.</p>
+      <div style="font-family: var(--font-heading); font-weight: 900; font-size: 1.6rem; color: #fff; margin-bottom: 0.5rem;">REGISTRATION SUCCESSFUL!</div>
+      <p style="color:var(--text-muted); font-size:0.95rem;">You are officially registered for the 1727 Champions League 2.0 Sports Tournament.</p>
       
       <div class="reg-code-pill" id="modal-reg-code">CLP-1001</div>
 
-      <div style="margin-bottom: 1.5rem; text-align: left; background: rgba(9, 14, 26, 0.6); padding: 1rem; border-radius: var(--radius-md);">
+      <div style="margin-bottom: 1.5rem; text-align: left; background: rgba(6, 10, 20, 0.7); padding: 1rem; border-radius: var(--radius-md);">
         <div style="font-size:0.85rem; color:var(--text-muted);">Player Name: <strong id="modal-player-name" style="color:#fff;">ALEX MORGAN</strong></div>
-        <div style="font-size:0.85rem; color:var(--text-muted); margin-top:0.3rem;">Status: <strong style="color:var(--primary-gold);">CONFIRMED</strong></div>
+        <div style="font-size:0.85rem; color:var(--text-muted); margin-top:0.3rem;">Status: <strong style="color:var(--primary-cyan);">CONFIRMED</strong></div>
       </div>
 
       <button type="button" class="btn-submit" id="btn-close-modal">
