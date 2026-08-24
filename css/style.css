@@ -90,20 +90,21 @@ body {
   margin-top: 0.5rem;
 }
 
-/* Main Grid Layout */
+/* Main Grid Layout - Aligned to Stadium Frame Boundary */
 .main-wrapper {
-  max-width: 1240px;
-  margin: 1rem auto 4rem;
-  padding: 0 1.5rem;
+  max-width: 1040px;
+  margin: 0.5rem auto 3.5rem;
+  padding: 0 1rem;
   display: grid;
-  grid-template-columns: 1fr 360px;
-  gap: 2rem;
+  grid-template-columns: 1fr 320px;
+  gap: 1.5rem;
   align-items: start;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 992px) {
   .main-wrapper {
     grid-template-columns: 1fr;
+    max-width: 100%;
   }
 }
 
@@ -115,7 +116,7 @@ body {
   border: 2px solid transparent;
   border-image: linear-gradient(135deg, rgba(0, 229, 255, 0.6) 0%, rgba(255, 59, 92, 0.6) 100%) 1;
   border-radius: var(--radius-lg);
-  padding: 2.25rem;
+  padding: 1.75rem 2rem;
   box-shadow: 
     0 20px 50px rgba(0, 0, 0, 0.8),
     inset 0 0 30px rgba(0, 229, 255, 0.05),
