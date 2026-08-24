@@ -1,76 +1,150 @@
 /* ============================================================
-   CHAMPIONS LEAGUE SPORTS TOURNAMENT — ADMIN CONSOLE SCRIPT
+   1727 CHAMPIONS LEAGUE 2.0 — ADMIN CONSOLE LOGIC
+   Features: Supabase Auth Login, Realtime Listener, Full CRUD
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', async () => {
   const config = window.CLP_CONFIG || {};
-  let registrations = [];
   let supabaseClient = null;
+  let registrationsData = [];
+  let currentUser = null;
 
-  if (window.supabase && config.SUPABASE_URL && config.SUPABASE_ANON_KEY && !config.SUPABASE_URL.includes("your-supabase-project")) {
+  // Initialize Supabase Client
+  if (window.supabase && config.SUPABASE_URL && config.SUPABASE_ANON_KEY) {
     try {
       supabaseClient = window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
     } catch (e) {
-      console.warn("Supabase admin init error", e);
+      console.error("Supabase admin initialization failed", e);
     }
   }
+
+  const loginModal = document.getElementById('login-modal');
+  const loginForm = document.getElementById('login-form');
+  const loginErr = document.getElementById('login-error-msg');
+  const loginSubmitBtn = document.getElementById('btn-login-submit');
+
+  const mainContent = document.getElementById('admin-main-content');
+  const userEmailDisplay = document.getElementById('admin-email-display');
+  const logoutBtn = document.getElementById('btn-logout-admin');
 
   const tableBody = document.getElementById('admin-table-body');
-  const searchInput = document.getElementById('admin-search-input');
+  const searchInput = document.getElementById('admin-search');
   const filterStatus = document.getElementById('admin-filter-status');
-  const exportBtn = document.getElementById('btn-export-csv');
 
-  async function loadData() {
-    if (supabaseClient) {
-      const { data, error } = await supabaseClient
-        .from('registrations')
-        .select('*')
-        .order('created_at', { ascending: false });
+  const playerModal = document.getElementById('player-modal');
+  const playerForm = document.getElementById('player-form');
+  const modalTitle = document.getElementById('modal-title');
 
-      if (!error && data) {
-        registrations = data;
-      }
+  // 1. Session Check & Auth Logic
+  async function checkSession() {
+    if (!supabaseClient) return false;
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session && session.user) {
+      currentUser = session.user;
+      showAdminView(currentUser.email);
+      return true;
     } else {
-      // Mock data for demo view
-      registrations = [
-        {
-          reg_code: 'CLP-1001',
-          full_name: 'Alex Morgan',
-          age: 24,
-          sex: 'Female',
-          tournament_status: 'Previous Participant',
-          jersey_name: 'MORGAN',
-          jersey_size: 'M',
-          combined_rating: 8.4,
-          created_at: new Date().toISOString(),
-          profile_pic_url: null
-        },
-        {
-          reg_code: 'CLP-1002',
-          full_name: 'Carlos Vela',
-          age: 28,
-          sex: 'Male',
-          tournament_status: 'Debut',
-          jersey_name: 'VELA',
-          jersey_size: 'L',
-          combined_rating: 7.2,
-          created_at: new Date().toISOString(),
-          profile_pic_url: null
-        }
-      ];
+      showLoginView();
+      return false;
     }
-
-    updateStats();
-    renderTable();
   }
 
-  function updateStats() {
-    const total = registrations.length;
+  function showLoginView() {
+    if (loginModal) loginModal.style.display = 'flex';
+    if (mainContent) mainContent.style.display = 'none';
+  }
+
+  function showAdminView(email) {
+    if (loginModal) loginModal.style.display = 'none';
+    if (mainContent) mainContent.style.display = 'block';
+    if (userEmailDisplay) userEmailDisplay.innerHTML = `<i class="fa-solid fa-user-shield"></i> ${email}`;
+    loadData();
+    setupRealtime();
+  }
+
+  // Handle Login Submission
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login_email').value.trim();
+      const password = document.getElementById('login_password').value;
+
+      if (!email || !password) return;
+
+      if (loginErr) loginErr.style.display = 'none';
+      if (loginSubmitBtn) {
+        loginSubmitBtn.disabled = true;
+        loginSubmitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> AUTHENTICATING...';
+      }
+
+      try {
+        if (!supabaseClient) {
+          throw new Error("Supabase client is not configured properly.");
+        }
+
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+
+        currentUser = data.user;
+        showAdminView(currentUser.email);
+      } catch (err) {
+        if (loginErr) {
+          loginErr.textContent = err.message || "Invalid email or password.";
+          loginErr.style.display = 'block';
+        }
+      } finally {
+        if (loginSubmitBtn) {
+          loginSubmitBtn.disabled = false;
+          loginSubmitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> SIGN IN';
+        }
+      }
+    });
+  }
+
+  // Logout Action
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+      if (supabaseClient) await supabaseClient.auth.signOut();
+      currentUser = null;
+      showLoginView();
+    });
+  }
+
+  // 2. Fetch Data from Supabase
+  async function loadData() {
+    if (!supabaseClient) return;
+    const { data, error } = await supabaseClient
+      .from('registrations')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      registrationsData = data;
+      renderStats();
+      renderTable();
+    }
+  }
+
+  // 3. Supabase Realtime Listener (Updates Table Instantly)
+  function setupRealtime() {
+    if (!supabaseClient) return;
+    supabaseClient
+      .channel('public:registrations')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'registrations' }, (payload) => {
+        console.log("Realtime payload received:", payload);
+        loadData();
+      })
+      .subscribe();
+  }
+
+  // 4. Render Stats
+  function renderStats() {
+    const total = registrationsData.length;
     let sumRating = 0;
     let debutCount = 0;
     let previousCount = 0;
 
-    registrations.forEach(r => {
+    registrationsData.forEach(r => {
       sumRating += parseFloat(r.combined_rating || 0);
       if (r.tournament_status === 'Debut') debutCount++;
       else previousCount++;
@@ -78,12 +152,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const avg = total > 0 ? (sumRating / total).toFixed(1) : "0.0";
 
-    document.getElementById('stat-total-players').textContent = total;
-    document.getElementById('stat-avg-rating').textContent = avg;
-    document.getElementById('stat-debut-players').textContent = debutCount;
-    document.getElementById('stat-previous-players').textContent = previousCount;
+    const statTotal = document.getElementById('stat-total');
+    const statAvg = document.getElementById('stat-avg');
+    const statDebut = document.getElementById('stat-debut');
+    const statPrevious = document.getElementById('stat-previous');
+
+    if (statTotal) statTotal.textContent = total;
+    if (statAvg) statAvg.textContent = avg;
+    if (statDebut) statDebut.textContent = debutCount;
+    if (statPrevious) statPrevious.textContent = previousCount;
   }
 
+  // 5. Render Data Table
   function renderTable() {
     if (!tableBody) return;
     tableBody.innerHTML = '';
@@ -91,7 +171,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const query = (searchInput?.value || '').toLowerCase().trim();
     const statusFilter = filterStatus?.value || 'ALL';
 
-    const filtered = registrations.filter(r => {
+    const filtered = registrationsData.filter(r => {
       const matchQuery = !query || 
         r.full_name?.toLowerCase().includes(query) ||
         r.jersey_name?.toLowerCase().includes(query) ||
@@ -102,46 +182,178 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     if (filtered.length === 0) {
-      tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:2rem; color:var(--text-muted);">No player registrations found.</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:2.5rem; color:var(--text-muted);">No registration records found.</td></tr>`;
       return;
     }
 
     filtered.forEach(r => {
       const tr = document.createElement('tr');
       const photoHtml = r.profile_pic_url 
-        ? `<img src="${r.profile_pic_url}" class="player-thumb" alt="Photo">`
-        : `<i class="fa-solid fa-user-circle" style="font-size:1.8rem; color:var(--text-muted);"></i>`;
+        ? `<img src="${r.profile_pic_url}" class="player-avatar-sm" alt="Photo">`
+        : `<i class="fa-solid fa-circle-user" style="font-size:2rem; color:var(--text-muted);"></i>`;
 
-      const statusBadgeClass = r.tournament_status === 'Debut' ? 'badge-debut' : 'badge-previous';
+      const statusBadge = r.tournament_status === 'Debut'
+        ? `<span style="background:rgba(0,229,255,0.15); color:var(--primary-cyan); border:1px solid var(--primary-cyan); padding:0.2rem 0.6rem; border-radius:12px; font-size:0.75rem; font-weight:700;">DEBUT</span>`
+        : `<span style="background:rgba(245,197,24,0.15); color:var(--primary-gold); border:1px solid var(--primary-gold); padding:0.2rem 0.6rem; border-radius:12px; font-size:0.75rem; font-weight:700;">VETERAN</span>`;
 
       tr.innerHTML = `
-        <td style="font-family:monospace; font-weight:700; color:var(--primary-gold);">${r.reg_code || '-'}</td>
+        <td style="font-family:monospace; font-weight:700; color:var(--primary-cyan);">${r.reg_code || '-'}</td>
         <td>${photoHtml}</td>
         <td style="font-weight:700;">${r.full_name || '-'}</td>
         <td>${r.age || '-'} / ${r.sex || '-'}</td>
-        <td><span class="badge-status ${statusBadgeClass}">${r.tournament_status || 'Debut'}</span></td>
-        <td style="font-family:var(--font-heading); font-weight:700;">${r.jersey_name || '-'}</td>
-        <td><strong style="color:var(--primary-cyan);">${r.jersey_size || '-'}</strong></td>
-        <td style="font-weight:900; color:var(--primary-gold);">${parseFloat(r.combined_rating || 0).toFixed(1)} / 10</td>
+        <td>${statusBadge}</td>
+        <td style="font-family:var(--font-heading); font-weight:800;">${r.jersey_name || '-'}</td>
+        <td><strong style="color:var(--primary-red);">${r.jersey_size || '-'}</strong></td>
+        <td style="font-weight:900; color:var(--primary-cyan);">${parseFloat(r.combined_rating || 0).toFixed(1)} / 10</td>
         <td style="font-size:0.8rem; color:var(--text-muted);">${r.created_at ? new Date(r.created_at).toLocaleDateString() : '-'}</td>
+        <td>
+          <button class="action-btn-sm btn-edit" data-id="${r.id}" title="Edit Player"><i class="fa-solid fa-pen"></i></button>
+          <button class="action-btn-sm btn-delete" data-id="${r.id}" title="Delete Player"><i class="fa-solid fa-trash"></i></button>
+        </td>
       `;
       tableBody.appendChild(tr);
+    });
+
+    // Attach Event Listeners to Edit and Delete buttons
+    document.querySelectorAll('.btn-edit').forEach(btn => {
+      btn.addEventListener('click', (e) => openEditModal(e.currentTarget.getAttribute('data-id')));
+    });
+
+    document.querySelectorAll('.btn-delete').forEach(btn => {
+      btn.addEventListener('click', (e) => deletePlayer(e.currentTarget.getAttribute('data-id')));
     });
   }
 
   if (searchInput) searchInput.addEventListener('input', renderTable);
   if (filterStatus) filterStatus.addEventListener('change', renderTable);
 
+  // 6. Add & Edit Modal Logic
+  const openAddBtn = document.getElementById('btn-open-add-modal');
+  const cancelModalBtn = document.getElementById('btn-cancel-modal');
+
+  if (openAddBtn) {
+    openAddBtn.addEventListener('click', () => {
+      if (playerForm) playerForm.reset();
+      document.getElementById('player_edit_id').value = '';
+      if (modalTitle) modalTitle.textContent = "ADD NEW PLAYER REGISTRATION";
+      if (playerModal) playerModal.classList.add('active');
+    });
+  }
+
+  if (cancelModalBtn) {
+    cancelModalBtn.addEventListener('click', () => {
+      if (playerModal) playerModal.classList.remove('active');
+    });
+  }
+
+  function openEditModal(id) {
+    const player = registrationsData.find(r => r.id === id);
+    if (!player) return;
+
+    document.getElementById('player_edit_id').value = player.id;
+    document.getElementById('modal_full_name').value = player.full_name || '';
+    document.getElementById('modal_age').value = player.age || 24;
+    document.getElementById('modal_sex').value = player.sex || 'Male';
+    document.getElementById('modal_status').value = player.tournament_status || 'Debut';
+    document.getElementById('modal_jersey_name').value = player.jersey_name || '';
+    document.getElementById('modal_jersey_size').value = player.jersey_size || 'L';
+    document.getElementById('modal_combined_rating').value = player.combined_rating || 5.0;
+
+    if (modalTitle) modalTitle.textContent = `EDIT PLAYER (${player.reg_code})`;
+    if (playerModal) playerModal.classList.add('active');
+  }
+
+  // Handle Add/Edit Form Save
+  if (playerForm) {
+    playerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const editId = document.getElementById('player_edit_id').value;
+      const fullName = document.getElementById('modal_full_name').value.trim();
+      const age = parseInt(document.getElementById('modal_age').value);
+      const sex = document.getElementById('modal_sex').value;
+      const status = document.getElementById('modal_status').value;
+      const jerseyName = document.getElementById('modal_jersey_name').value.trim();
+      const jerseySize = document.getElementById('modal_jersey_size').value;
+      const combinedRating = parseFloat(document.getElementById('modal_combined_rating').value);
+
+      if (!fullName || !jerseyName) return;
+
+      if (editId) {
+        // Update existing record
+        const { error } = await supabaseClient
+          .from('registrations')
+          .update({
+            full_name: fullName,
+            age: age,
+            sex: sex,
+            tournament_status: status,
+            jersey_name: jerseyName,
+            jersey_size: jerseySize,
+            combined_rating: combinedRating
+          })
+          .eq('id', editId);
+
+        if (error) alert("Error updating player: " + error.message);
+      } else {
+        // Insert new record
+        const regCode = 'CLP-' + Math.floor(1000 + Math.random() * 9000);
+        const { error } = await supabaseClient
+          .from('registrations')
+          .insert([{
+            reg_code: regCode,
+            full_name: fullName,
+            age: age,
+            sex: sex,
+            tournament_status: status,
+            jersey_name: jerseyName,
+            jersey_size: jerseySize,
+            combined_rating: combinedRating,
+            rating_pickleball: combinedRating,
+            rating_poker: combinedRating,
+            rating_cricket: combinedRating,
+            rating_triathlon: combinedRating,
+            rating_archery_shooting: combinedRating,
+            rating_badminton: combinedRating,
+            rating_table_tennis: combinedRating,
+            rating_football: combinedRating,
+            created_at: new Date().toISOString()
+          }]);
+
+        if (error) alert("Error adding player: " + error.message);
+      }
+
+      if (playerModal) playerModal.classList.remove('active');
+      loadData();
+    });
+  }
+
+  // 7. Delete Player
+  async function deletePlayer(id) {
+    const player = registrationsData.find(r => r.id === id);
+    if (!player) return;
+
+    if (confirm(`Are you sure you want to delete registration ${player.reg_code} (${player.full_name})?`)) {
+      const { error } = await supabaseClient
+        .from('registrations')
+        .delete()
+        .eq('id', id);
+
+      if (error) alert("Error deleting player: " + error.message);
+      else loadData();
+    }
+  }
+
+  // 8. Export CSV
+  const exportBtn = document.getElementById('btn-export-csv');
   if (exportBtn) {
     exportBtn.addEventListener('click', () => {
-      if (!registrations.length) {
+      if (!registrationsData.length) {
         alert("No registration data available to export.");
         return;
       }
 
-      const headers = ["Reg Code", "Full Name", "Age", "Sex", "Status", "Jersey Name", "Jersey Size", "Combined Rating", "Pickleball", "Poker", "Cricket", "Triathlon", "Archery & Shooting", "Badminton", "Table Tennis", "Football", "Created At"];
-      
-      const rows = registrations.map(r => [
+      const headers = ["Reg Code", "Full Name", "Age", "Sex", "Status", "Jersey Name", "Jersey Size", "Combined Rating", "Created At"];
+      const rows = registrationsData.map(r => [
         `"${r.reg_code || ''}"`,
         `"${r.full_name || ''}"`,
         r.age || '',
@@ -150,14 +362,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         `"${r.jersey_name || ''}"`,
         `"${r.jersey_size || ''}"`,
         r.combined_rating || '',
-        r.rating_pickleball || '',
-        r.rating_poker || '',
-        r.rating_cricket || '',
-        r.rating_triathlon || '',
-        r.rating_archery_shooting || '',
-        r.rating_badminton || '',
-        r.rating_table_tennis || '',
-        r.rating_football || '',
         `"${r.created_at || ''}"`
       ]);
 
@@ -165,12 +369,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
       link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `Champions_League_Registrations_${Date.now()}.csv`);
+      link.setAttribute("download", `1727_Champions_League_Registrations_${Date.now()}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     });
   }
 
-  await loadData();
+  // Run Session Check on Load
+  await checkSession();
 });

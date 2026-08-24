@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Organiser Admin Console — Champions League 2026</title>
+  <title>Organiser Admin Console — 1727 Champions League 2.0</title>
   
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -12,10 +12,11 @@
   <link rel="stylesheet" href="../css/style.css">
   
   <style>
-    .admin-container {
-      max-width: 1300px;
+    /* Admin Specific Custom Styles */
+    .admin-wrapper {
+      max-width: 1350px;
       margin: 2rem auto;
-      padding: 0 1.5rem;
+      padding: 0 1.25rem;
     }
 
     .admin-header {
@@ -25,16 +26,58 @@
       margin-bottom: 2rem;
       flex-wrap: wrap;
       gap: 1rem;
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(0, 229, 255, 0.3);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem 2rem;
     }
 
-    .admin-title {
+    .admin-title-box h1 {
       font-family: var(--font-heading);
       font-size: 1.8rem;
-      font-weight: 800;
-      color: var(--primary-gold);
+      font-weight: 900;
+      color: var(--primary-cyan);
     }
 
-    .stats-row {
+    .admin-title-box p {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+
+    .admin-user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .user-pill {
+      background: rgba(0, 229, 255, 0.1);
+      border: 1px solid var(--primary-cyan);
+      color: #fff;
+      padding: 0.4rem 0.9rem;
+      border-radius: var(--radius-full);
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .btn-logout {
+      background: rgba(255, 59, 92, 0.2);
+      border: 1px solid var(--primary-red);
+      color: var(--primary-red);
+      padding: 0.45rem 1rem;
+      border-radius: var(--radius-md);
+      font-weight: 700;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .btn-logout:hover {
+      background: var(--primary-red);
+      color: #fff;
+    }
+
+    .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 1.25rem;
@@ -43,44 +86,82 @@
 
     .stat-card {
       background: var(--bg-card);
-      border: 1px solid var(--bg-card-border);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: var(--radius-md);
       padding: 1.25rem;
       text-align: center;
     }
 
-    .stat-value {
+    .stat-val {
       font-family: var(--font-heading);
       font-size: 2.2rem;
       font-weight: 900;
       color: var(--primary-cyan);
     }
 
-    .stat-label {
-      font-size: 0.85rem;
+    .stat-lbl {
+      font-size: 0.8rem;
       color: var(--text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 1px;
     }
 
-    .controls-row {
+    .toolbar-row {
       display: flex;
       gap: 1rem;
       margin-bottom: 1.5rem;
       flex-wrap: wrap;
+      align-items: center;
     }
 
     .search-box {
       flex: 1;
-      min-width: 260px;
+      min-width: 250px;
     }
 
-    .data-table-container {
-      background: var(--bg-card);
-      border: 1px solid var(--bg-card-border);
+    .btn-action {
+      padding: 0.75rem 1.25rem;
       border-radius: var(--radius-md);
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all var(--transition);
+    }
+
+    .btn-add-player {
+      background: linear-gradient(135deg, #00e5ff 0%, #0072ff 100%);
+      color: #fff;
+      box-shadow: 0 5px 15px rgba(0, 229, 255, 0.3);
+    }
+
+    .btn-add-player:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 229, 255, 0.5);
+    }
+
+    .btn-export {
+      background: rgba(245, 197, 24, 0.15);
+      border: 1px solid var(--primary-gold);
+      color: var(--primary-gold);
+    }
+
+    .btn-export:hover {
+      background: var(--primary-gold);
+      color: #000;
+    }
+
+    .table-container {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(0, 229, 255, 0.2);
+      border-radius: var(--radius-lg);
       overflow-x: auto;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
     }
 
     table {
@@ -91,111 +172,190 @@
     }
 
     th {
-      background: rgba(9, 14, 26, 0.9);
-      color: var(--primary-gold);
+      background: rgba(4, 8, 18, 0.95);
+      color: var(--primary-cyan);
       font-family: var(--font-heading);
-      font-weight: 700;
-      padding: 1rem;
-      border-bottom: 1px solid var(--bg-card-border);
+      font-weight: 800;
+      padding: 1.1rem 1rem;
+      border-bottom: 1px solid rgba(0, 229, 255, 0.2);
       white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     td {
-      padding: 0.85rem 1rem;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 0.9rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
       color: #e2e8f0;
       white-space: nowrap;
     }
 
     tr:hover {
-      background: rgba(245, 197, 24, 0.05);
+      background: rgba(0, 229, 255, 0.04);
     }
 
-    .player-thumb {
-      width: 36px;
-      height: 36px;
+    .player-avatar-sm {
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       object-fit: cover;
-      border: 1px solid var(--primary-gold);
+      border: 1.5px solid var(--primary-cyan);
     }
 
-    .badge-status {
-      padding: 0.2rem 0.6rem;
-      border-radius: var(--radius-full);
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
+    .action-btn-sm {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all var(--transition);
     }
 
-    .badge-debut {
+    .btn-edit {
       background: rgba(0, 229, 255, 0.15);
       color: var(--primary-cyan);
       border: 1px solid var(--primary-cyan);
     }
 
-    .badge-previous {
-      background: rgba(245, 197, 24, 0.15);
-      color: var(--primary-gold);
-      border: 1px solid var(--primary-gold);
+    .btn-edit:hover {
+      background: var(--primary-cyan);
+      color: #000;
+    }
+
+    .btn-delete {
+      background: rgba(255, 59, 92, 0.15);
+      color: var(--primary-red);
+      border: 1px solid var(--primary-red);
+      margin-left: 0.3rem;
+    }
+
+    .btn-delete:hover {
+      background: var(--primary-red);
+      color: #fff;
+    }
+
+    /* Auth Login Overlay */
+    .login-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(4, 7, 14, 0.92);
+      backdrop-filter: blur(16px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+
+    .login-card {
+      background: var(--bg-card);
+      border: 1.5px solid var(--primary-cyan);
+      border-radius: var(--radius-lg);
+      max-width: 420px;
+      width: 90%;
+      padding: 2.5rem;
+      box-shadow: 0 25px 60px rgba(0, 229, 255, 0.3);
+      text-align: center;
+    }
+
+    .login-logo {
+      max-width: 180px;
+      margin-bottom: 1rem;
     }
   </style>
 </head>
 <body>
 
-  <div class="admin-container">
+  <!-- Auth Login Modal Overlay -->
+  <div class="login-modal-overlay" id="login-modal">
+    <div class="login-card">
+      <img src="../assets/champions-logo.png" alt="1727 Champions League Logo" class="login-logo">
+      <h2 style="font-family:var(--font-heading); font-weight:800; color:var(--primary-cyan); margin-bottom:0.4rem;">ORGANISER LOGIN</h2>
+      <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1.5rem;">Sign in to access live registrations & player management.</p>
+      
+      <form id="login-form">
+        <div class="form-group" style="text-align:left;">
+          <label for="login_email">Email Address</label>
+          <input type="text" id="login_email" value="ishanvashistha.1993@gmail.com" required>
+        </div>
+        <div class="form-group" style="text-align:left; margin-bottom:1.5rem;">
+          <label for="login_password">Password</label>
+          <input type="password" id="login_password" placeholder="Enter admin password" required>
+        </div>
+        <div id="login-error-msg" style="color:var(--primary-red); font-size:0.85rem; margin-bottom:1rem; display:none;"></div>
+        <button type="submit" class="btn-submit" id="btn-login-submit">
+          <i class="fa-solid fa-right-to-bracket"></i> SIGN IN
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Main Admin Content Area -->
+  <div class="admin-wrapper" id="admin-main-content" style="display:none;">
+    
+    <!-- Top Header -->
     <header class="admin-header">
-      <div>
-        <h1 class="admin-title"><i class="fa-solid fa-user-shield"></i> Organiser Admin Console</h1>
-        <p style="color:var(--text-muted); font-size:0.9rem;">Champions League 2026 — Player Registrations & Stats</p>
+      <div class="admin-title-box">
+        <h1><i class="fa-solid fa-shield-halved"></i> Organiser Console</h1>
+        <p>1727 Champions League 2.0 — Live Player Registrations</p>
       </div>
-      <div>
-        <a href="../index.html" class="btn-submit" style="padding:0.6rem 1.2rem; font-size:0.9rem; text-decoration:none;">
-          <i class="fa-solid fa-arrow-left"></i> Back to Registration Form
+      <div class="admin-user-info">
+        <span class="user-pill" id="admin-email-display"><i class="fa-solid fa-user"></i> Loading...</span>
+        <a href="https://1727championsleague.vercel.app" class="btn-submit" style="width:auto; padding:0.5rem 1rem; font-size:0.85rem; text-decoration:none;">
+          <i class="fa-solid fa-globe"></i> View Public Site
         </a>
+        <button class="btn-logout" id="btn-logout-admin"><i class="fa-solid fa-power-off"></i> Logout</button>
       </div>
     </header>
 
-    <!-- Stat Summary Cards -->
-    <div class="stats-row">
+    <!-- Stats Summary Row -->
+    <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-value" id="stat-total-players">0</div>
-        <div class="stat-label">Total Players</div>
+        <div class="stat-val" id="stat-total">0</div>
+        <div class="stat-lbl">Total Registrations</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value" id="stat-avg-rating" style="color:var(--primary-gold);">0.0</div>
-        <div class="stat-label">Avg Skill Index</div>
+        <div class="stat-val" id="stat-avg" style="color:var(--primary-gold);">0.0</div>
+        <div class="stat-lbl">Average Skill Index</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value" id="stat-debut-players" style="color:#a855f7;">0</div>
-        <div class="stat-label">Debut Players</div>
+        <div class="stat-val" id="stat-debut" style="color:#a855f7;">0</div>
+        <div class="stat-lbl">Debut Players</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value" id="stat-previous-players" style="color:#22c55e;">0</div>
-        <div class="stat-label">Previous Veterans</div>
+        <div class="stat-val" id="stat-previous" style="color:#22c55e;">0</div>
+        <div class="stat-lbl">Previous Participants</div>
       </div>
     </div>
 
-    <!-- Filter & Controls -->
-    <div class="controls-row">
+    <!-- Controls Toolbar -->
+    <div class="toolbar-row">
       <div class="search-box">
-        <input type="text" id="admin-search-input" placeholder="Search by name, jersey name, or reg code...">
+        <input type="text" id="admin-search" placeholder="Search by name, jersey name, or reg code...">
       </div>
       <div>
         <select id="admin-filter-status" style="width:auto;">
           <option value="ALL">All Players</option>
           <option value="Debut">Debut Players Only</option>
-          <option value="Previous Participant">Previous Veterans Only</option>
+          <option value="Previous Participant">Previous Participants Only</option>
         </select>
       </div>
-      <div>
-        <button id="btn-export-csv" class="btn-submit" style="padding:0.85rem 1.2rem; font-size:0.9rem; margin:0;">
-          <i class="fa-solid fa-file-csv"></i> Export CSV
-        </button>
-      </div>
+      <button class="btn-action btn-add-player" id="btn-open-add-modal">
+        <i class="fa-solid fa-plus"></i> Add Player
+      </button>
+      <button class="btn-action btn-export" id="btn-export-csv">
+        <i class="fa-solid fa-file-csv"></i> Export CSV
+      </button>
     </div>
 
-    <!-- Registrations Data Table -->
-    <div class="data-table-container">
+    <!-- Live Data Table -->
+    <div class="table-container">
       <table>
         <thead>
           <tr>
@@ -208,16 +368,79 @@
             <th>Size</th>
             <th>Combined Rating</th>
             <th>Reg Date</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody id="admin-table-body">
-          <!-- Rows inserted by admin.js -->
+          <!-- Rows dynamically rendered -->
         </tbody>
       </table>
     </div>
   </div>
 
-  <!-- Supabase JS SDK & Admin Script -->
+  <!-- Modal for Add/Edit Registration -->
+  <div class="modal-overlay" id="player-modal">
+    <div class="modal-content" style="max-width: 650px; text-align: left;">
+      <div style="font-family:var(--font-heading); font-weight:800; font-size:1.4rem; color:var(--primary-cyan); margin-bottom:1rem;" id="modal-title">
+        ADD NEW PLAYER
+      </div>
+      <form id="player-form">
+        <input type="hidden" id="player_edit_id">
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label for="modal_full_name">Full Name <span class="required-star">*</span></label>
+            <input type="text" id="modal_full_name" required>
+          </div>
+          <div class="form-group">
+            <label for="modal_age">Age <span class="required-star">*</span></label>
+            <input type="number" id="modal_age" min="10" max="99" required>
+          </div>
+          <div class="form-group">
+            <label for="modal_sex">Sex <span class="required-star">*</span></label>
+            <select id="modal_sex">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="modal_status">Tournament History</label>
+            <select id="modal_status">
+              <option value="Debut">Debut</option>
+              <option value="Previous Participant">Previous Participant</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="modal_jersey_name">Jersey Name <span class="required-star">*</span></label>
+            <input type="text" id="modal_jersey_name" maxlength="12" required>
+          </div>
+          <div class="form-group">
+            <label for="modal_jersey_size">Jersey Size <span class="required-star">*</span></label>
+            <select id="modal_jersey_size">
+              <option value="XS">XS</option>
+              <option value="S">S</option>
+              <option value="M">M</option>
+              <option value="L" selected>L</option>
+              <option value="XL">XL</option>
+              <option value="XXL">XXL</option>
+              <option value="3XL">3XL</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="modal_combined_rating">Combined Rating (0-10)</label>
+            <input type="number" id="modal_combined_rating" min="1" max="10" step="0.1" value="5.0">
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1.5rem;">
+          <button type="button" class="btn-submit" id="btn-cancel-modal" style="background:rgba(255,255,255,0.1); color:#fff; width:auto; padding:0.75rem 1.25rem;">Cancel</button>
+          <button type="submit" class="btn-submit" id="btn-save-modal" style="width:auto; padding:0.75rem 1.5rem;">Save Player</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Supabase JS Client & Admin Logic -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/config.js"></script>
   <script src="admin.js"></script>

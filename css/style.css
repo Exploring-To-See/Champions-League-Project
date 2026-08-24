@@ -602,3 +602,110 @@ input[type="range"]::-webkit-slider-thumb:hover {
 .footer-admin-link a:hover {
   color: var(--primary-cyan);
 }
+
+/* ============================================================
+   MOBILE RESPONSIVE HARDENING (< 768px)
+   ============================================================ */
+
+@media (max-width: 768px) {
+  body {
+    background-size: cover;
+    background-position: center top;
+  }
+
+  .header-banner {
+    padding: 1.25rem 0.75rem 0.5rem;
+  }
+
+  .logo-img {
+    max-width: 260px;
+  }
+
+  .event-tagline {
+    font-size: 0.95rem;
+    letter-spacing: 1px;
+  }
+
+  .main-wrapper {
+    padding: 0 0.85rem;
+    margin: 0.5rem auto 2.5rem;
+    gap: 1.25rem;
+  }
+
+  .form-card {
+    padding: 1.25rem 1rem;
+    border-radius: 18px;
+  }
+
+  .form-section-title {
+    font-size: 1.1rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .pill-selector {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .pill-option {
+    min-width: 90px;
+  }
+
+  .pill-label {
+    padding: 0.65rem 0.5rem;
+    font-size: 0.82rem;
+  }
+
+  .sports-ratings-container {
+    padding: 1rem 0.85rem;
+  }
+
+  .combined-score-header {
+    padding: 0.85rem 1rem;
+  }
+
+  .score-title {
+    font-size: 0.85rem;
+  }
+
+  .score-value-badge {
+    font-size: 1.3rem;
+  }
+
+  .sports-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  input[type="range"] {
+    height: 10px; /* Touch friendly height */
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    width: 22px;
+    height: 22px;
+  }
+
+  .sidebar-panel {
+    position: static;
+    gap: 1.25rem;
+  }
+
+  .mascot-card {
+    padding: 1.25rem 1rem;
+  }
+
+  .mascot-img {
+    max-width: 220px;
+  }
+
+  .btn-submit {
+    padding: 1rem;
+    font-size: 1.05rem;
+  }
+}
+
