@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (session && session.user) {
       currentUser = session.user;
-      showAdminView(currentUser.email);
+      showAdminView();
       return true;
     } else {
       showLoginView();
@@ -54,10 +54,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (mainContent) mainContent.style.display = 'none';
   }
 
-  function showAdminView(email) {
+  function showAdminView() {
     if (loginModal) loginModal.style.display = 'none';
     if (mainContent) mainContent.style.display = 'block';
-    if (userEmailDisplay) userEmailDisplay.innerHTML = `<i class="fa-solid fa-user-shield"></i> ${email}`;
     loadData();
     setupRealtime();
   }
@@ -81,14 +80,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Handle Login Submission
+  // Handle Login Submission (Password Only)
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = document.getElementById('login_email').value.trim();
       const password = document.getElementById('login_password').value;
+      const email = "ishanvashistha.1993@gmail.com";
 
-      if (!email || !password) return;
+      if (!password) return;
 
       if (loginErr) loginErr.style.display = 'none';
       if (loginSubmitBtn) {
@@ -105,10 +104,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (error) throw error;
 
         currentUser = data.user;
-        showAdminView(currentUser.email);
+        showAdminView();
       } catch (err) {
         if (loginErr) {
-          loginErr.textContent = err.message || "Invalid email or password.";
+          loginErr.textContent = err.message || "Invalid organiser password.";
           loginErr.style.display = 'block';
         }
       } finally {
