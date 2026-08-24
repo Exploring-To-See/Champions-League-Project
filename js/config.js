@@ -3,11 +3,9 @@
    ============================================================ */
 
 window.CLP_CONFIG = {
-  /* ---- Supabase Backend Credentials ---------------------------
-     Set your Supabase Project URL & Anon Key here or via Vercel env vars.
-     When empty or invalid, the app runs in interactive DEMO mode. */
-  SUPABASE_URL: "https://your-supabase-project.supabase.co",
-  SUPABASE_ANON_KEY: "your-anon-public-key-here",
+  /* ---- Supabase Backend Credentials --------------------------- */
+  SUPABASE_URL: "https://hckejkokkzbzrvbbrscz.supabase.co",
+  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhja2Vqa29ra3pienJ2YmJyc2N6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1ODI5MjgsImV4cCI6MjEwMzE1ODkyOH0.8OzH2mLs0DVZ66CNAmQtskE6towBAvAfuorZVpOK-RQ",
 
   /* Storage Bucket Name */
   STORAGE_BUCKET: "registrations",
