@@ -21,13 +21,13 @@ window.CLP_CONFIG = {
 
   /* ---- 7 Official Sports List for Skill Ratings (out of 10) --- */
   SPORTS: [
-    { id: "pickleball", name: "Pickleball", icon: "fa-solid fa-table-tennis-paddle-ball" },
-    { id: "poker", name: "Poker", icon: "fa-solid fa-spade" },
-    { id: "cricket", name: "Cricket", icon: "fa-solid fa-baseball-bat-ball" },
-    { id: "triathlon", name: "Triathlon", icon: "fa-solid fa-person-running" },
-    { id: "archery_shooting", name: "Archery & Shooting", icon: "fa-solid fa-bullseye" },
-    { id: "badminton", name: "Badminton", icon: "fa-solid fa-feather-pointed" },
-    { id: "table_tennis", name: "Table Tennis", icon: "fa-solid fa-table-tennis-paddle-ball" }
+    { id: "pickleball", name: "Pickleball", icon: "fa-solid fa-table-tennis-paddle-ball", emoji: "🏓" },
+    { id: "poker", name: "Poker", icon: "fa-solid fa-dice", emoji: "♠️" },
+    { id: "cricket", name: "Cricket", icon: "fa-solid fa-baseball-bat-ball", emoji: "🏏" },
+    { id: "triathlon", name: "Triathlon", icon: "fa-solid fa-person-running", emoji: "🏃" },
+    { id: "archery_shooting", name: "Archery & Shooting", icon: "fa-solid fa-bullseye", emoji: "🎯" },
+    { id: "badminton", name: "Badminton", icon: "fa-solid fa-feather-pointed", emoji: "🏸" },
+    { id: "table_tennis", name: "Table Tennis", icon: "fa-solid fa-table-tennis-paddle-ball", emoji: "🏓" }
   ],
 
   /* Jersey Sizes */

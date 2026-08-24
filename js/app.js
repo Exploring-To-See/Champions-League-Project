@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
       sportEl.className = 'sport-rating-item';
       sportEl.innerHTML = `
         <div class="sport-info">
-          <span class="sport-name"><i class="${sport.icon}"></i> ${sport.name}</span>
+          <span class="sport-name"><span style="font-style:normal; margin-right:5px; font-size:1.05rem;">${sport.emoji || ''}</span> <i class="${sport.icon}"></i> ${sport.name}</span>
           <span class="sport-score" id="score-val-${sport.id}">0.0 / 10</span>
         </div>
         <input type="range" id="rating-${sport.id}" name="rating_${sport.id}" min="0" max="10" step="0.5" value="0">
