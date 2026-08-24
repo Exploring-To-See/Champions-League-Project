@@ -343,93 +343,82 @@
 
   <!-- Main Protected Admin Dashboard -->
   <div class="admin-wrapper" id="admin-main-content" style="display: none;">
-    <div style="display: grid; grid-template-columns: 1fr auto; gap: 1.5rem; align-items: start;">
-      <div>
-        <header class="admin-header">
-          <div class="admin-title-box">
-            <h1><i class="fa-solid fa-shield-halved"></i> Organiser Console</h1>
-            <p>1727 Champion's League — Live Player Registrations</p>
-          </div>
-          <div class="admin-user-info">
-            <a href="https://1727championsleague.vercel.app" class="btn-submit" style="width:auto; padding:0.5rem 1rem; font-size:0.85rem; text-decoration:none;">
-              <i class="fa-solid fa-globe"></i> View Public Site
-            </a>
-            <button class="btn-logout" id="btn-logout-admin"><i class="fa-solid fa-power-off"></i> Logout</button>
-          </div>
-        </header>
-
-        <!-- Stats Summary Row -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-val" id="stat-total">0</div>
-            <div class="stat-lbl">Total Registrations</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-val" id="stat-avg" style="color:var(--primary-gold);">0.0</div>
-            <div class="stat-lbl">Average Skill Index</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-val" id="stat-debut" style="color:#a855f7;">0</div>
-            <div class="stat-lbl">Debut Players</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-val" id="stat-previous" style="color:#22c55e;">0</div>
-            <div class="stat-lbl">Previous Participants</div>
-          </div>
-        </div>
-
-        <!-- Controls Toolbar -->
-        <div class="toolbar-row">
-          <div class="search-box">
-            <input type="text" id="admin-search" placeholder="Search by name, jersey name, or reg code...">
-          </div>
-          <div>
-            <select id="admin-filter-status" style="width:auto;">
-              <option value="ALL">All Players</option>
-              <option value="Debut">Debut Players Only</option>
-              <option value="Previous Participant">Previous Participants Only</option>
-            </select>
-          </div>
-          <button class="btn-action btn-add-player" id="btn-open-add-modal">
-            <i class="fa-solid fa-plus"></i> Add Player
-          </button>
-          <button class="btn-action btn-export" id="btn-export-csv">
-            <i class="fa-solid fa-file-csv"></i> Export CSV
-          </button>
-        </div>
-
-        <!-- Live Data Table -->
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Code</th>
-                <th>Photo</th>
-                <th>Player Name</th>
-                <th>Age / Sex</th>
-                <th>History</th>
-                <th>Prev. Competition</th>
-                <th>Jersey Name</th>
-                <th>Jersey #</th>
-                <th>Size</th>
-                <th>Combined Rating</th>
-                <th>Reg Date</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="admin-table-body">
-              <!-- Rows dynamically rendered -->
-            </tbody>
-          </table>
-        </div>
+    <header class="admin-header">
+      <div class="admin-title-box">
+        <h1><i class="fa-solid fa-shield-halved"></i> Organiser Console</h1>
+        <p>1727 Champion's League — Live Player Registrations</p>
       </div>
+      <div class="admin-user-info">
+        <a href="https://1727championsleague.vercel.app" class="btn-submit" style="width:auto; padding:0.5rem 1rem; font-size:0.85rem; text-decoration:none;">
+          <i class="fa-solid fa-globe"></i> View Public Site
+        </a>
+        <button class="btn-logout" id="btn-logout-admin"><i class="fa-solid fa-power-off"></i> Logout</button>
+      </div>
+    </header>
 
-      <!-- Right Column: Official Mascot Display for Desktop -->
-      <aside class="sidebar-panel" style="width: 250px;">
-        <div class="mascot-card">
-          <img src="/assets/pug-tiger-mascot.png" alt="1727 Champion's League Mascot" class="mascot-img">
-        </div>
-      </aside>
+    <!-- Stats Summary Row -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-val" id="stat-total">0</div>
+        <div class="stat-lbl">Total Registrations</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="stat-avg" style="color:var(--primary-gold);">0.0</div>
+        <div class="stat-lbl">Average Skill Index</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="stat-debut" style="color:#a855f7;">0</div>
+        <div class="stat-lbl">Debut Players</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="stat-previous" style="color:#22c55e;">0</div>
+        <div class="stat-lbl">Previous Participants</div>
+      </div>
+    </div>
+
+    <!-- Controls Toolbar -->
+    <div class="toolbar-row">
+      <div class="search-box">
+        <input type="text" id="admin-search" placeholder="Search by name, jersey name, or reg code...">
+      </div>
+      <div>
+        <select id="admin-filter-status" style="width:auto;">
+          <option value="ALL">All Players</option>
+          <option value="Debut">Debut Players Only</option>
+          <option value="Previous Participant">Previous Participants Only</option>
+        </select>
+      </div>
+      <button class="btn-action btn-add-player" id="btn-open-add-modal">
+        <i class="fa-solid fa-plus"></i> Add Player
+      </button>
+      <button class="btn-action btn-export" id="btn-export-csv">
+        <i class="fa-solid fa-file-csv"></i> Export CSV
+      </button>
+    </div>
+
+    <!-- Live Data Table -->
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Photo</th>
+            <th>Player Name</th>
+            <th>Age / Sex</th>
+            <th>History</th>
+            <th>Prev. Competition</th>
+            <th>Jersey Name</th>
+            <th>Jersey #</th>
+            <th>Size</th>
+            <th>Combined Rating</th>
+            <th>Reg Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="admin-table-body">
+          <!-- Rows dynamically rendered -->
+        </tbody>
+      </table>
     </div>
   </div>
 
