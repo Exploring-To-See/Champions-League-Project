@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organiser Admin Console — Champions League 2026</title>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="../css/style.css">
+  
+  <style>
+    .admin-container {
+      max-width: 1300px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .admin-title {
+      font-family: var(--font-heading);
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--primary-gold);
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-family: var(--font-heading);
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: var(--primary-cyan);
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .controls-row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .search-box {
+      flex: 1;
+      min-width: 260px;
+    }
+
+    .data-table-container {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      border-radius: var(--radius-md);
+      overflow-x: auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    th {
+      background: rgba(9, 14, 26, 0.9);
+      color: var(--primary-gold);
+      font-family: var(--font-heading);
+      font-weight: 700;
+      padding: 1rem;
+      border-bottom: 1px solid var(--bg-card-border);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      color: #e2e8f0;
+      white-space: nowrap;
+    }
+
+    tr:hover {
+      background: rgba(245, 197, 24, 0.05);
+    }
+
+    .player-thumb {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid var(--primary-gold);
+    }
+
+    .badge-status {
+      padding: 0.2rem 0.6rem;
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .badge-debut {
+      background: rgba(0, 229, 255, 0.15);
+      color: var(--primary-cyan);
+      border: 1px solid var(--primary-cyan);
+    }
+
+    .badge-previous {
+      background: rgba(245, 197, 24, 0.15);
+      color: var(--primary-gold);
+      border: 1px solid var(--primary-gold);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="admin-container">
+    <header class="admin-header">
+      <div>
+        <h1 class="admin-title"><i class="fa-solid fa-user-shield"></i> Organiser Admin Console</h1>
+        <p style="color:var(--text-muted); font-size:0.9rem;">Champions League 2026 — Player Registrations & Stats</p>
+      </div>
+      <div>
+        <a href="../index.html" class="btn-submit" style="padding:0.6rem 1.2rem; font-size:0.9rem; text-decoration:none;">
+          <i class="fa-solid fa-arrow-left"></i> Back to Registration Form
+        </a>
+      </div>
+    </header>
+
+    <!-- Stat Summary Cards -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-value" id="stat-total-players">0</div>
+        <div class="stat-label">Total Players</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-avg-rating" style="color:var(--primary-gold);">0.0</div>
+        <div class="stat-label">Avg Skill Index</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-debut-players" style="color:#a855f7;">0</div>
+        <div class="stat-label">Debut Players</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-previous-players" style="color:#22c55e;">0</div>
+        <div class="stat-label">Previous Veterans</div>
+      </div>
+    </div>
+
+    <!-- Filter & Controls -->
+    <div class="controls-row">
+      <div class="search-box">
+        <input type="text" id="admin-search-input" placeholder="Search by name, jersey name, or reg code...">
+      </div>
+      <div>
+        <select id="admin-filter-status" style="width:auto;">
+          <option value="ALL">All Players</option>
+          <option value="Debut">Debut Players Only</option>
+          <option value="Previous Participant">Previous Veterans Only</option>
+        </select>
+      </div>
+      <div>
+        <button id="btn-export-csv" class="btn-submit" style="padding:0.85rem 1.2rem; font-size:0.9rem; margin:0;">
+          <i class="fa-solid fa-file-csv"></i> Export CSV
+        </button>
+      </div>
+    </div>
+
+    <!-- Registrations Data Table -->
+    <div class="data-table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Photo</th>
+            <th>Player Name</th>
+            <th>Age / Sex</th>
+            <th>History</th>
+            <th>Jersey Name</th>
+            <th>Size</th>
+            <th>Combined Rating</th>
+            <th>Reg Date</th>
+          </tr>
+        </thead>
+        <tbody id="admin-table-body">
+          <!-- Rows inserted by admin.js -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Supabase JS SDK & Admin Script -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
