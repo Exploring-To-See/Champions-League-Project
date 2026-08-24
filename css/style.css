@@ -462,20 +462,16 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 .mascot-card {
-  background: var(--bg-card);
-  backdrop-filter: blur(24px);
-  border: 1px solid rgba(0, 229, 255, 0.3);
-  border-radius: var(--radius-lg);
-  padding: 1.5rem;
+  background: transparent;
+  border: none;
+  padding: 0;
   text-align: center;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
   position: relative;
-  overflow: hidden;
   transition: transform var(--transition);
 }
 
 .mascot-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-4px) scale(1.02);
 }
 
 .mascot-img {
@@ -811,12 +807,32 @@ input[type="range"]::-webkit-slider-thumb:hover {
     gap: 1.25rem;
   }
 
+  /* Mascot as subtle fixed background watermark on mobile screens */
   .mascot-card {
-    padding: 1.25rem 1rem;
+    position: fixed;
+    right: -15px;
+    bottom: 10px;
+    width: 160px;
+    max-width: 40vw;
+    opacity: 0.22;
+    pointer-events: none;
+    z-index: 0;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    box-shadow: none;
   }
 
   .mascot-img {
-    max-width: 220px;
+    width: 100%;
+    filter: drop-shadow(0 6px 15px rgba(0, 0, 0, 0.9));
+    animation: floatMascotMobile 4s ease-in-out infinite;
+  }
+
+  @keyframes floatMascotMobile {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-5px); }
   }
 
   .btn-submit {
