@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Organiser Admin Console — 1727 Champions League 2.0</title>
+  <title>Organiser Admin Console — 1727 Champion's League</title>
   
   <!-- Favicon & Official Web App Icons -->
   <link rel="icon" type="image/png" href="/assets/champions-logo.png">
@@ -11,8 +11,8 @@
   <link rel="apple-touch-icon" href="/assets/champions-logo.png">
   
   <!-- OpenGraph Social Link Preview Meta Tags -->
-  <meta property="og:title" content="Organiser Admin Console — 1727 Champions League 2.0">
-  <meta property="og:description" content="Organiser Console for 1727 Champions League 2.0 Player Registrations.">
+  <meta property="og:title" content="Organiser Admin Console — 1727 Champion's League">
+  <meta property="og:description" content="Organiser Console for 1727 Champion's League Player Registrations.">
   <meta property="og:image" content="https://championsadmin.vercel.app/assets/champions-logo.png">
   <meta property="og:url" content="https://championsadmin.vercel.app">
   <meta property="og:type" content="website">
@@ -115,16 +115,18 @@
     .stat-lbl {
       font-size: 0.8rem;
       color: var(--text-muted);
+      margin-top: 0.25rem;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
     }
 
     .toolbar-row {
       display: flex;
+      justify-content: space-between;
+      align-items: center;
       gap: 1rem;
       margin-bottom: 1.5rem;
       flex-wrap: wrap;
-      align-items: center;
     }
 
     .search-box {
@@ -146,14 +148,13 @@
     }
 
     .btn-add-player {
-      background: linear-gradient(135deg, #00e5ff 0%, #0072ff 100%);
-      color: #fff;
-      box-shadow: 0 5px 15px rgba(0, 229, 255, 0.3);
+      background: var(--primary-cyan);
+      color: #04070e;
     }
 
     .btn-add-player:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(0, 229, 255, 0.5);
+      box-shadow: 0 0 15px rgba(0, 229, 255, 0.6);
+      transform: translateY(-1px);
     }
 
     .btn-export {
@@ -167,36 +168,37 @@
       color: #000;
     }
 
+    /* Table Component */
     .table-container {
       background: var(--bg-card);
       backdrop-filter: blur(20px);
-      border: 1px solid rgba(0, 229, 255, 0.2);
+      border: 1px solid rgba(0, 229, 255, 0.25);
       border-radius: var(--radius-lg);
       overflow-x: auto;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
       text-align: left;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
     }
 
     th {
-      background: rgba(4, 8, 18, 0.95);
+      background: rgba(6, 10, 20, 0.9);
       color: var(--primary-cyan);
       font-family: var(--font-heading);
       font-weight: 800;
-      padding: 1.1rem 1rem;
-      border-bottom: 1px solid rgba(0, 229, 255, 0.2);
-      white-space: nowrap;
+      padding: 1rem 0.85rem;
+      border-bottom: 2px solid rgba(0, 229, 255, 0.3);
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      white-space: nowrap;
     }
 
     td {
-      padding: 0.9rem 1rem;
+      padding: 0.85rem;
       border-bottom: 1px solid rgba(255,255,255,0.06);
       color: #e2e8f0;
       white-space: nowrap;
@@ -267,60 +269,87 @@
 
     .login-card {
       background: var(--bg-card);
-      border: 1.5px solid var(--primary-cyan);
+      border: 1px solid var(--primary-cyan);
       border-radius: var(--radius-lg);
-      max-width: 420px;
       width: 90%;
+      max-width: 420px;
       padding: 2.5rem;
-      box-shadow: 0 25px 60px rgba(0, 229, 255, 0.3);
-      text-align: center;
+      box-shadow: 0 25px 60px rgba(0, 229, 255, 0.4);
     }
 
-    .login-logo {
-      max-width: 180px;
-      margin-bottom: 1rem;
+    .password-input-wrapper {
+      position: relative;
+      width: 100%;
+    }
+
+    .toggle-password-btn {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 4px;
+      transition: color var(--transition);
+    }
+
+    .toggle-password-btn:hover {
+      color: var(--primary-cyan);
+    }
+
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+      }
     }
   </style>
 </head>
 <body>
 
   <!-- Auth Login Modal Overlay -->
-  <div class="login-modal-overlay" id="login-modal">
+  <div class="login-modal-overlay" id="login-modal" style="display: flex;">
     <div class="login-card">
-      <img src="/assets/champions-logo.png" alt="1727 Champions League Logo" class="login-logo">
-      <h2 style="font-family:var(--font-heading); font-weight:800; color:var(--primary-cyan); margin-bottom:0.4rem;">ORGANISER LOGIN</h2>
-      <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1.5rem;">Sign in to access live registrations & player management.</p>
-      
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <img src="/assets/champions-logo.png" alt="1727 Champion's League Logo" style="max-width: 180px; height: auto;">
+        <div style="font-family: var(--font-heading); font-weight: 900; font-size: 1.3rem; color: var(--primary-cyan); margin-top: 0.75rem;">ORGANISER LOGIN</div>
+        <div style="font-size: 0.82rem; color: var(--text-muted);">Authorised Admin Personnel Only</div>
+      </div>
+
       <form id="login-form">
-        <div class="form-group" style="text-align:left;">
-          <label for="login_email">Email Address</label>
-          <input type="email" id="login_email" placeholder="e.g. ishanvashistha.1993@gmail.com" autocomplete="email" required>
+        <div class="form-group">
+          <label for="login_email">Organiser Email <span class="required-star">*</span></label>
+          <input type="email" id="login_email" placeholder="Enter email address" autocomplete="email" required>
         </div>
-        <div class="form-group" style="text-align:left; margin-bottom:1.5rem;">
-          <label for="login_password">Password</label>
-          <div style="position:relative;">
-            <input type="password" id="login_password" placeholder="Enter admin password" autocomplete="current-password" required style="padding-right: 2.8rem;">
-            <button type="button" id="btn-toggle-password" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.1rem; padding:4px;" title="Toggle Password Visibility">
+
+        <div class="form-group" style="margin-top: 1rem;">
+          <label for="login_password">Organiser Password <span class="required-star">*</span></label>
+          <div class="password-input-wrapper">
+            <input type="password" id="login_password" placeholder="Enter password" autocomplete="current-password" required style="padding-right: 40px;">
+            <button type="button" class="toggle-password-btn" id="btn-toggle-password" title="Toggle password visibility">
               <i class="fa-solid fa-eye" id="password-eye-icon"></i>
             </button>
           </div>
         </div>
-        <div id="login-error-msg" style="color:var(--primary-red); font-size:0.85rem; margin-bottom:1rem; display:none;"></div>
-        <button type="submit" class="btn-submit" id="btn-login-submit">
+
+        <div id="login-error-msg" style="display:none; color:var(--primary-red); font-size:0.85rem; margin-top:0.75rem; text-align:center;"></div>
+
+        <button type="submit" class="btn-submit" id="btn-login-submit" style="margin-top: 1.5rem;">
           <i class="fa-solid fa-right-to-bracket"></i> SIGN IN
         </button>
       </form>
     </div>
   </div>
 
-  <!-- Main Admin Content Area -->
-  <div class="admin-wrapper" id="admin-main-content" style="display:none;">
+  <!-- Main Protected Admin Dashboard -->
+  <div class="admin-wrapper" id="admin-main-content" style="display: none;">
     
-    <!-- Top Header -->
     <header class="admin-header">
       <div class="admin-title-box">
         <h1><i class="fa-solid fa-shield-halved"></i> Organiser Console</h1>
-        <p>1727 Champions League 2.0 — Live Player Registrations</p>
+        <p>1727 Champion's League — Live Player Registrations</p>
       </div>
       <div class="admin-user-info">
         <span class="user-pill" id="admin-email-display"><i class="fa-solid fa-user"></i> Loading...</span>
@@ -381,7 +410,9 @@
             <th>Player Name</th>
             <th>Age / Sex</th>
             <th>History</th>
+            <th>Prev. Competition</th>
             <th>Jersey Name</th>
+            <th>Jersey #</th>
             <th>Size</th>
             <th>Combined Rating</th>
             <th>Reg Date</th>
@@ -417,7 +448,6 @@
             <select id="modal_sex">
               <option value="Male">Male</option>
               <option value="Female">Female</option>
-              <option value="Other">Other</option>
             </select>
           </div>
           <div class="form-group">
@@ -428,8 +458,16 @@
             </select>
           </div>
           <div class="form-group">
+            <label for="modal_previous_comp">Prev. Competition Name</label>
+            <input type="text" id="modal_previous_comp" placeholder="e.g. Champions Cup 2025">
+          </div>
+          <div class="form-group">
             <label for="modal_jersey_name">Jersey Name <span class="required-star">*</span></label>
             <input type="text" id="modal_jersey_name" maxlength="12" required>
+          </div>
+          <div class="form-group">
+            <label for="modal_jersey_number">Jersey Number <span class="required-star">*</span></label>
+            <input type="number" id="modal_jersey_number" min="0" max="999" required>
           </div>
           <div class="form-group">
             <label for="modal_jersey_size">Jersey Size <span class="required-star">*</span></label>
@@ -443,9 +481,9 @@
               <option value="3XL">3XL</option>
             </select>
           </div>
-          <div class="form-group">
+          <div class="form-group full-width">
             <label for="modal_combined_rating">Combined Rating (0-10)</label>
-            <input type="number" id="modal_combined_rating" min="1" max="10" step="0.1" value="5.0">
+            <input type="number" id="modal_combined_rating" min="0" max="10" step="0.1" value="0.0">
           </div>
         </div>
 

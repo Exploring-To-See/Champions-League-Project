@@ -1,5 +1,5 @@
 /* ============================================================
-   CHAMPIONS LEAGUE SPORTS TOURNAMENT — FRONTEND APPLICATION LOGIC
+   1727 CHAMPION'S LEAGUE — FRONTEND APPLICATION LOGIC
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("Running in DEMO mode (Supabase URL/Key pending)");
   }
 
-  // 2. Render 8 Sports Sliders dynamically
+  // 2. Render 7 Sports Sliders dynamically with default 0 rating
   const sportsContainer = document.getElementById('sports-ratings-grid');
   const sportsList = config.SPORTS || [];
 
@@ -31,15 +31,15 @@ document.addEventListener('DOMContentLoaded', () => {
       sportEl.innerHTML = `
         <div class="sport-info">
           <span class="sport-name"><i class="${sport.icon}"></i> ${sport.name}</span>
-          <span class="sport-score" id="score-val-${sport.id}">5.0 / 10</span>
+          <span class="sport-score" id="score-val-${sport.id}">0.0 / 10</span>
         </div>
-        <input type="range" id="rating-${sport.id}" name="rating_${sport.id}" min="1" max="10" step="0.5" value="5">
+        <input type="range" id="rating-${sport.id}" name="rating_${sport.id}" min="0" max="10" step="0.5" value="0">
       `;
       sportsContainer.appendChild(sportEl);
     });
   }
 
-  // 3. Dynamic Rating Calculation
+  // 3. Dynamic Rating Calculation (Starts at 0.0)
   function updateCombinedRating() {
     let totalScore = 0;
     let count = sportsList.length;
@@ -56,10 +56,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const average = count > 0 ? (totalScore / count).toFixed(1) : "0.0";
     const combinedBadge = document.getElementById('combined-score-badge');
-    const sidebarScoreBadge = document.getElementById('sidebar-combined-score');
 
     if (combinedBadge) combinedBadge.textContent = `${average} / 10`;
-    if (sidebarScoreBadge) sidebarScoreBadge.textContent = average;
   }
 
   // Attach event listeners to all sport sliders
@@ -71,37 +69,27 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   updateCombinedRating();
 
-  // 4. Live Jersey Preview Updates
-  const jerseyNameInput = document.getElementById('jersey_name');
-  const jerseySizeSelect = document.getElementById('jersey_size');
-  const previewName = document.getElementById('preview-jersey-name');
-  const previewSize = document.getElementById('preview-jersey-size');
+  // 4. Conditional Tournament History Previous Competition Field
+  const statusPills = document.querySelectorAll('input[name="tournament_status"]');
+  const prevWrapper = document.getElementById('previous-comp-wrapper');
+  const prevInput = document.getElementById('previous_competition_name');
 
-  if (jerseyNameInput && previewName) {
-    jerseyNameInput.addEventListener('input', (e) => {
-      const val = e.target.value.trim();
-      previewName.textContent = val ? val.toUpperCase() : "YOUR NAME";
-      
-      // Auto-adjust font size based on length so it fits perfectly on the jersey back
-      const len = val.length;
-      if (len > 10) {
-        previewName.style.fontSize = '0.75rem';
-        previewName.style.letterSpacing = '0.8px';
-      } else if (len > 7) {
-        previewName.style.fontSize = '0.82rem';
-        previewName.style.letterSpacing = '1px';
-      } else {
-        previewName.style.fontSize = '0.92rem';
-        previewName.style.letterSpacing = '1.5px';
+  function togglePreviousComp() {
+    const selected = document.querySelector('input[name="tournament_status"]:checked')?.value;
+    if (selected === 'Previous Participant') {
+      if (prevWrapper) prevWrapper.style.display = 'block';
+      if (prevInput) prevInput.required = true;
+    } else {
+      if (prevWrapper) prevWrapper.style.display = 'none';
+      if (prevInput) {
+        prevInput.required = false;
+        prevInput.value = '';
       }
-    });
+    }
   }
 
-  if (jerseySizeSelect && previewSize) {
-    jerseySizeSelect.addEventListener('change', (e) => {
-      previewSize.textContent = e.target.value || "L";
-    });
-  }
+  statusPills.forEach(pill => pill.addEventListener('change', togglePreviousComp));
+  togglePreviousComp();
 
   // 5. Drag & Drop Photo Upload Handler
   const dropZone = document.getElementById('photo-drop-zone');
@@ -146,7 +134,6 @@ document.addEventListener('DOMContentLoaded', () => {
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        // Compress image using canvas
         const canvas = document.createElement('canvas');
         const maxDim = 800;
         let width = img.width;
@@ -188,7 +175,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const regForm = document.getElementById('registration-form');
   const submitBtn = document.getElementById('btn-submit-form');
   const modalOverlay = document.getElementById('success-modal');
-  const modalRegCode = document.getElementById('modal-reg-code');
   const modalPlayerName = document.getElementById('modal-player-name');
 
   if (regForm) {
@@ -199,19 +185,26 @@ document.addEventListener('DOMContentLoaded', () => {
       const age = parseInt(document.getElementById('age').value);
       const sex = document.querySelector('input[name="sex"]:checked')?.value || 'Male';
       const tournamentStatus = document.querySelector('input[name="tournament_status"]:checked')?.value || 'Debut';
+      const previousCompName = document.getElementById('previous_competition_name')?.value.trim() || null;
       const jerseyName = document.getElementById('jersey_name').value.trim();
+      const jerseyNumber = document.getElementById('jersey_number')?.value.trim() || null;
       const jerseySize = document.getElementById('jersey_size').value;
 
-      if (!fullName || !age || !jerseyName || !jerseySize) {
+      if (!fullName || !age || !jerseyName || !jerseyNumber || !jerseySize) {
         alert("Please fill in all required fields.");
         return;
       }
 
-      // Collect 8 sports ratings
+      if (tournamentStatus === 'Previous Participant' && !previousCompName) {
+        alert("Please enter your previous competition name.");
+        return;
+      }
+
+      // Collect 7 sports ratings
       const sportsRatings = {};
       let totalRating = 0;
       sportsList.forEach(sport => {
-        const val = parseFloat(document.getElementById(`rating-${sport.id}`)?.value || 5.0);
+        const val = parseFloat(document.getElementById(`rating-${sport.id}`)?.value || 0);
         sportsRatings[sport.id] = val;
         totalRating += val;
       });
@@ -254,17 +247,18 @@ document.addEventListener('DOMContentLoaded', () => {
             age: age,
             sex: sex,
             profile_pic_url: profilePicUrl,
-            rating_pickleball: sportsRatings['pickleball'],
-            rating_poker: sportsRatings['poker'],
-            rating_cricket: sportsRatings['cricket'],
-            rating_triathlon: sportsRatings['triathlon'],
-            rating_archery_shooting: sportsRatings['archery_shooting'],
-            rating_badminton: sportsRatings['badminton'],
-            rating_table_tennis: sportsRatings['table_tennis'],
-            rating_football: sportsRatings['football'],
+            rating_pickleball: sportsRatings['pickleball'] || 0,
+            rating_poker: sportsRatings['poker'] || 0,
+            rating_cricket: sportsRatings['cricket'] || 0,
+            rating_triathlon: sportsRatings['triathlon'] || 0,
+            rating_archery_shooting: sportsRatings['archery_shooting'] || 0,
+            rating_badminton: sportsRatings['badminton'] || 0,
+            rating_table_tennis: sportsRatings['table_tennis'] || 0,
             combined_rating: combinedRating,
             tournament_status: tournamentStatus,
+            previous_competition_name: previousCompName,
             jersey_name: jerseyName,
+            jersey_number: jerseyNumber,
             jersey_size: jerseySize,
             created_at: new Date().toISOString()
           };
@@ -275,12 +269,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
           if (dbErr) {
             console.error("Database insert error:", dbErr);
-            alert("Database submission note: " + dbErr.message);
           }
         }
 
         // Show Success Modal
-        if (modalRegCode) modalRegCode.textContent = regCode;
         if (modalPlayerName) modalPlayerName.textContent = fullName.toUpperCase();
         if (modalOverlay) modalOverlay.classList.add('active');
 
@@ -303,8 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
       modalOverlay.classList.remove('active');
       if (regForm) regForm.reset();
       updateCombinedRating();
-      if (previewName) previewName.textContent = "YOUR NAME";
-      if (previewSize) previewSize.textContent = "L";
+      togglePreviousComp();
       if (previewImg) {
         previewImg.style.display = 'none';
         if (previewIcon) previewIcon.style.display = 'block';
