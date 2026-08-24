@@ -715,14 +715,50 @@ input[type="range"]::-webkit-slider-thumb:hover {
   100% { transform: scale(1); opacity: 1; }
 }
 
+/* Full-Page Magnified Blurred Mascot Background for Mobile View */
+.mobile-mascot-bg {
+  display: none;
+}
+
 /* ============================================================
-   MOBILE RESPONSIVE HARDENING (< 768px)
+   MOBILE & TABLET RESPONSIVE HARDENING (< 992px)
    ============================================================ */
 
-@media (max-width: 768px) {
+@media (max-width: 992px) {
   body {
     background-size: cover;
     background-position: center top;
+  }
+
+  /* Display full-page magnified blurred background watermark on mobile */
+  .mobile-mascot-bg {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .mobile-mascot-bg img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -45%) scale(1.35);
+    width: 90vw;
+    max-width: 500px;
+    height: auto;
+    opacity: 0.16;
+    filter: blur(5px) drop-shadow(0 0 40px rgba(0, 229, 255, 0.4));
+    animation: floatMascotMobile 6s ease-in-out infinite;
+  }
+
+  @keyframes floatMascotMobile {
+    0%, 100% { transform: translate(-50%, -45%) scale(1.35); }
+    50% { transform: translate(-50%, -45%) scale(1.40); }
   }
 
   .header-banner {
@@ -747,6 +783,8 @@ input[type="range"]::-webkit-slider-thumb:hover {
   .form-card {
     padding: 1.25rem 1rem;
     border-radius: 18px;
+    position: relative;
+    z-index: 2;
   }
 
   .form-section-title {
@@ -803,38 +841,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   }
 
   .sidebar-panel {
-    position: static;
-    gap: 1.25rem;
-  }
-
-  /* Mascot as magnified, centered, blurred background watermark on mobile screens */
-  .mascot-card {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 85vw;
-    max-width: 480px;
-    height: auto;
-    opacity: 0.16;
-    filter: blur(4px) drop-shadow(0 0 30px rgba(0, 229, 255, 0.4));
-    pointer-events: none;
-    z-index: 0;
-    margin: 0;
-    padding: 0;
-    background: none !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
-
-  .mascot-img {
-    width: 100%;
-    animation: floatMascotMobile 6s ease-in-out infinite;
-  }
-
-  @keyframes floatMascotMobile {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.04); }
+    display: none;
   }
 
   .btn-submit {
