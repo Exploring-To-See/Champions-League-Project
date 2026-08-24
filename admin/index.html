@@ -8,8 +8,8 @@
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   
-  <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="../css/style.css">
+  <!-- Main Stylesheet (Absolute Path for multi-domain routing) -->
+  <link rel="stylesheet" href="/css/style.css">
   
   <style>
     /* Admin Specific Custom Styles */
@@ -275,7 +275,7 @@
   <!-- Auth Login Modal Overlay -->
   <div class="login-modal-overlay" id="login-modal">
     <div class="login-card">
-      <img src="../assets/champions-logo.png" alt="1727 Champions League Logo" class="login-logo">
+      <img src="/assets/champions-logo.png" alt="1727 Champions League Logo" class="login-logo">
       <h2 style="font-family:var(--font-heading); font-weight:800; color:var(--primary-cyan); margin-bottom:0.4rem;">ORGANISER LOGIN</h2>
       <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1.5rem;">Sign in to access live registrations & player management.</p>
       
@@ -440,9 +440,9 @@
     </div>
   </div>
 
-  <!-- Supabase JS Client & Admin Logic -->
+  <!-- Supabase JS Client & Admin Logic (Absolute Paths) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../js/config.js"></script>
-  <script src="admin.js"></script>
+  <script src="/js/config.js"></script>
+  <script src="/admin/admin.js"></script>
 </body>
 </html>

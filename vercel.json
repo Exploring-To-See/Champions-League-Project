@@ -3,7 +3,7 @@
   "cleanUrls": true,
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!css|js|assets|admin/admin.js).*)",
       "has": [
         {
           "type": "host",
@@ -17,8 +17,12 @@
       "destination": "/admin/index.html"
     },
     {
-      "source": "/admin/(.*)",
-      "destination": "/admin/$1"
+      "source": "/admin/",
+      "destination": "/admin/index.html"
+    },
+    {
+      "source": "/admin/index.html",
+      "destination": "/admin/index.html"
     }
   ],
   "headers": [
