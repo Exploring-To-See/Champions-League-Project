@@ -62,6 +62,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupRealtime();
   }
 
+  // Password Visibility Toggle Handler
+  const togglePasswordBtn = document.getElementById('btn-toggle-password');
+  const passwordInput = document.getElementById('login_password');
+  const passwordEyeIcon = document.getElementById('password-eye-icon');
+
+  if (togglePasswordBtn && passwordInput && passwordEyeIcon) {
+    togglePasswordBtn.addEventListener('click', () => {
+      const isPassword = passwordInput.getAttribute('type') === 'password';
+      passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+      if (isPassword) {
+        passwordEyeIcon.classList.remove('fa-eye');
+        passwordEyeIcon.classList.add('fa-eye-slash');
+      } else {
+        passwordEyeIcon.classList.remove('fa-eye-slash');
+        passwordEyeIcon.classList.add('fa-eye');
+      }
+    });
+  }
+
   // Handle Login Submission
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
