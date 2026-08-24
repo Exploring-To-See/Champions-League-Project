@@ -1,6 +1,7 @@
 /* ============================================================
    CHAMPIONS LEAGUE 2.0 — STYLES & DESIGN SYSTEM
    Tailored to exact user background, logo & mascot assets
+   With motion design animations, button shimmer & modal effects
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
@@ -51,12 +52,13 @@ body {
   overflow-x: hidden;
 }
 
-/* Header with Official Logo */
+/* Header with Official Logo & Motion Entry */
 .header-banner {
   text-align: center;
   padding: 2rem 1rem 1rem;
   position: relative;
   z-index: 10;
+  animation: fadeInDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .logo-container {
@@ -73,7 +75,7 @@ body {
 }
 
 .logo-img:hover {
-  transform: scale(1.03);
+  transform: scale(1.05) rotate(-1deg);
 }
 
 .event-tagline {
@@ -118,6 +120,7 @@ body {
     0 20px 50px rgba(0, 0, 0, 0.8),
     inset 0 0 30px rgba(0, 229, 255, 0.05),
     0 0 30px rgba(0, 229, 255, 0.2);
+  animation: cardEntrance 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both, ambientGlowPulse 6s ease-in-out infinite 1s;
 }
 
 /* Section Title */
@@ -202,6 +205,7 @@ select:focus {
   border-color: var(--primary-cyan);
   box-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
   background: rgba(10, 18, 36, 0.95);
+  transform: translateY(-1px);
 }
 
 /* Sex & Debut Radio Pills */
@@ -242,6 +246,7 @@ select:focus {
   border-color: var(--primary-cyan);
   color: #ffffff;
   box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+  transform: scale(1.02);
 }
 
 /* Photo Drag & Drop Upload Zone */
@@ -263,6 +268,7 @@ select:focus {
   border-color: var(--primary-cyan);
   background: rgba(0, 229, 255, 0.08);
   box-shadow: 0 0 20px rgba(0, 229, 255, 0.25);
+  transform: translateY(-2px);
 }
 
 .avatar-preview-box {
@@ -276,6 +282,11 @@ select:focus {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform var(--transition);
+}
+
+.photo-upload-zone:hover .avatar-preview-box {
+  transform: scale(1.08);
 }
 
 .avatar-preview-box img {
@@ -324,6 +335,7 @@ select:focus {
   font-weight: 900;
   color: var(--primary-cyan);
   text-shadow: 0 0 12px rgba(0, 229, 255, 0.8);
+  transition: transform 0.2s ease;
 }
 
 .sports-grid {
@@ -387,10 +399,10 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.25);
+  transform: scale(1.3);
 }
 
-/* Submit Button */
+/* Submit Button with Shimmer Light Sweep */
 .btn-submit {
   width: 100%;
   padding: 1.1rem;
@@ -411,10 +423,29 @@ input[type="range"]::-webkit-slider-thumb:hover {
   justify-content: center;
   gap: 0.75rem;
   margin-top: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-submit::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -60%;
+  width: 40%;
+  height: 200%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transform: rotate(25deg);
+  animation: btnShimmer 3.5s infinite;
+}
+
+@keyframes btnShimmer {
+  0% { left: -60%; }
+  30%, 100% { left: 140%; }
 }
 
 .btn-submit:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px) scale(1.01);
   box-shadow: 0 15px 35px rgba(0, 229, 255, 0.6);
   background: linear-gradient(135deg, #33ebff 0%, #1a82ff 50%, #ff5270 100%);
 }
@@ -426,6 +457,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   gap: 1.5rem;
   position: sticky;
   top: 2rem;
+  animation: mascotEntrance 1s ease-out 0.2s both;
 }
 
 .mascot-card {
@@ -438,6 +470,11 @@ input[type="range"]::-webkit-slider-thumb:hover {
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
   position: relative;
   overflow: hidden;
+  transition: transform var(--transition);
+}
+
+.mascot-card:hover {
+  transform: translateY(-4px);
 }
 
 .mascot-img {
@@ -475,6 +512,12 @@ input[type="range"]::-webkit-slider-thumb:hover {
   padding: 1.5rem;
   text-align: center;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease;
+}
+
+.jersey-preview-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 45px rgba(0, 229, 255, 0.25);
 }
 
 .jersey-card-title {
@@ -530,7 +573,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   border-radius: 4px;
 }
 
-/* Modal Popup */
+/* Modal Popup with Entrance Motion */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -538,7 +581,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   width: 100%;
   height: 100%;
   background: rgba(4, 7, 14, 0.88);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(14px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -553,6 +596,14 @@ input[type="range"]::-webkit-slider-thumb:hover {
   pointer-events: auto;
 }
 
+.modal-overlay.active .modal-content {
+  animation: modalPop 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.modal-overlay.active .success-icon-box {
+  animation: checkPop 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+}
+
 .modal-content {
   background: var(--bg-card);
   border: 1px solid var(--primary-cyan);
@@ -565,8 +616,8 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 .success-icon-box {
-  width: 65px;
-  height: 65px;
+  width: 70px;
+  height: 70px;
   background: rgba(0, 229, 255, 0.15);
   border: 2px solid var(--primary-cyan);
   border-radius: 50%;
@@ -575,21 +626,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   justify-content: center;
   margin: 0 auto 1rem;
   color: var(--primary-cyan);
-  font-size: 2rem;
-}
-
-.reg-code-pill {
-  font-family: monospace;
-  font-size: 1.4rem;
-  font-weight: 800;
-  color: var(--primary-gold);
-  background: rgba(6, 10, 20, 0.9);
-  border: 1px dashed var(--primary-gold);
-  padding: 0.5rem 1.2rem;
-  border-radius: var(--radius-md);
-  display: inline-block;
-  margin: 1rem 0;
-  letter-spacing: 2px;
+  font-size: 2.2rem;
 }
 
 .footer-admin-link {
@@ -605,6 +642,42 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 .footer-admin-link a:hover {
   color: var(--primary-cyan);
+}
+
+/* Keyframe Animations */
+@keyframes fadeInDown {
+  0% { opacity: 0; transform: translateY(-25px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cardEntrance {
+  0% { opacity: 0; transform: scale(0.96) translateY(20px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes mascotEntrance {
+  0% { opacity: 0; transform: translateX(30px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes ambientGlowPulse {
+  0%, 100% {
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), inset 0 0 30px rgba(0, 229, 255, 0.05), 0 0 30px rgba(0, 229, 255, 0.25);
+  }
+  50% {
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), inset 0 0 35px rgba(255, 59, 92, 0.08), 0 0 45px rgba(255, 59, 92, 0.35);
+  }
+}
+
+@keyframes modalPop {
+  0% { transform: scale(0.85) translateY(20px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+@keyframes checkPop {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 /* ============================================================
@@ -686,7 +759,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   }
 
   input[type="range"] {
-    height: 10px; /* Touch friendly height */
+    height: 10px;
   }
 
   input[type="range"]::-webkit-slider-thumb {
@@ -712,4 +785,3 @@ input[type="range"]::-webkit-slider-thumb:hover {
     font-size: 1.05rem;
   }
 }
-
