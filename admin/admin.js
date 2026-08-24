@@ -208,16 +208,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         ? `<span style="background:rgba(0,229,255,0.15); color:var(--primary-cyan); border:1px solid var(--primary-cyan); padding:0.2rem 0.6rem; border-radius:12px; font-size:0.75rem; font-weight:700;">DEBUT</span>`
         : `<span style="background:rgba(245,197,24,0.15); color:var(--primary-gold); border:1px solid var(--primary-gold); padding:0.2rem 0.6rem; border-radius:12px; font-size:0.75rem; font-weight:700;">VETERAN</span>`;
 
-      // 7 Individual Sports Ratings Badge Display
+      // 7 Individual Sports Ratings Badge Display with Full Sport Names Spelled Out
       const ratingsBadge = `
-        <div style="font-size:0.75rem; line-height:1.45;">
-          🏓 <b>${parseFloat(r.rating_pickleball || 0).toFixed(1)}</b> &nbsp;|&nbsp;
-          ♠️ <b>${parseFloat(r.rating_poker || 0).toFixed(1)}</b> &nbsp;|&nbsp;
-          🏏 <b>${parseFloat(r.rating_cricket || 0).toFixed(1)}</b> &nbsp;|&nbsp;
-          🏃 <b>${parseFloat(r.rating_triathlon || 0).toFixed(1)}</b> <br>
-          🎯 <b>${parseFloat(r.rating_archery_shooting || 0).toFixed(1)}</b> &nbsp;|&nbsp;
-          🏸 <b>${parseFloat(r.rating_badminton || 0).toFixed(1)}</b> &nbsp;|&nbsp;
-          🏓 <b>${parseFloat(r.rating_table_tennis || 0).toFixed(1)}</b>
+        <div style="font-size:0.78rem; line-height:1.5; min-width:190px; color:#e2e8f0;">
+          <div>🏓 <b>Pickleball:</b> <span style="color:var(--primary-cyan); font-weight:800;">${parseFloat(r.rating_pickleball || 0).toFixed(1)}</span></div>
+          <div>♠️ <b>Poker:</b> <span style="color:var(--primary-cyan); font-weight:800;">${parseFloat(r.rating_poker || 0).toFixed(1)}</span></div>
+          <div>🏏 <b>Cricket:</b> <span style="color:var(--primary-cyan); font-weight:800;">${parseFloat(r.rating_cricket || 0).toFixed(1)}</span></div>
+          <div>🏃 <b>Triathlon:</b> <span style="color:var(--primary-cyan); font-weight:800;">${parseFloat(r.rating_triathlon || 0).toFixed(1)}</span></div>
+          <div>🎯 <b>Archery & Shooting:</b> <span style="color:var(--primary-cyan); font-weight:800;">${parseFloat(r.rating_archery_shooting || 0).toFixed(1)}</span></div>
+          <div>🏸 <b>Badminton:</b> <span style="color:var(--primary-cyan); font-weight:800;">${parseFloat(r.rating_badminton || 0).toFixed(1)}</span></div>
+          <div>🏓 <b>Table Tennis:</b> <span style="color:var(--primary-cyan); font-weight:800;">${parseFloat(r.rating_table_tennis || 0).toFixed(1)}</span></div>
         </div>
       `;
 
