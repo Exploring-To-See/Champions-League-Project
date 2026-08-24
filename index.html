@@ -6,6 +6,15 @@
   <title>1727 Champions League 2.0 — Official Registration</title>
   <meta name="description" content="Register now for the official 1727 Champions League 2.0 Sports Tournament. Compete across 8 sports disciplines and claim glory.">
   
+  <!-- Domain Router: If accessed via championsadmin domain, immediately load Admin Console -->
+  <script>
+    if (window.location.hostname.toLowerCase().includes('championsadmin')) {
+      if (!window.location.pathname.startsWith('/admin')) {
+        window.location.replace('/admin/');
+      }
+    }
+  </script>
+  
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   

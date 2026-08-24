@@ -1,17 +1,20 @@
 {
   "version": 2,
   "cleanUrls": true,
-  "rewrites": [
+  "redirects": [
     {
-      "source": "/((?!css|js|assets|admin/admin.js).*)",
+      "source": "/",
       "has": [
         {
           "type": "host",
           "value": "championsadmin.vercel.app"
         }
       ],
-      "destination": "/admin/index.html"
-    },
+      "destination": "/admin/",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
     {
       "source": "/admin",
       "destination": "/admin/index.html"
