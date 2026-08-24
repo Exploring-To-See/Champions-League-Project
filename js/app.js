@@ -81,6 +81,19 @@ document.addEventListener('DOMContentLoaded', () => {
     jerseyNameInput.addEventListener('input', (e) => {
       const val = e.target.value.trim();
       previewName.textContent = val ? val.toUpperCase() : "YOUR NAME";
+      
+      // Auto-adjust font size based on length so it fits perfectly on the jersey back
+      const len = val.length;
+      if (len > 10) {
+        previewName.style.fontSize = '0.75rem';
+        previewName.style.letterSpacing = '0.8px';
+      } else if (len > 7) {
+        previewName.style.fontSize = '0.82rem';
+        previewName.style.letterSpacing = '1px';
+      } else {
+        previewName.style.fontSize = '0.92rem';
+        previewName.style.letterSpacing = '1.5px';
+      }
     });
   }
 
