@@ -133,6 +133,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     reader.readAsDataURL(file);
     compressedPhotoBlob = file;
+
+    if (dropZone) {
+      dropZone.style.borderColor = 'rgba(0, 229, 255, 0.4)';
+    }
   }
 
   // 6. Handle Registration Form Submission
@@ -153,6 +157,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!fullName || !age || !jerseyName || !jerseyNumber || !jerseySize) {
         alert("Please fill in all required fields.");
+        return;
+      }
+
+      if (!compressedPhotoBlob) {
+        alert("Please upload a player photo to complete registration.");
+        if (dropZone) {
+          dropZone.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          dropZone.style.borderColor = 'var(--primary-red)';
+        }
         return;
       }
 
