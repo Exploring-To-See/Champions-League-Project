@@ -224,11 +224,10 @@ document.addEventListener('DOMContentLoaded', () => {
           if (insertErr) throw insertErr;
         }
 
-        // Show Success Modal Overlay
-        const modal = document.getElementById('success-modal');
-        const confirmedName = document.getElementById('confirmed-player-name');
-        if (confirmedName) confirmedName.textContent = fullName;
-        if (modal) modal.style.display = 'flex';
+        // Redirect to the confirmation page
+        const confirmationParams = new URLSearchParams({ name: fullName, code: regCode });
+        window.location.href = `confirmation.html?${confirmationParams.toString()}`;
+        return;
 
       } catch (err) {
         console.error("Registration error:", err);
@@ -246,14 +245,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Close Success Modal Handler
-  const closeModalBtn = document.getElementById('btn-close-modal');
-  if (closeModalBtn) {
-    closeModalBtn.addEventListener('click', () => {
-      const modal = document.getElementById('success-modal');
-      if (modal) modal.style.display = 'none';
-      if (regForm) regForm.reset();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  }
 });
