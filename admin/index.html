@@ -22,6 +22,7 @@
   
   <!-- Main Stylesheet (Absolute Path for multi-domain routing) -->
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/auction.css">
   
   <style>
     /* Admin Specific Custom Styles — Aligned to 1040px Stadium Frame Boundary */
@@ -29,7 +30,12 @@
       max-width: 1040px;
       margin: 0.5rem auto 3.5rem;
       padding: 0 1rem;
+      transition: max-width var(--transition);
     }
+
+    /* The auction board carries four team columns — give it more room
+       than the 1040px registration frame. */
+    .admin-wrapper.wide { max-width: 1240px; }
 
     .admin-header {
       display: flex;
@@ -440,6 +446,19 @@
       </div>
     </header>
 
+    <!-- Console Tab Bar -->
+    <div class="auc-tabs" role="tablist">
+      <button class="auc-tab active" data-console-tab="registrations" role="tab">
+        <i class="fa-solid fa-clipboard-list"></i> Registrations
+      </button>
+      <button class="auc-tab" data-console-tab="auction" role="tab">
+        <i class="fa-solid fa-gavel"></i> Auction Control
+      </button>
+    </div>
+
+    <!-- ============ PANEL: REGISTRATIONS ============ -->
+    <div class="auc-panel active" id="console-panel-registrations">
+
     <!-- Stats Summary Row -->
     <div class="stats-grid">
       <div class="stat-card">
@@ -503,6 +522,216 @@
         </tbody>
       </table>
     </div>
+    </div><!-- /console-panel-registrations -->
+
+    <!-- ============ PANEL: AUCTION CONTROL ============ -->
+    <div class="auc-panel" id="console-panel-auction">
+
+      <!-- Not-configured notice -->
+      <div class="auc-alert info" id="auc-setup-hint" style="display:none;">
+        <i class="fa-solid fa-circle-info"></i>
+        <div>
+          <b>Auction tables not found.</b> Run <code>supabase/auction-schema.sql</code> in your
+          Supabase SQL Editor, then press <b>Sync Config</b> under the Setup tab.
+        </div>
+      </div>
+
+      <!-- Live status bar -->
+      <div class="auc-card" style="padding:1rem 1.25rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap;">
+          <div style="display:flex; align-items:center; gap:0.8rem; flex-wrap:wrap;">
+            <span class="auc-status setup" id="auc-status-pill">
+              <span class="auc-live-dot"></span><span id="auc-status-text">SETUP</span>
+            </span>
+            <span class="auc-muted" id="auc-status-summary">Loading auction…</span>
+          </div>
+          <div class="auc-btn-row">
+            <button class="auc-btn auc-btn-green" id="auc-btn-start"><i class="fa-solid fa-play"></i> Start</button>
+            <button class="auc-btn auc-btn-ghost" id="auc-btn-pause"><i class="fa-solid fa-pause"></i> Pause</button>
+            <button class="auc-btn auc-btn-gold"  id="auc-btn-end"><i class="fa-solid fa-flag-checkered"></i> End Auction</button>
+          </div>
+        </div>
+        <div class="auc-progress"><div id="auc-progress-bar" style="width:0%"></div></div>
+      </div>
+
+      <!-- Auction sub-tabs -->
+      <div class="auc-tabs" role="tablist">
+        <button class="auc-tab active" data-auc-tab="control" role="tab"><i class="fa-solid fa-gavel"></i> Control Room</button>
+        <button class="auc-tab" data-auc-tab="pool" role="tab"><i class="fa-solid fa-users"></i> Player Pool</button>
+        <button class="auc-tab" data-auc-tab="teams" role="tab"><i class="fa-solid fa-shield"></i> Teams &amp; Captains</button>
+        <button class="auc-tab" data-auc-tab="squads" role="tab"><i class="fa-solid fa-list-check"></i> Squads</button>
+        <button class="auc-tab" data-auc-tab="setup" role="tab"><i class="fa-solid fa-sliders"></i> Setup</button>
+      </div>
+
+      <!-- ---------- CONTROL ROOM ---------- -->
+      <div class="auc-panel active" id="auc-tab-control">
+        <div id="auc-alerts"></div>
+
+        <div class="auc-card">
+          <div class="auc-card-title"><i class="fa-solid fa-hammer"></i> On The Block</div>
+          <div id="auc-current-lot"></div>
+        </div>
+
+        <div class="auc-card">
+          <div class="auc-card-title">
+            <i class="fa-solid fa-scale-balanced"></i> Team Bidding Positions
+            <span class="auc-muted" style="font-weight:500; text-transform:none; letter-spacing:0;">
+              — max bid = purse − reserve, recomputed after every purchase
+            </span>
+          </div>
+          <div class="auc-teams-grid" id="auc-team-panels"></div>
+        </div>
+
+        <div class="auc-card">
+          <div class="auc-card-title"><i class="fa-solid fa-list-ol"></i> Next Lot</div>
+          <div class="auc-form-row">
+            <div class="auc-field">
+              <label for="auc-queue-cat">Filter by category</label>
+              <select id="auc-queue-cat"><option value="ALL">All categories</option></select>
+            </div>
+            <div class="auc-field">
+              <label for="auc-queue-player">Player to put on the block</label>
+              <select id="auc-queue-player"></select>
+            </div>
+            <div class="auc-field">
+              <button class="auc-btn auc-btn-cyan" id="auc-btn-open-lot" style="width:100%;">
+                <i class="fa-solid fa-gavel"></i> Open Lot
+              </button>
+            </div>
+            <div class="auc-field">
+              <button class="auc-btn auc-btn-ghost" id="auc-btn-random-lot" style="width:100%;">
+                <i class="fa-solid fa-shuffle"></i> Random
+              </button>
+            </div>
+          </div>
+          <div class="auc-muted" style="margin-top:0.6rem;" id="auc-queue-note"></div>
+        </div>
+
+        <div class="auc-card">
+          <div class="auc-card-title"><i class="fa-solid fa-satellite-dish"></i> Live Feed</div>
+          <div class="auc-feed" id="auc-feed"></div>
+        </div>
+      </div>
+
+      <!-- ---------- PLAYER POOL ---------- -->
+      <div class="auc-panel" id="auc-tab-pool">
+        <div class="auc-card">
+          <div class="auc-card-title"><i class="fa-solid fa-user-plus"></i> Add / Import Players</div>
+          <div class="auc-form-row">
+            <div class="auc-field">
+              <label for="auc-new-name">Player name</label>
+              <input type="text" id="auc-new-name" placeholder="Full name">
+            </div>
+            <div class="auc-field">
+              <label for="auc-new-cat">Category</label>
+              <select id="auc-new-cat"></select>
+            </div>
+            <div class="auc-field">
+              <button class="auc-btn auc-btn-cyan" id="auc-btn-add-player" style="width:100%;">
+                <i class="fa-solid fa-plus"></i> Add Player
+              </button>
+            </div>
+            <div class="auc-field">
+              <button class="auc-btn auc-btn-ghost" id="auc-btn-import" style="width:100%;">
+                <i class="fa-solid fa-file-import"></i> Import Registrations
+              </button>
+            </div>
+          </div>
+          <div class="auc-muted" style="margin-top:0.6rem;">
+            Import pulls every registration not already in the pool into the category selected above.
+            Set each player's real category and pre-assign the Captain / Vice Captain below.
+          </div>
+        </div>
+
+        <div class="auc-card">
+          <div class="auc-card-title">
+            <i class="fa-solid fa-layer-group"></i> Pool Composition
+            <span id="auc-pool-health"></span>
+          </div>
+          <div class="auc-table-box">
+            <table class="auc-table">
+              <thead><tr>
+                <th>Category</th><th>Base</th><th>In Pool</th><th>Target</th>
+                <th>Min / Team</th><th>Slack</th><th>Sold</th><th>Left</th>
+              </tr></thead>
+              <tbody id="auc-pool-summary"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="auc-card">
+          <div class="auc-card-title"><i class="fa-solid fa-users"></i> All Players</div>
+          <div class="auc-form-row" style="margin-bottom:0.9rem;">
+            <div class="auc-field">
+              <label for="auc-pool-search">Search</label>
+              <input type="text" id="auc-pool-search" placeholder="Player name…">
+            </div>
+            <div class="auc-field">
+              <label for="auc-pool-filter">Category</label>
+              <select id="auc-pool-filter"><option value="ALL">All categories</option></select>
+            </div>
+          </div>
+          <div class="auc-table-box" style="max-height:560px; overflow-y:auto;">
+            <table class="auc-table">
+              <thead><tr>
+                <th>Player</th><th>Category</th><th>Status</th>
+                <th>Team</th><th>Price</th><th>Retained</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="auc-pool-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---------- TEAMS ---------- -->
+      <div class="auc-panel" id="auc-tab-teams">
+        <div class="auc-alert info">
+          <i class="fa-solid fa-key"></i>
+          <div>Each team captain signs in at <b>/captain</b> with their team code and the password you set here.
+          Passwords are bcrypt-hashed in the database and never sent back to any browser.</div>
+        </div>
+        <div id="auc-teams-editor"></div>
+      </div>
+
+      <!-- ---------- SQUADS ---------- -->
+      <div class="auc-panel" id="auc-tab-squads">
+        <div class="auc-btn-row" style="margin-bottom:1rem;">
+          <button class="auc-btn auc-btn-gold" id="auc-btn-export-squads">
+            <i class="fa-solid fa-file-csv"></i> Export Squads CSV
+          </button>
+        </div>
+        <div class="auc-squads" id="auc-squads"></div>
+      </div>
+
+      <!-- ---------- SETUP ---------- -->
+      <div class="auc-panel" id="auc-tab-setup">
+        <div class="auc-card">
+          <div class="auc-card-title"><i class="fa-solid fa-rotate"></i> Configuration</div>
+          <p class="auc-muted" style="margin-bottom:0.9rem;">
+            <code>js/auction-config.js</code> is the single source of truth. Sync pushes it into
+            Supabase so the server enforces the same numbers the console displays.
+          </p>
+          <div class="auc-btn-row">
+            <button class="auc-btn auc-btn-cyan" id="auc-btn-sync"><i class="fa-solid fa-rotate"></i> Sync Config</button>
+          </div>
+          <div id="auc-config-view" style="margin-top:1.1rem;"></div>
+        </div>
+
+        <div class="auc-card" style="border-color:rgba(255,59,92,0.45);">
+          <div class="auc-card-title" style="color:var(--primary-red);">
+            <i class="fa-solid fa-triangle-exclamation"></i> Danger Zone
+          </div>
+          <p class="auc-muted" style="margin-bottom:0.9rem;">
+            Reset clears every bid, lot and sale and restores full purses.
+            Retained Captain / Vice Captain assignments are kept.
+          </p>
+          <button class="auc-btn auc-btn-red" id="auc-btn-reset">
+            <i class="fa-solid fa-trash-arrow-up"></i> Reset Auction
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /console-panel-auction -->
   </div>
 
   <!-- Modal for Add/Edit Registration -->
@@ -569,6 +798,10 @@
   <!-- Supabase JS Client & Admin Logic (Absolute Paths) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/config.js"></script>
+  <script src="/js/auction-config.js"></script>
+  <script src="/js/auction-engine.js"></script>
+  <script src="/js/auction-client.js"></script>
   <script src="/admin/admin.js"></script>
+  <script src="/admin/auction.js"></script>
 </body>
 </html>

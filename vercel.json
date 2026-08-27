@@ -15,27 +15,21 @@
     }
   ],
   "rewrites": [
-    {
-      "source": "/admin",
-      "destination": "/admin/index.html"
-    },
-    {
-      "source": "/admin/",
-      "destination": "/admin/index.html"
-    },
-    {
-      "source": "/admin/index.html",
-      "destination": "/admin/index.html"
-    }
+    { "source": "/admin", "destination": "/admin/index.html" },
+    { "source": "/admin/", "destination": "/admin/index.html" },
+    { "source": "/admin/index.html", "destination": "/admin/index.html" },
+    { "source": "/captain", "destination": "/captain/index.html" },
+    { "source": "/captain/", "destination": "/captain/index.html" },
+    { "source": "/captain/index.html", "destination": "/captain/index.html" },
+    { "source": "/auction", "destination": "/auction/index.html" },
+    { "source": "/auction/", "destination": "/auction/index.html" },
+    { "source": "/auction/index.html", "destination": "/auction/index.html" }
   ],
   "headers": [
     {
       "source": "/assets/(.*)",
       "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
     }
   ]
