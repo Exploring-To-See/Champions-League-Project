@@ -16,13 +16,16 @@
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/nav.css">
   <link rel="stylesheet" href="/css/auction.css">
 </head>
-<body>
+<body data-view="CAPTAIN">
 
   <div class="mobile-mascot-bg" aria-hidden="true">
     <img src="/assets/pug-tiger-mascot.png" alt="">
   </div>
+
+  <nav class="clp-nav" aria-label="Site sections"></nav>
 
   <header class="header-banner">
     <div class="logo-container">
@@ -133,7 +136,13 @@
     </div>
   </div>
 
+  <footer class="clp-footer">
+    <div class="clp-footer-links" id="clp-footer-links"></div>
+    <div class="clp-footer-note">1727 Champion&#39;s League 2.0 &mdash; Team Captain Console</div>
+  </footer>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/links.js"></script>
   <script src="/js/config.js"></script>
   <script src="/js/auction-config.js"></script>
   <script src="/js/auction-engine.js"></script>

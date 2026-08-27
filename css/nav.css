@@ -1,0 +1,225 @@
+/* ============================================================
+   1727 CHAMPION'S LEAGUE 2.0 — CROSS-SITE NAVIGATION & SHELL
+   Shared by the registration form, live auction, captain and
+   organiser views so the four Vercel domains feel like one site.
+   ============================================================ */
+
+/* ---- Nav bar ----------------------------------------------- */
+.clp-nav {
+  position: sticky;
+  top: 0;
+  /* Above the captain / organiser login overlays (z-index 2000) so a visitor
+     who lands on the wrong domain can always navigate back out. */
+  z-index: 2500;
+  padding: 0.6rem 1rem;
+  background: linear-gradient(180deg, rgba(4, 7, 14, 0.94) 0%, rgba(4, 7, 14, 0.72) 100%);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(0, 229, 255, 0.18);
+}
+
+.clp-nav-inner {
+  max-width: 1240px;
+  margin: 0 auto;
+  display: flex;
+  gap: 0.4rem;
+  justify-content: center;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.clp-nav-inner::-webkit-scrollbar { display: none; }
+
+.clp-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 1.05rem;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.4px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all var(--transition);
+}
+
+.clp-nav-link:hover {
+  color: var(--text-main);
+  border-color: rgba(0, 229, 255, 0.5);
+  background: rgba(0, 229, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.clp-nav-link.active {
+  color: #04070e;
+  background: linear-gradient(135deg, var(--primary-cyan), #38bdf8);
+  border-color: transparent;
+  box-shadow: 0 4px 16px rgba(0, 229, 255, 0.45);
+}
+
+.clp-nav-link i { font-size: 0.85rem; }
+
+/* ---- Page intro block -------------------------------------- */
+.clp-intro {
+  max-width: 1040px;
+  margin: 0 auto 1.25rem;
+  padding: 0 1rem;
+  text-align: center;
+}
+
+.clp-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.28rem 0.85rem;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(245, 197, 24, 0.5);
+  background: rgba(245, 197, 24, 0.12);
+  color: var(--primary-gold);
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 0.7rem;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+}
+
+.clp-page-title {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: clamp(1.5rem, 4.5vw, 2.35rem);
+  line-height: 1.15;
+  margin-top: 0.6rem;
+  background: linear-gradient(92deg, var(--primary-cyan) 0%, #ffffff 48%, var(--primary-gold) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 0.5px;
+}
+
+.clp-page-sub {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  margin-top: 0.45rem;
+  max-width: 620px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.55;
+}
+
+/* ---- Step rail (registration form sections) ---------------- */
+.clp-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 1rem auto 0;
+  flex-wrap: wrap;
+}
+
+.clp-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  transition: all var(--transition);
+}
+
+.clp-step b {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.66rem;
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--text-main);
+}
+
+.clp-step.done {
+  border-color: rgba(34, 197, 94, 0.6);
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+}
+.clp-step.done b { background: #22c55e; color: #04140a; }
+
+.clp-step-divider {
+  width: 18px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* ---- Footer ------------------------------------------------ */
+.clp-footer {
+  max-width: 1240px;
+  margin: 2.5rem auto 0;
+  padding: 1.5rem 1rem 2.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+}
+
+.clp-footer-links {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 0.9rem;
+}
+
+.clp-footer-links a {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  text-decoration: none;
+  padding: 0.3rem 0.7rem;
+  border-radius: var(--radius-full);
+  transition: all var(--transition);
+}
+.clp-footer-links a:hover { color: var(--primary-cyan); background: rgba(0, 229, 255, 0.08); }
+
+.clp-footer-note {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  opacity: 0.75;
+}
+
+/* ---- Responsive -------------------------------------------- */
+@media (max-width: 640px) {
+  .clp-nav { padding: 0.5rem 0.5rem; }
+  .clp-nav-inner { justify-content: safe center; gap: 0.35rem; }
+  .clp-nav-link { padding: 0.45rem 0.8rem; font-size: 0.76rem; }
+  .clp-nav-link i { font-size: 0.78rem; }
+  .clp-intro { padding: 0 0.75rem; }
+  .clp-page-sub { text-shadow: 0 2px 10px rgba(4, 7, 14, 0.95); }
+  .clp-page-title { text-shadow: 0 2px 14px rgba(4, 7, 14, 0.6); }
+  .clp-steps { gap: 0.3rem; }
+  .clp-step { padding: 0.3rem 0.6rem; font-size: 0.7rem; }
+  .clp-step-divider { display: none; }
+}
+
+@media (max-width: 380px) {
+  .clp-nav-link span { display: none; }   /* icons only on the narrowest phones */
+  .clp-nav-link { padding: 0.5rem 0.85rem; }
+  .clp-nav-link i { font-size: 0.95rem; }
+}
+
+/* ---- Login gates sit below the nav, not under it ------------ */
+.auc-login-overlay,
+.login-modal-overlay {
+  padding-top: 4.25rem;
+  align-items: flex-start;
+}
+
+@media (min-height: 760px) {
+  .auc-login-overlay,
+  .login-modal-overlay { align-items: center; }
+}

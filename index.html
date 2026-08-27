@@ -33,8 +33,9 @@
 
   <!-- Main Stylesheet -->
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/nav.css">
 </head>
-<body>
+<body data-view="REGISTRATION">
 
   <!-- Full-Page Magnified Blurred Mascot Background for Mobile View -->
   <div class="mobile-mascot-bg" aria-hidden="true">
@@ -42,6 +43,9 @@
   </div>
 
   <!-- Top Header Banner with Official Logo -->
+  <!-- Cross-site navigation (one bar across all four Vercel domains) -->
+  <nav class="clp-nav" aria-label="Site sections"></nav>
+
   <header class="header-banner">
     <div class="logo-container">
       <img src="assets/champions-logo.png?v=3" alt="1727 Champion's League 2.0 Logo" class="logo-img">
@@ -50,6 +54,23 @@
   </header>
 
   <!-- Main Content Grid -->
+  <!-- Page intro & section progress -->
+  <div class="clp-intro">
+    <span class="clp-eyebrow"><i class="fa-solid fa-trophy"></i> Player Registration Open</span>
+    <h1 class="clp-page-title">Enter the 1727 Champion&#39;s League 2.0</h1>
+    <p class="clp-page-sub">
+      Register once to enter the player pool. Your skill ratings and jersey details
+      go straight to the organisers &mdash; and into the live auction.
+    </p>
+    <div class="clp-steps" id="reg-steps">
+      <span class="clp-step" data-step="1"><b>1</b> Profile</span>
+      <span class="clp-step-divider"></span>
+      <span class="clp-step" data-step="2"><b>2</b> Skill Ratings</span>
+      <span class="clp-step-divider"></span>
+      <span class="clp-step" data-step="3"><b>3</b> Jersey &amp; Gear</span>
+    </div>
+  </div>
+
   <main class="main-wrapper">
     
     <!-- Left Column: Glassmorphism Registration Form -->
@@ -216,15 +237,14 @@
     </aside>
   </main>
 
-  <!-- Organiser Admin Footer Link -->
-  <footer style="text-align: center; margin: 2rem 0 3rem;">
-    <a href="https://championsadmin.vercel.app" target="_blank" style="color: var(--text-muted); font-size: 0.85rem; text-decoration: none; transition: color var(--transition);">
-      <i class="fa-solid fa-lock"></i> Organiser Admin Console
-    </a>
-  </footer>
-
   <!-- Supabase JS Client & Main Logic -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <footer class="clp-footer">
+    <div class="clp-footer-links" id="clp-footer-links"></div>
+    <div class="clp-footer-note">1727 Champion&#39;s League 2.0 &mdash; Official Tournament Platform</div>
+  </footer>
+
+  <script src="js/links.js"></script>
   <script src="js/config.js"></script>
   <script src="js/app.js"></script>
 </body>
