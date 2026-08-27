@@ -1,0 +1,617 @@
+/* ============================================================
+   1727 CHAMPION'S LEAGUE 2.0 — AUCTION THEME
+   Extends css/style.css. Shared by the Organiser auction tab,
+   the Team Captain view and the public Live view.
+   ============================================================ */
+
+.auc-wrap {
+  max-width: 1240px;
+  margin: 0.5rem auto 3.5rem;
+  padding: 0 1rem;
+}
+
+/* ---- Tabs (Organiser console) ------------------------------ */
+.auc-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.auc-tab {
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--text-muted);
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 0.92rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 0.85rem 1.15rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition);
+}
+
+.auc-tab:hover { color: var(--primary-cyan); }
+
+.auc-tab.active {
+  color: var(--primary-cyan);
+  border-bottom-color: var(--primary-cyan);
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.6);
+}
+
+.auc-panel { display: none; }
+.auc-panel.active { display: block; animation: fadeInUp 0.4s var(--transition) both; }
+
+/* ---- Cards ------------------------------------------------- */
+.auc-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  border-radius: var(--radius-lg);
+  padding: 1.35rem 1.5rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+}
+
+.auc-card-title {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 1.05rem;
+  color: var(--primary-cyan);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.auc-muted { color: var(--text-muted); font-size: 0.85rem; }
+
+/* ---- Status pill ------------------------------------------- */
+.auc-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.85rem;
+  border-radius: var(--radius-full);
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.auc-status.setup     { background: rgba(160,174,192,0.18); color: #a0aec0; border: 1px solid #a0aec0; }
+.auc-status.live      { background: rgba(34,197,94,0.18);  color: #22c55e; border: 1px solid #22c55e; }
+.auc-status.paused    { background: rgba(245,197,24,0.18); color: var(--primary-gold); border: 1px solid var(--primary-gold); }
+.auc-status.completed { background: rgba(0,229,255,0.18);  color: var(--primary-cyan); border: 1px solid var(--primary-cyan); }
+
+.auc-live-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: currentColor;
+  animation: aucPulse 1.4s ease-in-out infinite;
+}
+@keyframes aucPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.35; transform: scale(0.75); }
+}
+
+/* ---- Alerts (rule 4 compulsory fill) ----------------------- */
+.auc-alert {
+  border-radius: var(--radius-md);
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 0.7rem;
+  font-size: 0.92rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  line-height: 1.45;
+}
+
+.auc-alert i { margin-top: 0.15rem; flex-shrink: 0; }
+
+.auc-alert.forced {
+  background: rgba(255, 59, 92, 0.16);
+  border: 1px solid var(--primary-red);
+  color: #ffd7df;
+  font-weight: 700;
+  box-shadow: 0 0 22px rgba(255, 59, 92, 0.28);
+  animation: aucGlow 2.2s ease-in-out infinite;
+}
+@keyframes aucGlow {
+  0%, 100% { box-shadow: 0 0 18px rgba(255, 59, 92, 0.22); }
+  50%      { box-shadow: 0 0 34px rgba(255, 59, 92, 0.5); }
+}
+
+.auc-alert.locked {
+  background: rgba(245, 197, 24, 0.12);
+  border: 1px solid rgba(245, 197, 24, 0.55);
+  color: #f8e6a8;
+}
+
+.auc-alert.info {
+  background: rgba(0, 229, 255, 0.1);
+  border: 1px solid rgba(0, 229, 255, 0.45);
+  color: #c8f4ff;
+}
+
+.auc-alert.ok {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.5);
+  color: #bbf7d0;
+}
+
+/* ---- The lot on the block ---------------------------------- */
+.auc-lot {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.auc-lot-photo {
+  width: 150px; height: 150px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  border: 2px solid var(--primary-cyan);
+  box-shadow: 0 0 26px rgba(0, 229, 255, 0.45);
+  background: rgba(6, 10, 20, 0.85);
+}
+
+.auc-lot-photo-empty {
+  width: 150px; height: 150px;
+  border-radius: var(--radius-md);
+  border: 2px dashed rgba(0, 229, 255, 0.45);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 3.5rem; color: rgba(0, 229, 255, 0.35);
+  background: rgba(6, 10, 20, 0.6);
+}
+
+.auc-lot-name {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 2rem;
+  line-height: 1.15;
+  color: #fff;
+}
+
+.auc-cat-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  border: 1px solid currentColor;
+  margin-top: 0.4rem;
+}
+
+.auc-bid-now {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 2.6rem;
+  color: var(--primary-gold);
+  text-shadow: 0 0 24px rgba(245, 197, 24, 0.5);
+  line-height: 1.1;
+}
+
+.auc-bid-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+}
+
+.auc-bid-row {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  margin-top: 0.85rem;
+}
+
+/* ---- Team strip -------------------------------------------- */
+.auc-teams-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1rem;
+}
+
+.auc-team {
+  background: rgba(6, 10, 20, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 3px solid var(--team-color, var(--primary-cyan));
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  transition: all var(--transition);
+}
+
+.auc-team.leading {
+  border-color: var(--primary-gold);
+  box-shadow: 0 0 24px rgba(245, 197, 24, 0.4);
+}
+
+.auc-team.ineligible { opacity: 0.5; }
+
+.auc-team-name {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 1rem;
+  color: var(--team-color, var(--primary-cyan));
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 0.5rem;
+}
+
+.auc-kv {
+  display: flex; justify-content: space-between;
+  font-size: 0.82rem; margin-top: 0.4rem;
+}
+.auc-kv span:first-child { color: var(--text-muted); }
+.auc-kv span:last-child  { font-weight: 800; }
+
+.auc-reason {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.55rem;
+  line-height: 1.4;
+  min-height: 2em;
+}
+
+.auc-reason.warn { color: var(--primary-red); }
+.auc-reason.good { color: #22c55e; }
+
+/* ---- Category minimum chips -------------------------------- */
+.auc-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.6rem; }
+
+.auc-chip {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 0.18rem 0.45rem;
+  border-radius: 5px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.05);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.auc-chip.met   { border-color: rgba(34,197,94,0.6); color: #22c55e; background: rgba(34,197,94,0.12); }
+.auc-chip.short { border-color: rgba(255,59,92,0.6); color: #ff8fa3; background: rgba(255,59,92,0.12); }
+
+/* ---- Buttons ----------------------------------------------- */
+.auc-btn {
+  padding: 0.65rem 1.05rem;
+  border-radius: var(--radius-md);
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  transition: all var(--transition);
+}
+
+.auc-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+
+.auc-btn-cyan  { background: var(--primary-cyan); color: #04070e; }
+.auc-btn-cyan:hover:not(:disabled)  { box-shadow: 0 0 18px rgba(0,229,255,0.65); transform: translateY(-1px); }
+.auc-btn-gold  { background: var(--primary-gold); color: #1a1400; }
+.auc-btn-gold:hover:not(:disabled)  { box-shadow: 0 0 18px rgba(245,197,24,0.65); transform: translateY(-1px); }
+.auc-btn-green { background: #22c55e; color: #04140a; }
+.auc-btn-green:hover:not(:disabled) { box-shadow: 0 0 18px rgba(34,197,94,0.65); transform: translateY(-1px); }
+.auc-btn-red   { background: rgba(255,59,92,0.16); border-color: var(--primary-red); color: var(--primary-red); }
+.auc-btn-red:hover:not(:disabled)   { background: var(--primary-red); color: #fff; }
+.auc-btn-ghost { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.2); color: #e2e8f0; }
+.auc-btn-ghost:hover:not(:disabled) { background: rgba(255,255,255,0.15); }
+
+.auc-btn-row { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+
+/* ---- The big captain bid button ---------------------------- */
+.auc-bid-btn {
+  width: 100%;
+  padding: 1.4rem 1rem;
+  font-size: 1.35rem;
+  font-family: var(--font-heading);
+  font-weight: 900;
+  letter-spacing: 1px;
+  border-radius: var(--radius-lg);
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--primary-cyan), #0891b2);
+  color: #04070e;
+  box-shadow: 0 12px 34px rgba(0, 229, 255, 0.42);
+  transition: all var(--transition);
+}
+.auc-bid-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 18px 44px rgba(0,229,255,0.6); }
+.auc-bid-btn:active:not(:disabled) { transform: translateY(1px); }
+.auc-bid-btn:disabled {
+  background: rgba(255,255,255,0.08);
+  color: var(--text-muted);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+.auc-bid-btn.compulsory { background: linear-gradient(135deg, var(--primary-red), #be123c); color: #fff; }
+
+/* ---- Tables ------------------------------------------------ */
+.auc-table-box {
+  background: var(--bg-card);
+  border: 1px solid rgba(0,229,255,0.22);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.auc-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left; }
+
+.auc-table th {
+  background: rgba(6,10,20,0.92);
+  color: var(--primary-cyan);
+  font-family: var(--font-heading);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.75rem;
+  padding: 0.75rem 0.7rem;
+  border-bottom: 2px solid rgba(0,229,255,0.3);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.auc-table td {
+  padding: 0.6rem 0.7rem;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  color: #e2e8f0;
+}
+
+.auc-table tr:hover td { background: rgba(0,229,255,0.05); }
+
+.auc-pill {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-full);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+.auc-pill.sold      { background: rgba(34,197,94,0.16);  color: #22c55e; border: 1px solid #22c55e; }
+.auc-pill.available { background: rgba(160,174,192,0.16); color: #a0aec0; border: 1px solid #a0aec0; }
+.auc-pill.in_lot    { background: rgba(245,197,24,0.16); color: var(--primary-gold); border: 1px solid var(--primary-gold); }
+
+/* ---- Live feed --------------------------------------------- */
+.auc-feed { max-height: 340px; overflow-y: auto; }
+
+.auc-feed-item {
+  padding: 0.6rem 0.75rem;
+  border-left: 3px solid rgba(255,255,255,0.15);
+  margin-bottom: 0.45rem;
+  background: rgba(6,10,20,0.55);
+  border-radius: 0 8px 8px 0;
+  font-size: 0.85rem;
+  animation: fadeInUp 0.35s var(--transition) both;
+}
+.auc-feed-item.sold     { border-left-color: #22c55e; }
+.auc-feed-item.bid      { border-left-color: var(--primary-cyan); }
+.auc-feed-item.unsold   { border-left-color: var(--primary-red); }
+.auc-feed-item.lot_open { border-left-color: var(--primary-gold); }
+.auc-feed-time { font-size: 0.7rem; color: var(--text-muted); }
+
+/* ---- Squad board ------------------------------------------- */
+.auc-squads {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 1rem;
+}
+
+.auc-squad-list { list-style: none; margin-top: 0.6rem; }
+
+.auc-squad-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.38rem 0;
+  border-bottom: 1px dashed rgba(255,255,255,0.09);
+  font-size: 0.83rem;
+}
+.auc-squad-list li:last-child { border-bottom: none; }
+.auc-squad-role { font-size: 0.65rem; color: var(--primary-gold); font-weight: 800; letter-spacing: 0.5px; }
+
+/* ---- Login card -------------------------------------------- */
+.auc-login-overlay {
+  position: fixed; inset: 0;
+  background: rgba(4, 7, 14, 0.93);
+  backdrop-filter: blur(16px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 2000;
+  padding: 1rem;
+}
+
+.auc-login-card {
+  background: var(--bg-card);
+  border: 1px solid var(--primary-cyan);
+  border-radius: var(--radius-lg);
+  width: 100%; max-width: 420px;
+  padding: 2.25rem 2rem;
+  box-shadow: 0 25px 60px rgba(0, 229, 255, 0.4);
+}
+
+/* ---- Toast ------------------------------------------------- */
+.auc-toast {
+  position: fixed;
+  bottom: 1.5rem; left: 50%;
+  transform: translateX(-50%);
+  z-index: 3000;
+  padding: 0.85rem 1.35rem;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 0.9rem;
+  max-width: min(92vw, 560px);
+  text-align: center;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+  animation: fadeInUp 0.3s var(--transition) both;
+}
+.auc-toast.err { background: var(--primary-red); color: #fff; }
+.auc-toast.ok  { background: #22c55e; color: #04140a; }
+
+/* ---- Public-view hero -------------------------------------- */
+.auc-hero {
+  text-align: center;
+  padding: 1.25rem 1rem 0.5rem;
+}
+.auc-hero h1 {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: clamp(1.4rem, 4vw, 2.1rem);
+  background: linear-gradient(90deg, var(--primary-cyan), #fff, var(--primary-gold));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.auc-sold-stamp {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: clamp(2rem, 9vw, 4.5rem);
+  color: #22c55e;
+  letter-spacing: 6px;
+  transform: rotate(-8deg);
+  text-shadow: 0 0 34px rgba(34,197,94,0.65);
+  border: 6px solid #22c55e;
+  border-radius: 14px;
+  padding: 0.4rem 1.5rem;
+  display: inline-block;
+}
+
+/* ---- Progress bar ------------------------------------------ */
+.auc-progress {
+  height: 8px;
+  background: rgba(255,255,255,0.08);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+.auc-progress > div {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-cyan), var(--primary-gold));
+  border-radius: var(--radius-full);
+  transition: width 0.5s var(--transition);
+}
+
+/* ---- Forms ------------------------------------------------- */
+.auc-form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.8rem;
+  align-items: end;
+}
+
+.auc-field label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.3rem;
+}
+
+.auc-field input, .auc-field select {
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 10px;
+  color: var(--text-main);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+}
+
+.auc-field input:focus, .auc-field select:focus {
+  outline: none;
+  border-color: var(--primary-cyan);
+  box-shadow: 0 0 0 3px rgba(0,229,255,0.18);
+}
+
+/* ---- Stat tiles -------------------------------------------- */
+.auc-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.8rem;
+  margin-bottom: 1.25rem;
+}
+
+.auc-stat {
+  background: var(--bg-card);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-md);
+  padding: 0.9rem 0.7rem;
+  text-align: center;
+}
+.auc-stat b {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: var(--primary-cyan);
+  line-height: 1.15;
+}
+.auc-stat span {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+/* ---- Responsive -------------------------------------------- */
+@media (max-width: 860px) {
+  .auc-lot { grid-template-columns: 1fr; text-align: center; justify-items: center; }
+  .auc-bid-row { justify-content: center; gap: 1.25rem; }
+  .auc-lot-name { font-size: 1.55rem; }
+  .auc-bid-now { font-size: 2.1rem; }
+}
+
+@media (max-width: 640px) {
+  .auc-wrap { padding: 0 0.6rem; }
+  .auc-card { padding: 1rem; border-radius: var(--radius-md); }
+  .auc-tab { font-size: 0.8rem; padding: 0.7rem 0.75rem; }
+  .auc-teams-grid, .auc-squads { grid-template-columns: 1fr; }
+  .auc-lot-photo, .auc-lot-photo-empty { width: 120px; height: 120px; }
+  .auc-table { font-size: 0.78rem; }
+  .auc-table th, .auc-table td { padding: 0.5rem 0.45rem; }
+  .auc-btn { width: 100%; }
+  .auc-btn-row .auc-btn { width: auto; flex: 1 1 auto; }
+}
+
+@media (max-width: 380px) {
+  .auc-stats { grid-template-columns: 1fr 1fr; }
+  .auc-bid-now { font-size: 1.75rem; }
+}
+
+/* ---- Collapsible advisory alerts ---------------------------- */
+details.auc-alert > summary { display: block; }
+details.auc-alert > summary::-webkit-details-marker { display: none; }
+details.auc-alert > summary::marker { content: ""; }
+details.auc-alert > summary::after {
+  content: "\f078";            /* chevron-down */
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  font-size: 0.72rem;
+  float: right;
+  opacity: 0.7;
+  transition: transform var(--transition);
+}
+details.auc-alert[open] > summary::after { content: "\f077"; }  /* chevron-up */
+details.auc-alert > summary:hover { opacity: 0.85; }
