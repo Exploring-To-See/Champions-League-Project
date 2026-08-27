@@ -23,6 +23,7 @@
   <!-- Main Stylesheet (Absolute Path for multi-domain routing) -->
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="/css/auction.css">
+  <link rel="stylesheet" href="/css/nav.css">
   
   <style>
     /* Admin Specific Custom Styles — Aligned to 1040px Stadium Frame Boundary */
@@ -387,7 +388,7 @@
     }
   </style>
 </head>
-<body>
+<body data-view="ADMIN">
 
   <!-- Full-Page Magnified Blurred Mascot Background for Mobile View -->
   <div class="mobile-mascot-bg" aria-hidden="true">
@@ -395,6 +396,8 @@
   </div>
 
   <!-- Top Header Banner with Official Logo -->
+  <nav class="clp-nav" aria-label="Site sections"></nav>
+
   <header class="header-banner">
     <div class="logo-container">
       <img src="/assets/champions-logo.png?v=3" alt="1727 Champion's League 2.0 Logo" class="logo-img">
@@ -797,6 +800,7 @@
 
   <!-- Supabase JS Client & Admin Logic (Absolute Paths) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/links.js"></script>
   <script src="/js/config.js"></script>
   <script src="/js/auction-config.js"></script>
   <script src="/js/auction-engine.js"></script>

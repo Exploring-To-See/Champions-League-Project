@@ -615,3 +615,65 @@ details.auc-alert > summary::after {
 }
 details.auc-alert[open] > summary::after { content: "\f077"; }  /* chevron-up */
 details.auc-alert > summary:hover { opacity: 0.85; }
+
+/* ============================================================
+   PUBLIC LIVE VIEW — projector scale
+   This screen is shown to a room, not held in a hand, so the lot
+   on the block and the live bid dominate the fold. Scoped to the
+   public view so the organiser and captain consoles keep their
+   denser, work-oriented layout.
+   ============================================================ */
+[data-view="PUBLIC"] #pub-lot-card {
+  border-color: rgba(245, 197, 24, 0.45);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.65), 0 0 60px rgba(245, 197, 24, 0.12);
+}
+
+[data-view="PUBLIC"] #pub-lot-card .auc-lot {
+  grid-template-columns: 210px 1fr;
+  gap: 2rem;
+}
+
+[data-view="PUBLIC"] #pub-lot-card .auc-lot-photo,
+[data-view="PUBLIC"] #pub-lot-card .auc-lot-photo-empty {
+  width: 210px;
+  height: 210px;
+}
+
+[data-view="PUBLIC"] #pub-lot-card .auc-lot-name {
+  font-size: clamp(2rem, 4.6vw, 3.1rem);
+  letter-spacing: -0.5px;
+}
+
+[data-view="PUBLIC"] #pub-lot-card .auc-bid-now {
+  font-size: clamp(2.8rem, 6.4vw, 4.4rem);
+  letter-spacing: -1px;
+}
+
+[data-view="PUBLIC"] #pub-lot-card .auc-bid-label {
+  font-size: 0.78rem;
+  letter-spacing: 2px;
+}
+
+[data-view="PUBLIC"] #pub-lot-card .auc-bid-row {
+  gap: 2.75rem;
+  margin-top: 1.15rem;
+  align-items: flex-end;
+}
+
+/* The secondary figures (leading team, next bid) — but never the headline
+   bid, which keeps its own clamp above. */
+[data-view="PUBLIC"] #pub-lot-card .auc-bid-row > div > div:last-child:not(.auc-bid-now) {
+  font-size: 1.75rem !important;
+}
+
+/* Stat tiles read from further back too */
+[data-view="PUBLIC"] .auc-stat b { font-size: 1.9rem; }
+
+@media (max-width: 860px) {
+  [data-view="PUBLIC"] #pub-lot-card .auc-lot { grid-template-columns: 1fr; gap: 1.1rem; }
+  [data-view="PUBLIC"] #pub-lot-card .auc-lot-photo,
+  [data-view="PUBLIC"] #pub-lot-card .auc-lot-photo-empty { width: 150px; height: 150px; }
+  [data-view="PUBLIC"] #pub-lot-card .auc-bid-row { gap: 1.4rem; }
+  [data-view="PUBLIC"] #pub-lot-card .auc-bid-row > div > div:last-child:not(.auc-bid-now) { font-size: 1.25rem !important; }
+  [data-view="PUBLIC"] .auc-stat b { font-size: 1.5rem; }
+}

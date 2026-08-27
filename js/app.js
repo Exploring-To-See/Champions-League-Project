@@ -258,4 +258,44 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /* ---------------------------------------------------------
+     Section progress rail — ticks off each of the three form
+     sections as its required fields are filled, so a player on
+     a phone can see how much is left without scrolling back.
+     --------------------------------------------------------- */
+  (function initStepRail() {
+    const rail = document.getElementById('reg-steps');
+    if (!rail) return;
+
+    const filled = (id) => {
+      const el = document.getElementById(id);
+      return !!(el && String(el.value || '').trim());
+    };
+    const anyChecked = (name) =>
+      !!document.querySelector(`input[name="${name}"]:checked`);
+
+    const steps = {
+      1: () => filled('full_name') && filled('age') && anyChecked('sex') &&
+               !!document.getElementById('avatar-preview-img')?.getAttribute('src'),
+      2: () => true,   /* sliders always carry a value */
+      3: () => anyChecked('tournament_status') && filled('jersey_name') &&
+               filled('jersey_number') && filled('jersey_size')
+    };
+
+    function refresh() {
+      Object.keys(steps).forEach((n) => {
+        const el = rail.querySelector(`.clp-step[data-step="${n}"]`);
+        if (!el) return;
+        const done = steps[n]();
+        el.classList.toggle('done', done);
+        const badge = el.querySelector('b');
+        if (badge) badge.textContent = done ? '\u2713' : n;
+      });
+    }
+
+    document.addEventListener('input', refresh);
+    document.addEventListener('change', refresh);
+    refresh();
+  })();
+
 });

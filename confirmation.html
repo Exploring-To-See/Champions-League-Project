@@ -27,6 +27,7 @@
 
   <!-- Main Stylesheet (shared with registration page) -->
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/nav.css">
 
   <style>
     .confirmation-wrapper {
@@ -85,7 +86,7 @@
     }
   </style>
 </head>
-<body>
+<body data-view="REGISTRATION">
 
   <!-- Full-Page Magnified Blurred Mascot Background for Mobile View -->
   <div class="mobile-mascot-bg" aria-hidden="true">
@@ -93,6 +94,8 @@
   </div>
 
   <!-- Top Header Banner with Official Logo -->
+  <nav class="clp-nav" aria-label="Site sections"></nav>
+
   <header class="header-banner">
     <div class="logo-container">
       <img src="assets/champions-logo.png?v=3" alt="1727 Champion's League 2.0 Logo" class="logo-img">
@@ -119,20 +122,35 @@
 
       <img src="assets/pug-tiger-mascot.png" alt="1727 Champion's League 2.0 Mascot" class="confirmation-mascot">
 
-      <a href="index.html" class="btn-submit confirmation-back-link">
-        <i class="fa-solid fa-house"></i> BACK TO HOME
-      </a>
+      <p style="color:var(--text-muted); font-size:0.9rem; margin-top:0.25rem;">
+        You are in the player pool. Follow the auction live to see where you land.
+      </p>
+
+      <div style="display:flex; gap:0.6rem; justify-content:center; flex-wrap:wrap; margin-top:1.25rem;">
+        <a href="/auction" class="btn-submit confirmation-back-link" id="cta-watch"
+           style="width:auto; padding:0.85rem 1.5rem;">
+          <i class="fa-solid fa-tower-broadcast"></i> WATCH THE LIVE AUCTION
+        </a>
+        <a href="index.html" class="btn-submit confirmation-back-link"
+           style="width:auto; padding:0.85rem 1.5rem; background:rgba(255,255,255,0.08); color:#fff;">
+          <i class="fa-solid fa-house"></i> BACK TO HOME
+        </a>
+      </div>
     </div>
   </main>
 
-  <!-- Organiser Admin Footer Link -->
-  <footer style="text-align: center; margin: 2rem 0 3rem;">
-    <a href="https://championsadmin.vercel.app" target="_blank" style="color: var(--text-muted); font-size: 0.85rem; text-decoration: none;">
-      <i class="fa-solid fa-lock"></i> Organiser Admin Console
-    </a>
+  <footer class="clp-footer">
+    <div class="clp-footer-links" id="clp-footer-links"></div>
+    <div class="clp-footer-note">1727 Champion&#39;s League 2.0 &mdash; Official Tournament Platform</div>
   </footer>
 
+  <script src="js/links.js"></script>
   <script>
+    /* Point the CTA at the configured Live Auction domain when there is one. */
+    document.addEventListener('DOMContentLoaded', function () {
+      var cta = document.getElementById('cta-watch');
+      if (cta && window.CLP_NAV) cta.href = window.CLP_NAV.urlFor('PUBLIC');
+    });
     // Populate confirmed player name & registration code from URL query params
     const params = new URLSearchParams(window.location.search);
     const name = params.get('name');

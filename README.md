@@ -100,6 +100,55 @@ assign leftovers at base — not a change to the maths.
 
 ---
 
+## 🔗 Four Vercel Links — One Site
+
+Each view can live on its own Vercel domain while staying one connected site.
+A sticky nav bar on every page links the four together, and every page carries a
+matching footer.
+
+| View | Path | Suggested domain |
+|---|---|---|
+| Player Registration | `/` | `1727championsleague.vercel.app` |
+| Live Auction (public) | `/auction` | `championsauction.vercel.app` |
+| Team Captain | `/captain` | `championscaptain.vercel.app` |
+| Organiser Console | `/admin` | `championsadmin.vercel.app` |
+
+### Wiring a domain up — two edits
+
+**1. Root redirect** (`vercel.json` → `redirects`) so the domain's root lands on
+its own view:
+
+```json
+{
+  "source": "/",
+  "has": [{ "type": "host", "value": "YOUR-DOMAIN.vercel.app" }],
+  "destination": "/auction/",
+  "permanent": false
+}
+```
+
+**2. Cross-links** (`js/links.js`) so the nav points at the right domain instead of
+a relative path:
+
+```javascript
+window.CLP_LINKS = {
+  REGISTRATION: "https://1727championsleague.vercel.app",
+  PUBLIC:       "https://championsauction.vercel.app",
+  CAPTAIN:      "https://championscaptain.vercel.app",
+  ADMIN:        "https://championsadmin.vercel.app"
+};
+```
+
+Leave any value as `""` and that link stays a **relative path** on whatever domain
+the visitor is already on — so the site works before any custom domains exist, and
+keeps working as you add them one at a time. Every path also stays reachable on
+every domain, so nothing breaks if a domain is missing.
+
+> `js/links.js` is the only place the four URLs are written down. The nav bar, the
+> footer, and each page's cross-links all read from it.
+
+---
+
 ## 🚀 Setup & Vercel Deployment Guide
 
 ### Step 1: Connect Supabase Database
@@ -126,10 +175,12 @@ assign leftovers at base — not a change to the maths.
 ├── index.html              # Main Registration Form & Mascot Layout
 ├── css/
 │   ├── style.css           # Design System & Responsive Theme
-│   └── auction.css         # Auction theme shared by all three views
+│   ├── auction.css         # Auction theme shared by all three views
+│   └── nav.css             # Cross-site nav, page intro, step rail, footer
 ├── js/
 │   ├── config.js           # Tournament & Backend Config
 │   ├── app.js              # Ratings Math, Jersey Preview & Supabase Submissions
+│   ├── links.js            # THE FOUR VERCEL LINKS + shared nav/footer renderer
 │   ├── auction-config.js   # AUCTION SINGLE SOURCE OF TRUTH (teams, pool, minimums)
 │   ├── auction-engine.js   # Rules engine: reserve, max bid, feasibility, compulsory
 │   └── auction-client.js   # Shared Supabase data layer for all three auction views
