@@ -134,9 +134,17 @@
     deletePlayer:   function (id)             { return this.rpc("auction_delete_player", { p_id: id }); },
     setRetained:    function (p, t, role)     { return this.rpc("auction_set_retained", { p_player: p, p_team: t, p_role: role }); },
     setTeamPassword: function (t, pw)         { return this.rpc("auction_set_team_password", { p_team: t, p_password: pw }); },
+    /* Pass no team to reissue every captain password in one go. The
+       plaintext comes back once and is never stored. */
+    generatePasswords: function (t)           { return this.rpc("auction_generate_team_passwords", { p_team: t || null }); },
+    captainAccounts: function ()              { return this.rpc("auction_captain_accounts"); },
+    /* Organiser-only: adds password_set_at and active_sessions, which the
+       public roster deliberately omits. */
+    captainAdminAccounts: function ()         { return this.rpc("auction_captain_admin_accounts"); },
     importRegistrations: function (cat)       { return this.rpc("auction_import_registrations", { p_cat: cat }); },
     captainLogin:   function (code, pw)       { return this.rpc("auction_captain_login", { p_code: code, p_password: pw }); },
     captainLogout:  function (token)          { return this.rpc("auction_captain_logout", { p_token: token }); },
+    captainSession: function (token)          { return this.rpc("auction_captain_session", { p_token: token }); },
     updateTeam:     function (id, n, s, c, p) {
       return this.rpc("auction_update_team", { p_team: id, p_name: n, p_short: s, p_color: c, p_purse: p });
     },

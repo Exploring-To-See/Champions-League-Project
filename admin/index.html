@@ -562,6 +562,7 @@
         <button class="auc-tab active" data-auc-tab="control" role="tab"><i class="fa-solid fa-gavel"></i> Control Room</button>
         <button class="auc-tab" data-auc-tab="pool" role="tab"><i class="fa-solid fa-users"></i> Player Pool</button>
         <button class="auc-tab" data-auc-tab="teams" role="tab"><i class="fa-solid fa-shield"></i> Teams &amp; Captains</button>
+        <button class="auc-tab" data-auc-tab="captains" role="tab"><i class="fa-solid fa-key"></i> Captain Logins</button>
         <button class="auc-tab" data-auc-tab="squads" role="tab"><i class="fa-solid fa-list-check"></i> Squads</button>
         <button class="auc-tab" data-auc-tab="setup" role="tab"><i class="fa-solid fa-sliders"></i> Setup</button>
       </div>
@@ -694,6 +695,63 @@
           Passwords are bcrypt-hashed in the database and never sent back to any browser.</div>
         </div>
         <div id="auc-teams-editor"></div>
+      </div>
+
+      <!-- ---------- CAPTAIN LOGINS ---------- -->
+      <div class="auc-panel" id="auc-tab-captains">
+
+        <div class="auc-card">
+          <div class="auc-card-title">
+            <i class="fa-solid fa-link"></i> Where captains sign in
+          </div>
+          <div class="auc-form-row">
+            <div class="auc-field" style="flex:2;">
+              <label for="auc-captain-url">Captain console link — send this to all four captains</label>
+              <input type="text" id="auc-captain-url" readonly>
+            </div>
+            <div class="auc-field">
+              <button class="auc-btn auc-btn-ghost" id="auc-btn-copy-url" style="width:100%;">
+                <i class="fa-solid fa-copy"></i> Copy link
+              </button>
+            </div>
+          </div>
+          <div class="auc-muted" style="margin-top:0.6rem;">
+            Sign-in is <b>team code + password</b>, checked by Supabase against a bcrypt hash.
+            Nothing is stored in the browser except a session token that expires after 16 hours.
+          </div>
+        </div>
+
+        <div class="auc-card">
+          <div class="auc-card-title">
+            <i class="fa-solid fa-key"></i> Captain Accounts
+            <span id="auc-captains-health"></span>
+          </div>
+          <div class="auc-btn-row" style="margin-bottom:1rem;">
+            <button class="auc-btn auc-btn-gold" id="auc-btn-gen-all">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Passwords For All Captains
+            </button>
+            <button class="auc-btn auc-btn-ghost" id="auc-btn-copy-creds" style="display:none;">
+              <i class="fa-solid fa-copy"></i> Copy All Credentials
+            </button>
+            <button class="auc-btn auc-btn-ghost" id="auc-btn-download-creds" style="display:none;">
+              <i class="fa-solid fa-file-csv"></i> Download CSV
+            </button>
+          </div>
+
+          <!-- Plaintext passwords, shown once, right after they are issued -->
+          <div id="auc-creds-sheet"></div>
+
+          <div class="auc-table-box">
+            <table class="auc-table">
+              <thead><tr>
+                <th>Team</th><th>Login Code</th><th>Captain</th><th>Vice Captain</th>
+                <th>Password</th><th>Signed In</th><th>Wallet</th><th>Action</th>
+              </tr></thead>
+              <tbody id="auc-captains-body"></tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
 
       <!-- ---------- SQUADS ---------- -->

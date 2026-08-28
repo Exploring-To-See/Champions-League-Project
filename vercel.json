@@ -10,6 +10,18 @@
     },
     {
       "source": "/",
+      "has": [{ "type": "host", "value": "1727championsauction.vercel.app" }],
+      "destination": "/auction/",
+      "permanent": false
+    },
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "1727championstats.vercel.app" }],
+      "destination": "/auction/",
+      "permanent": false
+    },
+    {
+      "source": "/",
       "has": [{ "type": "host", "value": "championsauction.vercel.app" }],
       "destination": "/auction/",
       "permanent": false

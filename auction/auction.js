@@ -43,9 +43,11 @@
     renderStatus();
     renderStats();
     renderLot();
+    renderCaptains();
     renderTeams();
     renderFeed();
     renderSquads();
+    renderAllPlayers();
     renderPool();
   }
 
@@ -151,11 +153,56 @@
       "</div></div>";
   }
 
+  /* Who leads each team, and whether their sign-in is live. `captains`
+     reports only that a password EXISTS — the hash never leaves Postgres. */
+  function renderCaptains() {
+    var accounts = board.captains || [];
+    if (!accounts.length) {
+      $("pub-captains").innerHTML =
+        '<div class="auc-muted">Teams have not been set up yet.</div>';
+      return;
+    }
+
+    $("pub-captains").innerHTML = accounts.map(function (a) {
+      var lot = board.current_lot;
+      var leading = lot && lot.current_bidder_id === a.team_id;
+      /* Provisioning state only. When the password was issued and who is
+         signed in right now stay in the organiser console. */
+      var signIn = a.has_password
+        ? '<span class="auc-pill sold">SIGN-IN ACTIVE</span>'
+        : '<span class="auc-pill in_lot">AWAITING PASSWORD</span>';
+
+      return '<div class="auc-team' + (leading ? " leading" : "") +
+        '" style="--team-color:' + esc(a.color) + '">' +
+        '<div class="auc-team-name"><span>' + esc(a.team_name) + "</span>" +
+          '<span class="auc-muted" style="font-size:0.72rem;">' + esc(a.team_code) + "</span>" +
+        "</div>" +
+        '<div class="auc-kv"><span><i class="fa-solid fa-crown" style="color:var(--primary-gold);"></i> Captain</span>' +
+          "<span>" + (a.captain ? esc(a.captain) : '<span class="auc-muted">not assigned</span>') +
+          "</span></div>" +
+        '<div class="auc-kv"><span><i class="fa-solid fa-user-shield"></i> Vice Captain</span>' +
+          "<span>" + (a.vice_captain ? esc(a.vice_captain) : '<span class="auc-muted">not assigned</span>') +
+          "</span></div>" +
+        '<div class="auc-kv"><span>Wallet</span><span style="color:var(--primary-gold);">' +
+          money(a.purse_left) + "</span></div>" +
+        '<div class="auc-kv"><span>Bought</span><span>' + a.squad_size + " players</span></div>" +
+        '<div class="auc-chips" style="margin-top:0.6rem;">' + signIn + "</div>" +
+        "</div>";
+    }).join("");
+  }
+
   function renderTeams() {
     $("pub-teams").innerHTML = board.teams.map(function (t) {
       var lot = board.current_lot;
       var leading = lot && lot.current_bidder_id === t.id;
       var pct = t.purse_total ? (t.purse_left / t.purse_total) * 100 : 0;
+      var chips = board.categories.map(function (c) {
+        var own = (t.owned && t.owned[c.code]) || 0;
+        var un = (t.unmet && t.unmet[c.code]) || 0;
+        return '<span class="auc-chip ' + (un > 0 ? "short" : "met") + '">' +
+          esc(c.short_code) + " " + own + "/" + c.min_per_team + "</span>";
+      }).join("");
+
       return '<div class="auc-team' + (leading ? " leading" : "") +
         '" style="--team-color:' + esc(t.color) + '">' +
         '<div class="auc-team-name"><span>' + esc(t.name) + "</span>" +
@@ -163,10 +210,95 @@
         "</div>" +
         '<div class="auc-kv"><span>Purse left</span><span style="color:var(--primary-gold);">' +
           money(t.purse_left) + "</span></div>" +
+        '<div class="auc-kv"><span>Spent</span><span>' + money(t.purse_spent) + "</span></div>" +
+        '<div class="auc-kv"><span>Total purse</span><span>' + money(t.purse_total) + "</span></div>" +
         '<div class="auc-kv"><span>Squad</span><span>' + t.squad_size + "</span></div>" +
         '<div class="auc-progress"><div style="width:' + pct.toFixed(1) + '%"></div></div>' +
+        '<div class="auc-chips">' + chips + "</div>" +
         "</div>";
     }).join("");
+  }
+
+  /* The whole pool in one table: every player, and which captain bought
+     them for how much. Filters are read live so typing re-renders. */
+  function renderAllPlayers() {
+    var catSel = $("pub-players-cat");
+    var teamSel = $("pub-players-team");
+
+    /* Rebuild a filter only when its underlying list actually changed, and
+       put the viewer's choice back afterwards. Counting options instead
+       would latch: an empty board still writes the fixed "All"/"Not bought
+       yet" entries, so the count never falls back to 1 and teams added
+       later — the normal case, since the pool is built after the page is
+       already open — would never appear. */
+    function syncSelect(sel, signature, html) {
+      if (sel.dataset.sig === signature) return;
+      var prev = sel.value;
+      sel.innerHTML = html;
+      sel.dataset.sig = signature;
+      var kept = false;
+      for (var i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === prev) { kept = true; break; }
+      }
+      sel.value = kept ? prev : "ALL";
+    }
+
+    syncSelect(catSel,
+      board.categories.map(function (c) { return c.code + ":" + c.label; }).join("|"),
+      '<option value="ALL">All categories</option>' +
+        board.categories.map(function (c) {
+          return '<option value="' + esc(c.code) + '">' + esc(c.label) + "</option>";
+        }).join(""));
+
+    syncSelect(teamSel,
+      board.teams.map(function (t) { return t.id + ":" + t.name; }).join("|"),
+      '<option value="ALL">All teams</option>' +
+        board.teams.map(function (t) {
+          return '<option value="' + esc(t.id) + '">' + esc(t.name) + "</option>";
+        }).join("") + '<option value="NONE">Not bought yet</option>');
+
+    var q = ($("pub-players-search").value || "").toLowerCase().trim();
+    var fcat = catSel.value || "ALL";
+    var fteam = teamSel.value || "ALL";
+    var fstatus = $("pub-players-status").value || "ALL";
+
+    var rows = board.players.filter(function (p) {
+      if (q && p.name.toLowerCase().indexOf(q) < 0) return false;
+      if (fcat !== "ALL" && p.category !== fcat) return false;
+      if (fteam === "NONE" && p.team_id) return false;
+      if (fteam !== "ALL" && fteam !== "NONE" && p.team_id !== fteam) return false;
+      if (fstatus === "sold" && p.status !== "sold") return false;
+      if (fstatus === "available" && p.status === "sold") return false;
+      return true;
+    });
+
+    var soldTotal = board.players.filter(function (p) { return p.status === "sold"; }).length;
+    $("pub-players-count").textContent =
+      rows.length + " shown · " + soldTotal + " of " + board.players.length + " placed";
+
+    $("pub-players-body").innerHTML = rows.length ? rows.map(function (p) {
+      var c = catOf(p.category);
+      var t = teamOf(p.team_id);
+      var statusLabel = p.status === "in_lot" ? "on the block" : p.status;
+      return "<tr>" +
+        "<td><b>" + esc(p.name) + "</b>" +
+          (p.retained_role
+            ? ' <span class="auc-squad-role">' + esc(p.retained_role.replace("_", " ")) + "</span>"
+            : "") + "</td>" +
+        '<td><span style="color:' + esc(c ? c.color : "#00e5ff") + '; font-weight:700;">' +
+          esc(c ? c.label : p.category) + "</span></td>" +
+        '<td><span class="auc-pill ' + esc(p.status) + '">' + esc(statusLabel) + "</span></td>" +
+        "<td>" + (t
+          ? '<span style="color:' + esc(t.color) + '; font-weight:700;">' + esc(t.name) + "</span>"
+          : '<span class="auc-muted">—</span>') + "</td>" +
+        '<td style="font-weight:800;">' +
+          (p.status === "sold"
+            ? (p.is_retained ? '<span class="auc-muted">retained</span>' : money(p.sold_price || 0))
+            : '<span class="auc-muted">base ' + money(c ? c.base_price : 0) + "</span>") +
+        "</td></tr>";
+    }).join("")
+      : '<tr><td colspan="5" style="text-align:center; padding:2rem; color:var(--text-muted);">' +
+        "No players match these filters.</td></tr>";
   }
 
   function renderFeed() {
@@ -213,7 +345,31 @@
     }).join("");
   }
 
+  /* Filters only re-draw the table, so they stay responsive between the
+     five-second board refreshes. */
+  function wireFilters() {
+    ["pub-players-search", "pub-players-cat", "pub-players-team", "pub-players-status"]
+      .forEach(function (id) {
+        var el = $(id);
+        if (!el) return;
+        el.addEventListener(el.tagName === "SELECT" ? "change" : "input", function () {
+          if (board) renderAllPlayers();
+        });
+      });
+  }
+
+  /* Point the in-page captain link at the same origin the nav uses. A
+     captain's session token is per-origin, so sending them to /captain on
+     whichever domain they happen to be reading would hand them an empty
+     session store and a second sign-in. */
+  function alignCaptainLink() {
+    var el = $("pub-captain-link");
+    if (el && window.CLP_NAV) el.href = window.CLP_NAV.urlFor("CAPTAIN");
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
+    alignCaptainLink();
+    wireFilters();
     api = window.createAuctionClient();
     if (!api.ready()) {
       $("pub-status-text").textContent = "NOT CONFIGURED";

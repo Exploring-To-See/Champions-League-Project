@@ -90,10 +90,13 @@
         document.querySelectorAll("[data-auc-tab]").forEach(function (b) {
           b.classList.toggle("active", b === btn);
         });
-        ["control", "pool", "teams", "squads", "setup"].forEach(function (n) {
+        ["control", "pool", "teams", "captains", "squads", "setup"].forEach(function (n) {
           var p = $("auc-tab-" + n);
           if (p) p.classList.toggle("active", n === btn.dataset.aucTab);
         });
+        /* Session counts go stale; re-read them when the tab is opened
+           rather than on every 7-second board poll. */
+        if (btn.dataset.aucTab === "captains") refreshAdminAccounts();
       });
     });
   }
@@ -112,7 +115,7 @@
     }
     api.onChange(render);
     api.refresh()
-      .then(function () { api.subscribe().startPolling(7000); })
+      .then(function () { api.subscribe().startPolling(7000); refreshAdminAccounts(); })
       .catch(function (err) {
         $("auc-setup-hint").style.display = "flex";
         console.error(err);
@@ -133,6 +136,7 @@
     renderFeed();
     renderPool();
     renderTeamsEditor();
+    renderCaptainAccounts();
     renderSquads();
     renderConfigView();
   }
@@ -664,6 +668,169 @@
     });
   }
 
+  /* ---------- captain logins -------------------------------- */
+
+  /* Plaintext lives here only between "Generate" and the next reload —
+     the database keeps a bcrypt hash and nothing else, so this sheet is
+     the one and only chance to copy the passwords out. */
+  var issued = [];
+
+  /* password_set_at / active_sessions come from an admin-only RPC, not from
+     the board — the board is served to the anon key on the public page.
+     Fetched alongside each board render and merged in by team id. */
+  var adminAccounts = {};
+  var adminAccountsPending = false;
+
+  function refreshAdminAccounts() {
+    if (!api || adminAccountsPending) return;
+    adminAccountsPending = true;
+    api.captainAdminAccounts().then(function (rows) {
+      adminAccounts = {};
+      (rows || []).forEach(function (r) { adminAccounts[r.team_id] = r; });
+      if (board) renderCaptainAccounts();
+    }).catch(function () {
+      /* Not signed in yet, or the schema predates this RPC — the tab still
+         renders from the board, just without the two extra columns. */
+    }).finally(function () { adminAccountsPending = false; });
+  }
+
+  function captainConsoleUrl() {
+    var base = (window.CLP_NAV && window.CLP_NAV.urlFor("CAPTAIN")) || "/captain";
+    if (base.indexOf("http") === 0) return base;
+    return window.location.origin + base;
+  }
+
+  function renderCredsSheet() {
+    var host = $("auc-creds-sheet");
+    var copyBtn = $("auc-btn-copy-creds");
+    var csvBtn = $("auc-btn-download-creds");
+
+    if (!issued.length) {
+      host.innerHTML = "";
+      copyBtn.style.display = "none";
+      csvBtn.style.display = "none";
+      return;
+    }
+
+    copyBtn.style.display = "";
+    csvBtn.style.display = "";
+
+    host.innerHTML =
+      '<div class="auc-alert forced" style="margin-bottom:1rem;">' +
+        '<i class="fa-solid fa-triangle-exclamation"></i>' +
+        "<div><b>Copy these now — they are shown once.</b> Only a bcrypt hash is stored, " +
+        "so a lost password can be reissued but never recovered. Any captain already " +
+        "signed in on an old password has been signed out.</div></div>" +
+      '<div class="auc-table-box" style="margin-bottom:1.2rem;">' +
+        '<table class="auc-table"><thead><tr>' +
+          "<th>Team</th><th>Login Code</th><th>Password</th><th>Console</th>" +
+        "</tr></thead><tbody>" +
+        issued.map(function (c) {
+          return "<tr>" +
+            '<td><b style="color:' + esc(c.color) + '">' + esc(c.team_name) + "</b></td>" +
+            '<td style="font-family:monospace; font-weight:800; color:var(--primary-cyan);">' +
+              esc(c.team_code) + "</td>" +
+            '<td style="font-family:monospace; font-size:1.05rem; font-weight:800; ' +
+              'color:var(--primary-gold); letter-spacing:1px;">' + esc(c.password) + "</td>" +
+            '<td class="auc-muted" style="font-size:0.78rem;">' + esc(captainConsoleUrl()) + "</td>" +
+          "</tr>";
+        }).join("") +
+        "</tbody></table></div>";
+  }
+
+  function credsText() {
+    return issued.map(function (c) {
+      return c.team_name + "\n" +
+             "  Console : " + captainConsoleUrl() + "\n" +
+             "  Code    : " + c.team_code + "\n" +
+             "  Password: " + c.password;
+    }).join("\n\n");
+  }
+
+  function copyText(text, okMsg) {
+    function fallback() {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); toast(okMsg); }
+      catch (e) { toast("Copy failed — select the text manually", "err"); }
+      ta.remove();
+    }
+    /* navigator.clipboard needs a secure context; the venue may be on
+       plain http, so keep the textarea path as a real fallback. */
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(function () { toast(okMsg); }, fallback);
+    } else {
+      fallback();
+    }
+  }
+
+  function renderCaptainAccounts() {
+    var accounts = board.captains || [];
+    var withPw = accounts.filter(function (a) { return a.has_password; }).length;
+
+    $("auc-captain-url").value = captainConsoleUrl();
+    $("auc-captains-health").innerHTML = accounts.length
+      ? (withPw === accounts.length
+          ? '<span class="auc-pill sold">ALL ' + accounts.length + " CAPTAINS CAN SIGN IN</span>"
+          : '<span class="auc-pill in_lot">' + withPw + " of " + accounts.length +
+            " captains have a password</span>")
+      : "";
+
+    $("auc-captains-body").innerHTML = accounts.length ? accounts.map(function (a) {
+      var extra = adminAccounts[a.team_id] || {};
+      var pwCell = a.has_password
+        ? '<span class="auc-pill sold">SET</span>' +
+          (extra.password_set_at
+            ? '<div class="auc-muted" style="font-size:0.72rem; margin-top:0.2rem;">' +
+              new Date(extra.password_set_at).toLocaleString() + "</div>"
+            : "")
+        : '<span class="auc-pill in_lot">NOT SET</span>';
+
+      return "<tr>" +
+        '<td><b style="color:' + esc(a.color) + '">' + esc(a.team_name) + "</b></td>" +
+        '<td style="font-family:monospace; font-weight:800; color:var(--primary-cyan);">' +
+          esc(a.team_code) + "</td>" +
+        "<td>" + (a.captain ? esc(a.captain) : '<span class="auc-muted">not assigned</span>') + "</td>" +
+        "<td>" + (a.vice_captain ? esc(a.vice_captain) : '<span class="auc-muted">not assigned</span>') + "</td>" +
+        "<td>" + pwCell + "</td>" +
+        "<td>" + (extra.active_sessions > 0
+          ? '<span class="auc-pill available">' + extra.active_sessions + "</span>"
+          : '<span class="auc-muted">—</span>') + "</td>" +
+        '<td style="color:var(--primary-gold); font-weight:700;">' + money(a.purse_left) + "</td>" +
+        '<td><button class="auc-btn auc-btn-ghost auc-gen-one" data-team="' + esc(a.team_id) +
+          '" style="padding:0.4rem 0.7rem; font-size:0.78rem;">' +
+          '<i class="fa-solid fa-rotate"></i> Reissue</button></td>' +
+      "</tr>";
+    }).join("")
+      : '<tr><td colspan="8" style="text-align:center; padding:2rem; color:var(--text-muted);">' +
+        "No teams yet — run <b>Setup → Sync Config</b> first.</td></tr>";
+
+    document.querySelectorAll(".auc-gen-one").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.dataset.team;
+        var team = null;
+        accounts.forEach(function (a) { if (a.team_id === id) team = a; });
+        if (!confirm("Issue a new password for " + (team ? team.team_name : "this team") +
+                     "?\n\nThe current password stops working immediately and that " +
+                     "captain is signed out.")) return;
+        busy(btn, true, "Issuing…");
+        api.generatePasswords(id)
+          .then(function (rows) {
+            issued = rows || [];
+            renderCredsSheet();
+            refreshAdminAccounts();
+            return api.refresh();
+          })
+          .then(function () { toast("New password issued"); })
+          .catch(fail).finally(function () { busy(btn, false); });
+      });
+    });
+  }
+
   /* ---------- final squads ---------------------------------- */
   function renderSquads() {
     $("auc-squads").innerHTML = board.teams.map(function (t) {
@@ -813,6 +980,51 @@
     });
 
     $("auc-btn-export-squads").addEventListener("click", exportSquads);
+
+    /* ---- captain logins ---- */
+    $("auc-btn-copy-url").addEventListener("click", function () {
+      copyText(captainConsoleUrl(), "Captain console link copied");
+    });
+
+    $("auc-btn-gen-all").addEventListener("click", function () {
+      var n = (board && board.captains ? board.captains.length : 0);
+      if (!n) { toast("No teams yet — run Setup → Sync Config first", "err"); return; }
+      if (!confirm("Issue a fresh password for all " + n + " captains?\n\n" +
+                   "Every existing captain password stops working immediately and " +
+                   "anyone signed in is signed out. The new passwords are shown once.")) return;
+      var b = this;
+      busy(b, true, "Issuing…");
+      api.generatePasswords(null)
+        .then(function (rows) {
+          issued = rows || [];
+          renderCredsSheet();
+          refreshAdminAccounts();
+          return api.refresh();
+        })
+        .then(function () { toast(issued.length + " captain passwords issued"); })
+        .catch(fail).finally(function () { busy(b, false); });
+    });
+
+    $("auc-btn-copy-creds").addEventListener("click", function () {
+      if (!issued.length) return;
+      copyText(credsText(), "All credentials copied");
+    });
+
+    $("auc-btn-download-creds").addEventListener("click", function () {
+      if (!issued.length) return;
+      var head = ["Team", "Login Code", "Password", "Captain Console"];
+      var lines = [head.join(",")].concat(issued.map(function (c) {
+        return [c.team_name, c.team_code, c.password, captainConsoleUrl()]
+          .map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(",");
+      }));
+      var blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "1727_CL2_Captain_Logins.csv";
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    });
   }
 
   function exportSquads() {

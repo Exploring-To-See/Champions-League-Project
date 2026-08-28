@@ -359,12 +359,21 @@
     initLogin();
 
     /* Resume a stored session, but only if the server still honours the
-       token — it expires after 16 hours or when the password is changed. */
+       token — it expires after 16 hours, on sign-out, or the moment the
+       organiser reissues the team password. Asking the server is the only
+       way to know: a token that merely LOOKS well-formed buys nothing,
+       because every bid is re-checked against the session table anyway. */
     session = loadSession();
     if (session && session.token) {
-      api.refresh().then(function (b) {
-        var ok = b && b.teams.some(function (t) { return t.id === session.team_id; });
-        if (ok) showConsole(); else { session = null; saveSession(null); }
+      api.captainSession(session.token).then(function (live) {
+        if (live && live.team_id) {
+          session = live;
+          saveSession(session);
+          showConsole();
+        } else {
+          session = null;
+          saveSession(null);
+        }
       }).catch(function () { session = null; saveSession(null); });
     }
   });

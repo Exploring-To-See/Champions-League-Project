@@ -39,9 +39,33 @@ minimum 15-player squads (2 retained + 13 bought). Every squad-maths number is
 
 | Route | Who | What |
 |---|---|---|
-| `/admin` → **Auction Control** | Organiser | Run the auction: open lots, take bids, SOLD / unsold, compulsory-fill alerts, player pool, team passwords, squads, CSV export |
+| `/admin` → **Auction Control** | Organiser | Run the auction: open lots, take bids, SOLD / unsold, compulsory-fill alerts, player pool, **Captain Logins**, squads, CSV export |
 | `/captain` | Team captains | Password login per team, live purse / reserve / max bid, one-tap bidding |
-| `/auction` | Everyone | Read-only live view: lot on the block, bids, purses, squads, pool progress |
+| `/auction` | Everyone | Read-only live view: lot on the block, bids, **team captains**, wallets, squads, **all players and who bought them**, pool progress |
+
+### Captain sign-in
+
+Captains authenticate against Supabase with a **team code + password**. There is no
+e-mail and no Supabase Auth user per captain: `auction_captain_login` checks the
+password against a bcrypt hash in `auction_team_auth` — a table with RLS on and no
+select policy, so the hash never reaches any browser — and hands back a session
+token that expires after 16 hours.
+
+Set them up in **Auction Control → Captain Logins**, in this order:
+
+1. **Setup → Sync Config** first. Password generation acts on the rows in
+   `auction_teams`; until the config is synced there are no teams and nothing to
+   issue a password *for*.
+2. **Captain Logins → Generate Passwords For All Captains.** One click issues a
+   fresh password for every team. The plaintext is shown **once**, with Copy All
+   and Download CSV — only the bcrypt hash is stored, so a lost password can be
+   reissued but never recovered.
+3. Send each captain the console link shown at the top of that tab, plus their
+   team code and password.
+
+Reissuing a password immediately invalidates the old one and signs that captain
+out everywhere. The tab shows, per team, whether a password is set, when it was
+issued, and how many sessions are currently live.
 
 ### The rules, and where they are enforced
 
@@ -106,12 +130,24 @@ Each view can live on its own Vercel domain while staying one connected site.
 A sticky nav bar on every page links the four together, and every page carries a
 matching footer.
 
-| View | Path | Suggested domain |
+All four domains serve **this same repository**, so every path resolves on every
+domain. The table below is what is actually deployed, not a suggestion.
+
+| View | Path | Live domain |
 |---|---|---|
 | Player Registration | `/` | `1727championsleague.vercel.app` |
-| Live Auction (public) | `/auction` | `championsauction.vercel.app` |
-| Team Captain | `/captain` | `championscaptain.vercel.app` |
+| Live Auction (public) | `/auction` | `1727championsauction.vercel.app` |
+| Live Auction (stats) | `/auction` | `1727championstats.vercel.app` |
+| Team Captain | `/captain` | `1727championsauction.vercel.app/captain` |
 | Organiser Console | `/admin` | `championsadmin.vercel.app` |
+
+`1727championstats.vercel.app` has no page of its own — its root redirects to
+`/auction`, which is where the all-players board, team wallets and squad lists live.
+
+Because captains sign in on `1727championsauction.vercel.app`, their session token
+is scoped to that origin. A captain who opens `/captain` on a *different* domain
+gets a separate, empty localStorage and has to sign in again — so send them the one
+link from **Organiser Console → Auction Control → Captain Logins**.
 
 ### Wiring a domain up — two edits
 
@@ -133,8 +169,8 @@ a relative path:
 ```javascript
 window.CLP_LINKS = {
   REGISTRATION: "https://1727championsleague.vercel.app",
-  PUBLIC:       "https://championsauction.vercel.app",
-  CAPTAIN:      "https://championscaptain.vercel.app",
+  PUBLIC:       "https://1727championsauction.vercel.app",
+  CAPTAIN:      "https://1727championsauction.vercel.app",
   ADMIN:        "https://championsadmin.vercel.app"
 };
 ```
@@ -154,12 +190,21 @@ every domain, so nothing breaks if a domain is missing.
 ### Step 1: Connect Supabase Database
 1. Create a project on [Supabase](https://supabase.com).
 2. Go to **SQL Editor**, paste contents of `supabase/schema.sql` and run.
-3. Copy **Project URL** and **Anon Key** from **Project Settings -> API**.
-4. Update `js/config.js` with your credentials:
+3. In a new query, paste `supabase/auction-schema.sql` and run that too.
+   **This one is not optional** — without it `/auction`, `/captain` and the
+   Auction Control tab have no tables to read and every one of them shows
+   "not set up yet". It must run *after* `schema.sql`, which it references.
+4. Copy **Project URL** and **Anon Key** from **Project Settings -> API**.
+5. Update `js/config.js` with your credentials:
    ```javascript
    SUPABASE_URL: "https://your-project-id.supabase.co",
    SUPABASE_ANON_KEY: "your-anon-public-key-here"
    ```
+6. **Authentication → Users → Add user** with the e-mail hard-coded in
+   `admin/admin.js`. That password is the Organiser Console login.
+
+See [`supabase/README.md`](supabase/README.md) for what each file installs and
+the order to set the auction up in afterwards.
 
 ### Step 2: Deploy to Vercel
 1. Import this GitHub repository into your [Vercel Dashboard](https://vercel.com).

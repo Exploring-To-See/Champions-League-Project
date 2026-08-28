@@ -11,13 +11,15 @@
    ============================================================ */
 
 window.CLP_LINKS = {
-  /* --- Paste each Vercel URL here (no trailing slash) --------
-     e.g. REGISTRATION: "https://1727championsleague.vercel.app"
+  /* --- The live Vercel domains (no trailing slash) -----------
+     All four domains serve this same repository, so every path
+     resolves on every domain. These values only decide which
+     domain a nav link points AT.
      ----------------------------------------------------------- */
-  REGISTRATION: "",   /* Player registration form            -> / */
-  PUBLIC:       "",   /* General public live auction view    -> /auction */
-  CAPTAIN:      "",   /* Team captain bidding console        -> /captain */
-  ADMIN:        ""    /* Organiser console + auction control -> /admin */
+  REGISTRATION: "https://1727championsleague.vercel.app",  /* -> /         */
+  PUBLIC:       "https://1727championsauction.vercel.app", /* -> /auction  */
+  CAPTAIN:      "https://1727championsauction.vercel.app", /* -> /captain  */
+  ADMIN:        "https://championsadmin.vercel.app"        /* -> /admin    */
 };
 
 (function (global) {

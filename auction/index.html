@@ -53,9 +53,25 @@
       <div id="pub-lot"></div>
     </div>
 
-    <!-- Team purses -->
+    <!-- Team captains and their sign-in accounts -->
     <div class="auc-card">
-      <div class="auc-card-title"><i class="fa-solid fa-sack-dollar"></i> Team Purses</div>
+      <div class="auc-card-title">
+        <i class="fa-solid fa-shield-halved"></i> Team Captains
+        <span class="auc-muted" style="font-weight:500; letter-spacing:0; text-transform:none;">
+          &mdash; who is bidding for each team
+        </span>
+      </div>
+      <div class="auc-teams-grid" id="pub-captains"></div>
+      <div class="auc-muted" style="margin-top:0.9rem;">
+        Captains bid from the
+        <a href="/captain" id="pub-captain-link" style="color:var(--primary-cyan);">Team Captain Console</a>
+        using the team code and the password issued by the organiser.
+      </div>
+    </div>
+
+    <!-- Team purses / wallets -->
+    <div class="auc-card">
+      <div class="auc-card-title"><i class="fa-solid fa-sack-dollar"></i> Team Wallets</div>
       <div class="auc-teams-grid" id="pub-teams"></div>
     </div>
 
@@ -69,6 +85,44 @@
     <div class="auc-card">
       <div class="auc-card-title"><i class="fa-solid fa-list-check"></i> Squads So Far</div>
       <div class="auc-squads" id="pub-squads"></div>
+    </div>
+
+    <!-- Every player in the auction, and who bought them -->
+    <div class="auc-card">
+      <div class="auc-card-title">
+        <i class="fa-solid fa-users"></i> All Players
+        <span class="auc-pill available" id="pub-players-count"></span>
+      </div>
+      <div class="auc-form-row">
+        <div class="auc-field">
+          <label for="pub-players-search">Search</label>
+          <input type="text" id="pub-players-search" placeholder="Player name…" autocomplete="off">
+        </div>
+        <div class="auc-field">
+          <label for="pub-players-cat">Category</label>
+          <select id="pub-players-cat"><option value="ALL">All categories</option></select>
+        </div>
+        <div class="auc-field">
+          <label for="pub-players-team">Bought by</label>
+          <select id="pub-players-team"><option value="ALL">All teams</option></select>
+        </div>
+        <div class="auc-field">
+          <label for="pub-players-status">Status</label>
+          <select id="pub-players-status">
+            <option value="ALL">All</option>
+            <option value="sold">Sold</option>
+            <option value="available">Still in pool</option>
+          </select>
+        </div>
+      </div>
+      <div class="auc-table-box" style="max-height:560px; overflow-y:auto;">
+        <table class="auc-table">
+          <thead><tr>
+            <th>Player</th><th>Category</th><th>Status</th><th>Bought By</th><th>Price</th>
+          </tr></thead>
+          <tbody id="pub-players-body"></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- Remaining pool -->

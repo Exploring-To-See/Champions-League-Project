@@ -30,6 +30,9 @@ That password is the Organiser Console login.
 `auction_team_sessions`, `auction_players`, `auction_state`, `auction_lots`,
 `auction_bids`, `auction_events`
 
+> The file is run **after** `schema.sql` because `auction_players.registration_id`
+> references `registrations(id)`.
+
 ### Where the rules live
 Every auction rule is enforced **server side** in `SECURITY DEFINER` functions.
 `js/auction-engine.js` mirrors them only so the UI can grey out an illegal action
@@ -67,10 +70,31 @@ publication, so every console updates the moment a bid lands.
 
 ## After the schema runs
 
-In the Organiser Console → **Auction Control**:
+In the Organiser Console → **Auction Control**, in this order:
 
 1. **Setup → Sync Config** — pushes `js/auction-config.js` into the database.
-2. **Teams & Captains** — name the teams and set each captain's password.
-3. **Player Pool** — import registrations, set each player's category, and
+   This is what creates the four team rows; nothing below works before it.
+2. **Captain Logins → Generate Passwords For All Captains** — issues a fresh
+   password per team in one click. Shown once; copy or download the CSV then.
+3. **Teams & Captains** — rename teams, set colours and purses. (A custom
+   password per team can still be set by hand here.)
+4. **Player Pool** — import registrations, set each player's category, and
    pre-assign the 8 Captain / Vice Captain retentions.
-4. **Control Room → Start** — go live, then open lots one at a time.
+5. **Control Room → Start** — go live, then open lots one at a time.
+
+### Captain authentication
+
+Captains do **not** get Supabase Auth users. They sign in with a team code and a
+password checked by `auction_captain_login` against a bcrypt hash:
+
+| Function | Role |
+|---|---|
+| `auction_generate_team_passwords(p_team)` | Organiser-only. Pass `null` to reissue every team at once. Returns the plaintext **once** and stores only the hash. |
+| `auction_random_password(p_len)` | 31-symbol unambiguous alphabet, rejection-sampled so no symbol is likelier than another. Not callable by `anon` or `authenticated`. |
+| `auction_captain_login(p_code, p_password)` | Verifies the hash, issues a 16-hour session token. |
+| `auction_captain_session(p_token)` | Validates a stored token on page load; returns null once it expires, is signed out, or the password is reissued. |
+| `auction_captain_logout(p_token)` | Drops the session. |
+| `auction_captain_accounts()` | Per team: captain, vice captain, wallet, whether a password exists and how many sessions are live. Never returns the hash. |
+
+Issuing a password deletes every existing session for that team, so a reissue
+signs the old holder out immediately.

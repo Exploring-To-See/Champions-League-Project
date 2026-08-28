@@ -492,6 +492,77 @@ begin
     'blockers',     v_blockers);
 end $$;
 
+-- Does this team have a captain password set?
+--
+-- SECURITY DEFINER on purpose. auction_team_auth has RLS enabled and
+-- deliberately NO select policy, so a plain (invoker) function reading it
+-- as anon or authenticated matches zero rows and would report "no password"
+-- forever, whatever is actually stored. Running as the owner is the only way
+-- to answer the question — and all that escapes is one boolean.
+create or replace function public.auction_team_has_password(p_team uuid)
+returns boolean language sql stable security definer
+set search_path = public as $$
+  select coalesce((select password_hash is not null
+                     from public.auction_team_auth where team_id = p_team), false);
+$$;
+
+-- Captain roster for the PUBLIC live view: who leads each team, what their
+-- wallet looks like, and whether a sign-in has been provisioned at all.
+--
+-- Deliberately stops there. When a password was last issued and how many
+-- captains are signed in right now are operational facts a spectator has no
+-- use for — the first dates a reissue, the second is a liveness oracle —
+-- so they live in auction_captain_admin_accounts() below instead. The one
+-- auth fact kept here, has_password, is what makes the panel readable
+-- ("sign-in active" vs "awaiting password") and reveals nothing usable:
+-- the team codes were already public and the passwords carry ~59 bits.
+create or replace function public.auction_captain_accounts()
+returns jsonb language sql stable security definer
+set search_path = public as $$
+  select coalesce(jsonb_agg(jsonb_build_object(
+           'team_id',      t.id,
+           'team_code',    t.code,
+           'team_name',    t.name,
+           'short_name',   t.short_name,
+           'color',        t.color,
+           'captain',      (select p.name from public.auction_players p
+                             where p.team_id = t.id and p.retained_role = 'CAPTAIN'
+                             order by p.sort_order, p.name limit 1),
+           'vice_captain', (select p.name from public.auction_players p
+                             where p.team_id = t.id and p.retained_role = 'VICE_CAPTAIN'
+                             order by p.sort_order, p.name limit 1),
+           'has_password', public.auction_team_has_password(t.id),
+           'purse_total',  t.purse_total,
+           'purse_spent',  t.purse_spent,
+           'purse_left',   (t.purse_total - t.purse_spent),
+           'squad_size',   (select count(*)::int from public.auction_players p
+                             where p.team_id = t.id and p.status = 'sold')
+         ) order by t.sort_order, t.name), '[]'::jsonb)
+    from public.auction_teams t;
+$$;
+
+-- The organiser's view of the same roster, with the two fields held back
+-- from the public one. Admin-gated, and never reached by the anon key.
+create or replace function public.auction_captain_admin_accounts()
+returns jsonb language plpgsql stable security definer
+set search_path = public as $$
+begin
+  perform public.auction_require_admin();
+  return (
+    select coalesce(jsonb_agg(jsonb_build_object(
+             'team_id',         t.id,
+             'team_code',       t.code,
+             'team_name',       t.name,
+             'color',           t.color,
+             'has_password',    public.auction_team_has_password(t.id),
+             'password_set_at', (select a.updated_at from public.auction_team_auth a
+                                  where a.team_id = t.id and a.password_hash is not null),
+             'active_sessions', (select count(*)::int from public.auction_team_sessions s
+                                  where s.team_id = t.id and s.expires_at > now())
+           ) order by t.sort_order, t.name), '[]'::jsonb)
+      from public.auction_teams t);
+end $$;
+
 -- One call, whole auction. All three views poll/subscribe to this.
 create or replace function public.auction_board()
 returns jsonb language plpgsql stable as $$
@@ -533,8 +604,7 @@ begin
       'total_unmet', public.auction_total_unmet(t.id),
       'squad_size', (select count(*) from public.auction_players
                       where team_id = t.id and status = 'sold'),
-      'has_password', (select password_hash is not null
-                         from public.auction_team_auth where team_id = t.id),
+      'has_password', public.auction_team_has_password(t.id),
       'complete', (public.auction_total_unmet(t.id) = 0 and v_complete)
     ));
   end loop;
@@ -555,6 +625,7 @@ begin
                     'unsold_count', p.unsold_count, 'sort_order', p.sort_order
                   ) order by p.sort_order, p.name), '[]'::jsonb)
                   from public.auction_players p),
+    'captains', public.auction_captain_accounts(),
     'alerts', public.auction_alerts(),
     'stranded', public.auction_stranded(),
     'end_check', public.auction_end_check(),
@@ -638,6 +709,108 @@ begin
     set password_hash = excluded.password_hash, updated_at = now();
   -- force a fresh sign-in everywhere with the new password
   delete from public.auction_team_sessions where team_id = p_team;
+end $$;
+
+-- Resume check for a stored captain session. Returns null once the token
+-- has expired, been signed out, or been invalidated by a password change,
+-- so a stale localStorage entry can never keep a console open.
+create or replace function public.auction_captain_session(p_token text)
+returns jsonb language plpgsql security definer
+set search_path = public as $$
+declare v_id uuid; v_name text; v_code text; v_exp timestamptz;
+begin
+  if p_token is null or length(p_token) = 0 then return null; end if;
+
+  select t.id, t.name, t.code, s.expires_at
+    into v_id, v_name, v_code, v_exp
+    from public.auction_team_sessions s
+    join public.auction_teams t on t.id = s.team_id
+   where s.token = p_token and s.expires_at > now();
+
+  if v_id is null then return null; end if;
+
+  return jsonb_build_object('token', p_token, 'team_id', v_id,
+                            'team_name', v_name, 'team_code', v_code,
+                            'expires_at', v_exp);
+end $$;
+
+-- Readable random password, grouped in fours: HJ4K-MN7P-2QRS.
+-- The alphabet is the 31 characters that survive being read down a phone
+-- line — O/0, I/1/L and every punctuation mark are gone, so a captain can
+-- type what the organiser dictates without a second attempt.
+--
+-- 31 does not divide 256, so folding a byte with % would make the first
+-- 8 symbols fractionally likelier than the rest. Bytes at or above 248
+-- are therefore DISCARDED rather than folded, which keeps every symbol
+-- exactly equally likely. 12 symbols out of 31 is ~59 bits.
+create or replace function public.auction_random_password(p_len int default 12)
+returns text language plpgsql volatile
+set search_path = public, extensions as $$
+declare
+  v_alpha text := 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  v_n     int  := length(v_alpha);          -- 31
+  v_max   int  := (256 / v_n) * v_n;        -- 248
+  v_out   text := '';
+  v_bytes bytea;
+  v_b     int;
+  i       int;
+begin
+  if p_len < 8 then p_len := 8; end if;
+
+  -- Draw in generous batches; ~3% of bytes are rejected, so one batch of
+  -- 2x almost always suffices and the loop is a formality.
+  while length(v_out) < p_len loop
+    v_bytes := gen_random_bytes(p_len * 2);
+    for i in 0 .. (p_len * 2) - 1 loop
+      exit when length(v_out) >= p_len;
+      v_b := get_byte(v_bytes, i);
+      continue when v_b >= v_max;
+      v_out := v_out || substr(v_alpha, (v_b % v_n) + 1, 1);
+    end loop;
+  end loop;
+
+  return regexp_replace(v_out, '(.{4})(?=.)', '\1-', 'g');
+end $$;
+
+-- Issue captain passwords. Pass null for p_team to do every team at once.
+-- The plaintext is returned ONCE, here, and never stored — only the bcrypt
+-- hash is kept, so a lost password can only be replaced, not recovered.
+-- Any live session for an affected team is dropped.
+create or replace function public.auction_generate_team_passwords(p_team uuid default null)
+returns jsonb language plpgsql security definer
+set search_path = public, extensions as $$
+declare t record; v_pw text; v_out jsonb := '[]'::jsonb; v_n int := 0;
+begin
+  perform public.auction_require_admin();
+
+  for t in select * from public.auction_teams
+            where p_team is null or id = p_team
+            order by sort_order, name loop
+    v_pw := public.auction_random_password(12);
+
+    insert into public.auction_team_auth (team_id, password_hash, updated_at)
+    values (t.id, crypt(v_pw, gen_salt('bf')), now())
+    on conflict (team_id) do update
+      set password_hash = excluded.password_hash, updated_at = now();
+
+    delete from public.auction_team_sessions where team_id = t.id;
+
+    v_out := v_out || jsonb_build_array(jsonb_build_object(
+      'team_id', t.id, 'team_code', t.code, 'team_name', t.name,
+      'color', t.color, 'password', v_pw));
+    v_n := v_n + 1;
+  end loop;
+
+  if v_n = 0 then raise exception 'No teams to issue passwords for'; end if;
+
+  insert into public.auction_events (kind, message)
+  values ('captain_auth',
+          case when p_team is null
+               then 'Captain passwords issued for all ' || v_n || ' teams'
+               else 'Captain password reissued for ' ||
+                    (select name from public.auction_teams where id = p_team) end);
+
+  return v_out;
 end $$;
 
 -- ============================================================
@@ -1188,8 +1361,11 @@ grant execute on function
   public.auction_stranded(),
   public.auction_blocker_summary(),
   public.auction_board(),
+  public.auction_team_has_password(uuid),
+  public.auction_captain_accounts(),
   public.auction_captain_login(text, text),
   public.auction_captain_logout(text),
+  public.auction_captain_session(text),
   public.auction_place_bid(uuid, uuid, bigint, text, text)
 to anon, authenticated;
 
@@ -1199,6 +1375,8 @@ grant execute on function
   public.auction_sync_config(jsonb),
   public.auction_update_team(uuid, text, text, text, bigint),
   public.auction_set_team_password(uuid, text),
+  public.auction_generate_team_passwords(uuid),
+  public.auction_captain_admin_accounts(),
   public.auction_upsert_player(uuid, text, text, text, uuid, int),
   public.auction_delete_player(uuid),
   public.auction_set_retained(uuid, uuid, text),
@@ -1210,6 +1388,17 @@ grant execute on function
   public.auction_revert_sale(uuid),
   public.auction_reset(text)
 to authenticated;
+
+-- The password generator is only ever called from inside
+-- auction_generate_team_passwords, which runs as the owner. Nobody
+-- else needs to mint strings from it.
+revoke execute on function public.auction_random_password(int)
+  from public, anon, authenticated;
+
+-- Belt and braces: the admin roster carries password timestamps and session
+-- counts, so make sure the anon key cannot reach it even if a default grant
+-- to PUBLIC would otherwise have applied.
+revoke execute on function public.auction_captain_admin_accounts() from anon;
 
 -- ============================================================
 -- 11) REALTIME — pushes every lot, bid and sale to all three views
@@ -1279,10 +1468,14 @@ select id, null from public.auction_teams
 on conflict (team_id) do nothing;
 
 -- ============================================================
--- DONE. Next steps in the Organiser Console -> Auction tab:
---   1. "Sync Config"        - push auction-config.js into these tables
---   2. "Teams"              - name the 4 teams, set captain passwords
---   3. "Player Pool"        - import registrations, set categories,
---                             pre-assign the 8 Captain/Vice Captain
---   4. "Start Auction"      - go live, then open lots one at a time
+-- DONE. Next steps in the Organiser Console -> Auction Control, in order:
+--   1. "Setup -> Sync Config"  - push auction-config.js into these tables.
+--                                This is what creates the four team rows;
+--                                nothing below works before it.
+--   2. "Captain Logins"        - "Generate Passwords For All Captains".
+--                                Shown once; copy or download the CSV then.
+--   3. "Teams & Captains"      - rename teams, set colours and purses
+--   4. "Player Pool"           - import registrations, set categories,
+--                                pre-assign the 8 Captain/Vice Captain
+--   5. "Control Room -> Start" - go live, then open lots one at a time
 -- ============================================================
