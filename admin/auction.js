@@ -289,7 +289,7 @@
     /* Just the card — the same one the room sees on the public view, from
        js/onblock.js. Nothing above it: the card names the player itself, and
        in full screen any heading is only in the way. */
-    host.innerHTML = window.OnBlockCard.render(player, cat, ctx.base) + compulsoryBanner;
+    host.innerHTML = window.OnBlockCard.render(player, cat, ctx.base, { logos: true }) + compulsoryBanner;
   }
 
   /* ---------- selling the drawn player ---------------------- */

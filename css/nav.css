@@ -160,6 +160,33 @@
 }
 
 /* ---- Footer ------------------------------------------------ */
+/* ---- Partner logos ------------------------------------------
+   The three organising bodies, sat under the page header on every view.
+   Supplied as JPEGs on white; the shipped PNGs have the outer background
+   flood-filled away so they sit on the dark theme without a white block. */
+.clp-partners {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1rem, 4vw, 2.75rem);
+  padding: 0.35rem 1rem 0.9rem;
+  position: relative;
+  z-index: 1;
+}
+
+.clp-partners img {
+  height: clamp(46px, 7vw, 78px);
+  width: auto;
+  object-fit: contain;
+  /* they are flat print logos — a little lift stops them looking pasted on */
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.75));
+}
+
+@media (max-width: 420px) {
+  .clp-partners { gap: 1rem; padding-bottom: 0.6rem; }
+  .clp-partners img { height: 42px; }
+}
+
 .clp-footer {
   max-width: 1240px;
   margin: 2.5rem auto 0;

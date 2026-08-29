@@ -56,14 +56,28 @@
            "</div></div>";
   }
 
+  /* Branding strip along the bottom of the card: the tournament logo first,
+     then the three organising bodies. The organiser opts in, because this is
+     the card that goes on the big screen. */
+  function footerStrip() {
+    return '<div class="otb-footer">' +
+      '<img class="otb-footer-main" src="/assets/champions-logo.png?v=3" alt="1727 Champions League">' +
+      '<span class="otb-footer-rule"></span>' +
+      '<img src="/assets/partner-csrt17.png" alt="Calcutta South Round Table 17">' +
+      '<img src="/assets/partner-csrt-cclc.png" alt="CSRT 17 and CCLC 27">' +
+      '<img src="/assets/partner-cclc27.png" alt="Calcutta Cosmopolitan Ladies Circle 27">' +
+    "</div>";
+  }
+
   /*
     player : a row from board.players (carries age, history, top_sports,
              achievement, photo_url, sort_order)
     cat    : the matching row from board.categories
     base   : base price to show — pass lot_context.base when a lot is open
   */
-  function card(player, cat, base) {
+  function card(player, cat, base, opts) {
     if (!player) return "";
+    opts = opts || {};
 
     var photo = player.photo_url
       ? '<img src="' + esc(player.photo_url) + '" alt="' + esc(player.name) + '">'
@@ -107,7 +121,7 @@
           box(player.achievement ? esc(player.achievement) : ""),
           { className: player.achievement ? "has-achievement" : "" }) +
 
-      "</div></div>";
+      "</div>" + (opts.logos ? footerStrip() : "") + "</div>";
   }
 
   /* Font Awesome stand-ins for the sport glyphs in the captain design.
@@ -127,8 +141,9 @@
     deciding what to pay, so they get the category, and every sport score
     rather than only the best two.
   */
-  function captainCard(player, cat, base) {
+  function captainCard(player, cat, base, opts) {
     if (!player) return "";
+    opts = opts || {};
 
     var photo = player.photo_url
       ? '<img src="' + esc(player.photo_url) + '" alt="' + esc(player.name) + '">'
@@ -174,7 +189,7 @@
 
         (tiles ? '<div class="otb-tiles">' + tiles + "</div>" : "") +
 
-      "</div></div>";
+      "</div>" + (opts.logos ? footerStrip() : "") + "</div>";
   }
 
   global.OnBlockCard = { render: card, renderCaptain: captainCard, money: money };

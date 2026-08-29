@@ -238,6 +238,44 @@
   .otb-pair { grid-template-columns: 1fr; }
 }
 
+/* ---- branding strip under the card -------------------------
+   Tournament logo, then the three organising bodies. Spans both columns
+   so it reads as the card's own footer rather than a caption on the photo. */
+.otb-footer {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.9rem, 2.4vw, 2rem);
+  margin-top: clamp(0.9rem, 2vw, 1.6rem);
+  padding-top: clamp(0.7rem, 1.6vw, 1.2rem);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  flex-wrap: wrap;
+}
+.otb-footer img {
+  height: clamp(34px, 4.4cqw, 62px);
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.7));
+}
+/* the tournament mark leads, so give it more room than the partners */
+.otb-footer .otb-footer-main { height: clamp(44px, 6cqw, 88px); }
+.otb-footer-rule {
+  width: 1px;
+  align-self: stretch;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+@media (max-width: 780px) {
+  .otb-footer { gap: 0.85rem; }
+  .otb-footer img { height: 30px; }
+  .otb-footer .otb-footer-main { height: 40px; }
+  .otb-footer-rule { display: none; }
+}
+
 /* ---- full screen: the same card, sized for the room --------- */
 .auc-card.auc-fullscreen .otb { max-width: 1500px; margin: 0 auto; width: 100%; }
 .auc-card.auc-fullscreen .otb-photo { aspect-ratio: 3 / 4.1; }
+/* on the big screen the branding should read from the back of the room */
+.auc-card.auc-fullscreen .otb-footer img { height: 66px; }
+.auc-card.auc-fullscreen .otb-footer .otb-footer-main { height: 96px; }
