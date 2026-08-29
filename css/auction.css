@@ -442,7 +442,13 @@ body.auc-fs-open { overflow: hidden; }
   margin-bottom: 1rem;
   overflow: hidden;
 }
+/* The team name is the only thing allowed to give up space; the status
+   pill and the sign-out button keep theirs. Without min-width:0 a flex
+   item will not shrink below its text, so the name pushed the button
+   wide instead of ellipsing. */
 .cap-bar-team {
+  flex: 1 1 auto;
+  min-width: 0;
   font-family: var(--font-heading);
   font-weight: 900;
   font-size: 1.05rem;
@@ -450,16 +456,28 @@ body.auc-fs-open { overflow: hidden; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.cap-bar-sub { font-size: 0.78rem; white-space: nowrap; margin-left: auto; }
-.cap-bar-out { flex-shrink: 0; padding: 0.4rem 0.7rem; font-size: 0.78rem; }
+.cap-bar .auc-status { flex: 0 0 auto; }
+.cap-bar-out {
+  flex: 0 0 auto;
+  width: auto;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.78rem;
+}
 
 @media (max-width: 640px) {
-  .cap-bar { gap: 0.45rem; padding: 0.5rem 0.6rem; }
-  .cap-bar-team { font-size: 0.92rem; }
-  /* the team code is the first thing to go when space runs out */
-  .cap-bar-sub { display: none; }
+  .cap-bar { gap: 0.45rem; padding: 0.45rem 0.55rem; }
+  .cap-bar-team { font-size: 0.9rem; }
+  .cap-bar .auc-status { padding: 0.25rem 0.6rem; font-size: 0.66rem; letter-spacing: 0.5px; }
+  /* Beats the blanket `.auc-btn { width: 100% }` further down this file,
+     which is what stretched the sign-out button across the bar. */
+  .cap-bar .auc-btn.cap-bar-out {
+    width: 38px;
+    min-width: 38px;
+    height: 38px;
+    padding: 0;
+    border-radius: var(--radius-md);
+  }
   .cap-bar-out span { display: none; }
-  .cap-bar-out { padding: 0.4rem 0.55rem; }
 }
 
 /* ---- Other teams: name + category, folded away by default --- */

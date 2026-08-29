@@ -136,7 +136,6 @@
     $("cap-login").style.display = "none";
     $("cap-main").style.display = "block";
     $("cap-team-name").textContent = session.team_name;
-    $("cap-team-sub").textContent = "Team code " + session.team_code;
     api.onChange(render);
     api.refresh().then(function () {
       api.subscribe().startPolling(5000);
