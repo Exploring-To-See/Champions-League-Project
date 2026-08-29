@@ -80,7 +80,10 @@ create table if not exists public.auction_players (
   category_code   text not null references public.auction_categories(code),
   photo_url       text,
   status          text not null default 'available'
-                  check (status in ('available','in_lot','sold')),
+                  -- 'unsold' is a resting state, NOT a return to the pool:
+                  -- the randomizer will not draw the player again, and the
+                  -- organiser places them by hand once the pool is empty.
+                  check (status in ('available','in_lot','sold','unsold')),
   team_id         uuid references public.auction_teams(id) on delete set null,
   sold_price      bigint,
   is_retained     boolean not null default false,
@@ -152,6 +155,41 @@ create index if not exists idx_auction_events_time on public.auction_events(crea
 
 insert into public.auction_config (id) values (1) on conflict (id) do nothing;
 insert into public.auction_state  (id, status) values (1, 'setup') on conflict (id) do nothing;
+
+
+-- ------------------------------------------------------------
+-- 2b) IN-PLACE MIGRATIONS for databases created by an earlier
+--     version of this file. All are no-ops on a fresh install.
+-- ------------------------------------------------------------
+
+-- Allow 'unsold' on installs whose check constraint predates it.
+do $$
+begin
+  alter table public.auction_players drop constraint if exists auction_players_status_check;
+  alter table public.auction_players
+    add constraint auction_players_status_check
+    check (status in ('available','in_lot','sold','unsold'));
+end $$;
+
+-- Renaming a category code has to reach auction_players too, so make the
+-- foreign key cascade before the rename below runs.
+do $$
+begin
+  alter table public.auction_players drop constraint if exists auction_players_category_code_fkey;
+  alter table public.auction_players
+    add constraint auction_players_category_code_fkey
+    foreign key (category_code) references public.auction_categories(code)
+    on update cascade;
+end $$;
+
+-- "Circular" was the wrong word: these are Circlers. The cascade above
+-- carries the rename into every player row.
+update public.auction_categories set code = 'CIRCLER_A' where code = 'CIRCULAR_A';
+update public.auction_categories set code = 'CIRCLER_B' where code = 'CIRCULAR_B';
+update public.auction_categories set label = 'Circler A', player_type = 'circler'
+ where code = 'CIRCLER_A';
+update public.auction_categories set label = 'Circler B', player_type = 'circler'
+ where code = 'CIRCLER_B';
 
 -- ============================================================
 -- 5) DERIVED HELPERS — the auction maths, computed from the
@@ -1054,6 +1092,7 @@ begin
 
   if v_status is null then raise exception 'Player not found'; end if;
   if v_status = 'sold'  then raise exception '% has already been sold', v_name; end if;
+  if v_status = 'in_lot' then raise exception '% is already on the block', v_name; end if;
 
   if exists (select 1 from public.auction_lots where status = 'open') then
     raise exception 'Close the open lot (sell or mark unsold) before opening another';
@@ -1228,6 +1267,114 @@ begin
   return public.auction_board();
 end $$;
 
+-- Put a specific player on the block by their sheet number (1..56).
+--
+-- The counterpart to the randomizer: once the pool is drained, everyone
+-- left in the unsold list has to be placed by hand, and the sheet serial
+-- is the id the organiser is reading off the printed list.
+create or replace function public.auction_open_by_serial(p_serial int)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare v_id uuid; v_n int;
+begin
+  perform public.auction_require_admin();
+
+  select count(*) into v_n
+    from public.auction_players p
+    join public.auction_categories c on c.code = p.category_code
+   where p.sort_order = p_serial and not p.is_retained and not c.is_retained;
+
+  if v_n = 0 then
+    raise exception 'No player carries number %', p_serial;
+  elsif v_n > 1 then
+    raise exception 'Number % is on more than one player — fix the pool first', p_serial;
+  end if;
+
+  select p.id into v_id
+    from public.auction_players p
+    join public.auction_categories c on c.code = p.category_code
+   where p.sort_order = p_serial and not p.is_retained and not c.is_retained;
+
+  return public.auction_open_lot(v_id);
+end $$;
+
+-- Award the player on the block to a team at a price the organiser types in.
+--
+-- Bidding happens in the room, not in this app, so there is no bid ladder to
+-- respect here. What IS still enforced, because it decides whether a squad
+-- can be completed at all: the team must be allowed to buy in this category
+-- (rules 2 and 3), a compulsory fill must go to the pinned team at base, the
+-- price cannot be below base, and it cannot exceed the team's max bid —
+-- purse minus the reserve it must keep to fill its remaining minimums.
+create or replace function public.auction_award_lot(
+  p_lot uuid, p_team uuid, p_price bigint)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  v_lot record; v_cat text; v_base bigint; v_name text; v_team_name text;
+  v_forced uuid; v_max bigint; v_unmet int;
+begin
+  perform public.auction_require_admin();
+
+  select * into v_lot from public.auction_lots where id = p_lot for update;
+  if v_lot.id is null       then raise exception 'Lot not found'; end if;
+  if v_lot.status <> 'open' then raise exception 'This player is already closed'; end if;
+
+  select p.category_code, p.name, c.base_price into v_cat, v_name, v_base
+    from public.auction_players p
+    join public.auction_categories c on c.code = p.category_code
+   where p.id = v_lot.player_id;
+
+  select name into v_team_name from public.auction_teams where id = p_team;
+  if v_team_name is null then raise exception 'Pick a team'; end if;
+
+  if p_price is null or p_price < v_base then
+    raise exception 'Price cannot be below the base of %', public.auction_money(v_base);
+  end if;
+
+  v_forced := public.auction_forced_team(v_cat);
+  if v_forced is not null then
+    if v_forced <> p_team then
+      raise exception 'Compulsory fill — only % may take this player',
+        (select name from public.auction_teams where id = v_forced);
+    end if;
+    if p_price <> v_base then
+      raise exception 'Compulsory fill must be taken at base %', public.auction_money(v_base);
+    end if;
+  else
+    v_unmet := public.auction_unmet(p_team, v_cat);
+    if v_unmet = 0 and not public.auction_surplus_feasible(p_team, v_cat) then
+      raise exception '% has met this minimum and the category is full for surplus', v_team_name;
+    end if;
+    v_max := public.auction_max_bid(p_team, v_cat);
+    if p_price > v_max then
+      raise exception '% exceeds %''s max bid of % (purse % less the % it must keep for its remaining minimums)',
+        public.auction_money(p_price), v_team_name, public.auction_money(v_max),
+        public.auction_money(public.auction_purse_left(p_team)),
+        public.auction_money(public.auction_reserve(p_team, v_cat));
+    end if;
+  end if;
+
+  update public.auction_players
+     set status = 'sold', team_id = p_team, sold_price = p_price
+   where id = v_lot.player_id;
+
+  update public.auction_teams
+     set purse_spent = purse_spent + p_price
+   where id = p_team;
+
+  update public.auction_lots
+     set status = 'sold', winning_team_id = p_team, final_price = p_price,
+         current_bid = p_price, current_bidder_id = p_team, closed_at = now()
+   where id = p_lot;
+
+  update public.auction_state set current_lot_id = null, updated_at = now() where id = 1;
+
+  insert into public.auction_events (kind, message, payload)
+  values ('sold', v_name || ' SOLD to ' || v_team_name || ' for ' || public.auction_money(p_price),
+          jsonb_build_object('player_id', v_lot.player_id, 'team_id', p_team, 'amount', p_price));
+
+  return public.auction_board();
+end $$;
+
 -- Rule 6: SOLD. Deduct from purse, assign, update category counts.
 create or replace function public.auction_sell_lot(p_lot uuid)
 returns jsonb language plpgsql security definer set search_path = public as $$
@@ -1284,8 +1431,11 @@ begin
 
   select name into v_name from public.auction_players where id = v_lot.player_id;
 
+  -- Park, do not return to the pool. The randomizer draws only from
+  -- 'available', so an unsold player can never come up a second time;
+  -- the organiser places them by hand from the unsold list afterwards.
   update public.auction_players
-     set status = 'available', unsold_count = unsold_count + 1
+     set status = 'unsold', unsold_count = unsold_count + 1
    where id = v_lot.player_id;
 
   update public.auction_lots
@@ -1295,7 +1445,7 @@ begin
   update public.auction_state set current_lot_id = null, updated_at = now() where id = 1;
 
   insert into public.auction_events (kind, message, payload)
-  values ('unsold', v_name || ' went UNSOLD — returned to the pool',
+  values ('unsold', v_name || ' went UNSOLD — moved to the unsold list',
           jsonb_build_object('player_id', v_lot.player_id));
 
   return public.auction_board();
@@ -1344,6 +1494,8 @@ begin
   update public.auction_state set status = 'setup', current_lot_id = null, updated_at = now() where id = 1;
   delete from public.auction_bids;
   delete from public.auction_lots;
+  -- everything that is not a retained captain goes back into the pool,
+  -- including anything parked in the unsold list
   update public.auction_players
      set status = 'available', team_id = null, sold_price = null, unsold_count = 0
    where is_retained = false;
@@ -1433,6 +1585,8 @@ grant execute on function
   public.auction_set_status(text),
   public.auction_open_lot(uuid),
   public.auction_draw_random(),
+  public.auction_open_by_serial(int),
+  public.auction_award_lot(uuid, uuid, bigint),
   public.auction_sell_lot(uuid),
   public.auction_unsold_lot(uuid),
   public.auction_revert_sale(uuid),
@@ -1492,12 +1646,12 @@ end $$;
 insert into public.auction_categories
   (code, label, short_code, base_price, player_type, pool_count, min_per_team, is_retained, color, sort_order)
 values
-  ('CVC',        'Captain & Vice Captain', 'CVC',    0,      'retained', 8,  2, true,  '#f5c518', 0),
-  ('CIRCULAR_A', 'Circular A',             'CIR-A',  200000, 'circular', 8,  2, false, '#00e5ff', 1),
-  ('CIRCULAR_B', 'Circular B',             'CIR-B',  100000, 'circular', 14, 3, false, '#38bdf8', 2),
-  ('TABLER_A',   'Tabler A',               'TAB-A',  500000, 'tabler',   12, 3, false, '#ff3b5c', 3),
-  ('TABLER_B',   'Tabler B',               'TAB-B',  300000, 'tabler',   12, 3, false, '#fb7185', 4),
-  ('TABLER_C',   'Tabler C',               'TAB-C',  200000, 'tabler',   10, 2, false, '#a855f7', 5)
+  ('CVC',       'Captain & Vice Captain', 'CVC',    0,      'retained', 8,  2, true,  '#f5c518', 0),
+  ('CIRCLER_A', 'Circler A',              'CIR-A',  300000, 'circler',  8,  2, false, '#00e5ff', 1),
+  ('CIRCLER_B', 'Circler B',              'CIR-B',  200000, 'circler',  14, 3, false, '#38bdf8', 2),
+  ('TABLER_A',  'Tabler A',               'TAB-A',  400000, 'tabler',   12, 3, false, '#ff3b5c', 3),
+  ('TABLER_B',  'Tabler B',               'TAB-B',  300000, 'tabler',   12, 3, false, '#fb7185', 4),
+  ('TABLER_C',  'Tabler C',               'TAB-C',  200000, 'tabler',   10, 2, false, '#a855f7', 5)
 on conflict (code) do update set
   label = excluded.label, short_code = excluded.short_code,
   base_price = excluded.base_price, player_type = excluded.player_type,

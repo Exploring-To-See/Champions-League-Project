@@ -43,10 +43,8 @@
     renderStatus();
     renderStats();
     renderLot();
-    renderCaptains();
-    renderTeams();
+    renderTeamBoard();
     renderFeed();
-    renderSquads();
     renderAllPlayers();
     renderPool();
   }
@@ -66,20 +64,23 @@
       return c && !c.is_retained;
     });
     var sold = auctionable.filter(function (p) { return p.status === "sold"; });
+    var inPool = auctionable.filter(function (p) { return p.status === "available"; });
+    var unsold = auctionable.filter(function (p) { return p.status === "unsold"; });
     var spend = board.teams.reduce(function (a, t) { return a + t.purse_spent; }, 0);
     var top = board.players.filter(function (p) { return p.status === "sold" && p.sold_price; })
       .sort(function (a, b) { return b.sold_price - a.sold_price; })[0];
 
     $("pub-stats").innerHTML =
-      '<div class="auc-stat"><b>' + sold.length + " / " + auctionable.length + "</b><span>Lots sold</span></div>" +
+      '<div class="auc-stat"><b>' + sold.length + " / " + auctionable.length + "</b><span>Players sold</span></div>" +
       '<div class="auc-stat"><b style="color:var(--primary-gold);">' + shortMoney(spend) +
         "</b><span>Total spend</span></div>" +
       '<div class="auc-stat"><b>' + (top ? shortMoney(top.sold_price) : "—") +
         "</b><span>Top buy</span></div>" +
       '<div class="auc-stat"><b style="font-size:1rem; line-height:1.5;">' +
         (top ? esc(top.name) : "—") + "</b><span>Most expensive</span></div>" +
-      '<div class="auc-stat"><b>' + board.teams.length + "</b><span>Teams</span></div>" +
-      '<div class="auc-stat"><b>' + (auctionable.length - sold.length) + "</b><span>Still in pool</span></div>";
+      '<div class="auc-stat"><b>' + inPool.length + "</b><span>Still in pool</span></div>" +
+      '<div class="auc-stat"><b style="color:' + (unsold.length ? "var(--primary-red)" : "inherit") +
+        ';">' + unsold.length + "</b><span>Unsold</span></div>";
   }
 
   function renderLot() {
@@ -153,70 +154,117 @@
       "</div></div>";
   }
 
-  /* Who leads each team, and whether their sign-in is live. `captains`
-     reports only that a password EXISTS — the hash never leaves Postgres. */
-  function renderCaptains() {
+  /* Captains, wallet and squad for all four teams in one grid, teams as
+     columns. Three separate cards meant scrolling between facts that are
+     only useful side by side — who has money left, who still needs what,
+     and who they have already bought. */
+  function renderTeamBoard() {
     var accounts = board.captains || [];
-    if (!accounts.length) {
-      $("pub-captains").innerHTML =
-        '<div class="auc-muted">Teams have not been set up yet.</div>';
+    var teams = board.teams || [];
+    if (!teams.length) {
+      $("pub-teamboard").innerHTML =
+        '<tbody><tr><td class="auc-muted" style="padding:1.5rem;">' +
+        "Teams have not been set up yet.</td></tr></tbody>";
       return;
     }
 
-    $("pub-captains").innerHTML = accounts.map(function (a) {
-      var lot = board.current_lot;
-      var leading = lot && lot.current_bidder_id === a.team_id;
-      /* Provisioning state only. When the password was issued and who is
-         signed in right now stay in the organiser console. */
-      var signIn = a.has_password
-        ? '<span class="auc-pill sold">SIGN-IN ACTIVE</span>'
-        : '<span class="auc-pill in_lot">AWAITING PASSWORD</span>';
+    /* captains come from a separate roster; index it by team */
+    var acc = {};
+    accounts.forEach(function (a) { acc[a.team_id] = a; });
 
-      return '<div class="auc-team' + (leading ? " leading" : "") +
-        '" style="--team-color:' + esc(a.color) + '">' +
-        '<div class="auc-team-name"><span>' + esc(a.team_name) + "</span>" +
-          '<span class="auc-muted" style="font-size:0.72rem;">' + esc(a.team_code) + "</span>" +
-        "</div>" +
-        '<div class="auc-kv"><span><i class="fa-solid fa-crown" style="color:var(--primary-gold);"></i> Captain</span>' +
-          "<span>" + (a.captain ? esc(a.captain) : '<span class="auc-muted">not assigned</span>') +
-          "</span></div>" +
-        '<div class="auc-kv"><span><i class="fa-solid fa-user-shield"></i> Vice Captain</span>' +
-          "<span>" + (a.vice_captain ? esc(a.vice_captain) : '<span class="auc-muted">not assigned</span>') +
-          "</span></div>" +
-        '<div class="auc-kv"><span>Wallet</span><span style="color:var(--primary-gold);">' +
-          money(a.purse_left) + "</span></div>" +
-        '<div class="auc-kv"><span>Bought</span><span>' + a.squad_size + " players</span></div>" +
-        '<div class="auc-chips" style="margin-top:0.6rem;">' + signIn + "</div>" +
-        "</div>";
-    }).join("");
-  }
+    var lot = board.current_lot;
 
-  function renderTeams() {
-    $("pub-teams").innerHTML = board.teams.map(function (t) {
-      var lot = board.current_lot;
+    function cells(render) {
+      return teams.map(function (t) {
+        return '<td style="vertical-align:top;">' + render(t, acc[t.id] || {}) + "</td>";
+      }).join("");
+    }
+
+    var head = "<thead><tr><th></th>" + teams.map(function (t) {
       var leading = lot && lot.current_bidder_id === t.id;
+      return '<th style="color:' + esc(t.color) + '; font-size:0.95rem;">' +
+        esc(t.name) +
+        (leading ? '<div style="color:var(--primary-gold); font-size:0.68rem;">&#9670; LEADING</div>' : "") +
+        "</th>";
+    }).join("") + "</tr></thead>";
+
+    function label(txt) {
+      return '<th scope="row" style="color:var(--text-muted); font-size:0.78rem; ' +
+             'text-transform:uppercase; letter-spacing:0.5px; white-space:nowrap;">' + txt + "</th>";
+    }
+
+    var rows = "";
+
+    rows += "<tr>" + label("Captain") + cells(function (t, a) {
+      return a.captain ? "<b>" + esc(a.captain) + "</b>"
+                       : '<span class="auc-muted">not assigned</span>';
+    }) + "</tr>";
+
+    rows += "<tr>" + label("Vice Captain") + cells(function (t, a) {
+      return a.vice_captain ? "<b>" + esc(a.vice_captain) + "</b>"
+                            : '<span class="auc-muted">not assigned</span>';
+    }) + "</tr>";
+
+    rows += "<tr>" + label("Wallet left") + cells(function (t) {
       var pct = t.purse_total ? (t.purse_left / t.purse_total) * 100 : 0;
-      var chips = board.categories.map(function (c) {
+      return '<b style="color:var(--primary-gold); font-size:1.05rem;">' + money(t.purse_left) + "</b>" +
+             '<div class="auc-progress" style="margin:0.4rem 0 0;"><div style="width:' +
+             pct.toFixed(1) + '%"></div></div>';
+    }) + "</tr>";
+
+    rows += "<tr>" + label("Spent") + cells(function (t) {
+      return money(t.purse_spent) +
+        '<div class="auc-muted" style="font-size:0.72rem;">of ' + money(t.purse_total) + "</div>";
+    }) + "</tr>";
+
+    rows += "<tr>" + label("Squad size") + cells(function (t) {
+      return "<b>" + t.squad_size + "</b>" +
+        (t.total_unmet
+          ? ' <span style="color:var(--primary-red); font-size:0.75rem;">(' +
+            t.total_unmet + " short)</span>"
+          : ' <span style="color:#22c55e; font-size:0.75rem;">complete</span>');
+    }) + "</tr>";
+
+    rows += "<tr>" + label("Requirements") + cells(function (t) {
+      return '<div class="auc-chips">' + board.categories.map(function (c) {
         var own = (t.owned && t.owned[c.code]) || 0;
         var un = (t.unmet && t.unmet[c.code]) || 0;
         return '<span class="auc-chip ' + (un > 0 ? "short" : "met") + '">' +
           esc(c.short_code) + " " + own + "/" + c.min_per_team + "</span>";
-      }).join("");
+      }).join("") + "</div>";
+    }) + "</tr>";
 
-      return '<div class="auc-team' + (leading ? " leading" : "") +
-        '" style="--team-color:' + esc(t.color) + '">' +
-        '<div class="auc-team-name"><span>' + esc(t.name) + "</span>" +
-          (leading ? '<span style="color:var(--primary-gold); font-size:0.7rem;">◆ LEADING</span>' : "") +
-        "</div>" +
-        '<div class="auc-kv"><span>Purse left</span><span style="color:var(--primary-gold);">' +
-          money(t.purse_left) + "</span></div>" +
-        '<div class="auc-kv"><span>Spent</span><span>' + money(t.purse_spent) + "</span></div>" +
-        '<div class="auc-kv"><span>Total purse</span><span>' + money(t.purse_total) + "</span></div>" +
-        '<div class="auc-kv"><span>Squad</span><span>' + t.squad_size + "</span></div>" +
-        '<div class="auc-progress"><div style="width:' + pct.toFixed(1) + '%"></div></div>' +
-        '<div class="auc-chips">' + chips + "</div>" +
-        "</div>";
-    }).join("");
+    rows += "<tr>" + label("Squad") + cells(function (t) {
+      var squad = board.players.filter(function (p) {
+        return p.team_id === t.id && p.status === "sold";
+      }).sort(function (a, b) { return (a.sort_order || 0) - (b.sort_order || 0); });
+
+      if (!squad.length) return '<span class="auc-muted">No players yet</span>';
+
+      return '<ul class="auc-squad-list" style="margin:0;">' + squad.map(function (p) {
+        var c = catOf(p.category);
+        return "<li><span>" +
+          (p.is_retained ? "" : '<span style="font-family:monospace; color:var(--primary-cyan);">#' +
+                                p.sort_order + "</span> ") +
+          esc(p.name) +
+          (p.retained_role
+            ? ' <span class="auc-squad-role">' + esc(p.retained_role.replace("_", " ")) + "</span>"
+            : "") +
+          '<br><span class="auc-muted" style="font-size:0.72rem;">' +
+            esc(c ? c.short_code : p.category) + "</span></span>" +
+          "<span style='font-weight:800;'>" +
+            (p.is_retained ? '<span class="auc-muted">retained</span>' : money(p.sold_price || 0)) +
+          "</span></li>";
+      }).join("") + "</ul>";
+    }) + "</tr>";
+
+    rows += "<tr>" + label("Sign-in") + cells(function (t, a) {
+      return a.has_password
+        ? '<span class="auc-pill sold">ACTIVE</span>'
+        : '<span class="auc-pill in_lot">AWAITING PASSWORD</span>';
+    }) + "</tr>";
+
+    $("pub-teamboard").innerHTML = head + "<tbody>" + rows + "</tbody>";
   }
 
   /* The whole pool in one table: every player, and which captain bought
@@ -313,36 +361,18 @@
     }).join("") : '<div class="auc-muted">The auction has not started yet.</div>';
   }
 
-  function renderSquads() {
-    $("pub-squads").innerHTML = board.teams.map(function (t) {
-      var squad = board.players.filter(function (p) {
-        return p.team_id === t.id && p.status === "sold";
-      });
-      return '<div class="auc-card" style="margin:0; border-top:3px solid ' + esc(t.color) + ';">' +
-        '<div class="auc-card-title" style="color:' + esc(t.color) + '; font-size:0.95rem;">' +
-          esc(t.name) + '<span class="auc-pill available">' + squad.length + " players</span></div>" +
-        '<ul class="auc-squad-list">' + (squad.length ? squad.map(function (p) {
-          var c = catOf(p.category);
-          return "<li><span>" + esc(p.name) +
-            (p.retained_role ? ' <span class="auc-squad-role">' +
-              esc(p.retained_role.replace("_", " ")) + "</span>" : "") +
-            '<br><span class="auc-muted" style="font-size:0.72rem;">' +
-              esc(c ? c.short_code : p.category) + "</span></span>" +
-            "<span style='font-weight:800;'>" + money(p.sold_price || 0) + "</span></li>";
-        }).join("") : '<li class="auc-muted">No players yet</li>') + "</ul></div>";
-    }).join("");
-  }
-
   function renderPool() {
     $("pub-pool").innerHTML = board.categories.map(function (c) {
-      var inPool = board.players.filter(function (p) { return p.category === c.code; });
-      var sold = inPool.filter(function (p) { return p.status === "sold"; }).length;
-      var pct = inPool.length ? (sold / inPool.length) * 100 : 0;
+      var inCat = board.players.filter(function (p) { return p.category === c.code; });
+      var sold = inCat.filter(function (p) { return p.status === "sold"; }).length;
+      var uns = inCat.filter(function (p) { return p.status === "unsold"; }).length;
+      var pct = inCat.length ? (sold / inCat.length) * 100 : 0;
       return "<tr>" +
         '<td><b style="color:' + esc(c.color) + '">' + esc(c.label) + "</b></td>" +
         "<td>" + money(c.base_price) + "</td>" +
         "<td>" + sold + "</td>" +
-        "<td>" + (inPool.length - sold) + "</td>" +
+        "<td>" + (inCat.length - sold - uns) + "</td>" +
+        '<td style="color:' + (uns ? "var(--primary-red)" : "var(--text-muted)") + ';">' + uns + "</td>" +
         '<td style="min-width:120px;"><div class="auc-progress" style="margin:0;">' +
           '<div style="width:' + pct.toFixed(1) + '%"></div></div></td>' +
         "</tr>";

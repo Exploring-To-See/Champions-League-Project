@@ -36,23 +36,23 @@ window.CLP_AUCTION_CONFIG = {
       color: "#f5c518"
     },
     {
-      code: "CIRCULAR_A",
-      label: "Circular A",
+      code: "CIRCLER_A",
+      label: "Circler A",
       short: "CIR-A",
-      type: "circular",
+      type: "circler",
       pool: 8,
-      base: 200000,
+      base: 300000,
       minPerTeam: 2,
       retained: false,
       color: "#00e5ff"
     },
     {
-      code: "CIRCULAR_B",
-      label: "Circular B",
+      code: "CIRCLER_B",
+      label: "Circler B",
       short: "CIR-B",
-      type: "circular",
+      type: "circler",
       pool: 14,
-      base: 100000,
+      base: 200000,
       minPerTeam: 3,
       retained: false,
       color: "#38bdf8"
@@ -63,7 +63,7 @@ window.CLP_AUCTION_CONFIG = {
       short: "TAB-A",
       type: "tabler",
       pool: 12,
-      base: 500000,
+      base: 400000,
       minPerTeam: 3,
       retained: false,
       color: "#ff3b5c"

@@ -554,6 +554,7 @@
             <button class="auc-btn auc-btn-green" id="auc-btn-start"><i class="fa-solid fa-play"></i> Start</button>
             <button class="auc-btn auc-btn-ghost" id="auc-btn-pause"><i class="fa-solid fa-pause"></i> Pause</button>
             <button class="auc-btn auc-btn-gold"  id="auc-btn-end"><i class="fa-solid fa-flag-checkered"></i> End Auction</button>
+            <button class="auc-btn auc-btn-red"   id="auc-btn-reset-top"><i class="fa-solid fa-arrows-rotate"></i> Reset Auction</button>
           </div>
         </div>
         <div class="auc-progress"><div id="auc-progress-bar" style="width:0%"></div></div>
@@ -605,10 +606,49 @@
 
           <div class="auc-muted" style="margin-top:0.6rem;" id="auc-draw-note"></div>
 
+          <!-- Manual entry: the only way to bring up an unsold player, and
+               a fallback whenever a specific number is needed. -->
+          <div class="auc-form-row" style="margin-top:1.2rem; padding-top:1rem;
+               border-top:1px solid rgba(255,255,255,0.08);">
+            <div class="auc-field">
+              <label for="auc-manual-serial">Or open a specific player by ID</label>
+              <input type="number" id="auc-manual-serial" min="1" max="56"
+                     placeholder="Player ID (1–56)" autocomplete="off">
+            </div>
+            <div class="auc-field">
+              <button class="auc-btn auc-btn-ghost" id="auc-btn-open-serial" style="width:100%;">
+                <i class="fa-solid fa-hashtag"></i> Open Player
+              </button>
+            </div>
+          </div>
+          <div class="auc-muted" id="auc-manual-note" style="margin-top:0.4rem;"></div>
+
           <div style="margin-top:1rem;">
             <div class="auc-bid-label">Numbers drawn so far</div>
             <div class="auc-chips" id="auc-draw-history"
                  style="margin-top:0.45rem; max-height:120px; overflow-y:auto;"></div>
+          </div>
+        </div>
+
+        <!-- Unsold: parked, not back in the pool -->
+        <div class="auc-card">
+          <div class="auc-card-title">
+            <i class="fa-solid fa-box-archive"></i> Unsold Players
+            <span class="auc-pill in_lot" id="auc-unsold-count"></span>
+          </div>
+          <div class="auc-muted" style="margin-bottom:0.8rem;">
+            These went unsold and are <b>out of the randomizer</b> — it will never draw them
+            again. Once the pool is empty, place each one by hand: enter their player ID above,
+            or press Re-open here.
+          </div>
+          <div class="auc-table-box">
+            <table class="auc-table">
+              <thead><tr>
+                <th>ID</th><th>Player</th><th>Category</th><th>Base</th>
+                <th>Times unsold</th><th>Action</th>
+              </tr></thead>
+              <tbody id="auc-unsold-body"></tbody>
+            </table>
           </div>
         </div>
 
@@ -675,11 +715,20 @@
               <label for="auc-pool-filter">Category</label>
               <select id="auc-pool-filter"><option value="ALL">All categories</option></select>
             </div>
+            <div class="auc-field">
+              <label for="auc-pool-status">Status</label>
+              <select id="auc-pool-status">
+                <option value="ALL">All</option>
+                <option value="sold">Sold</option>
+                <option value="available">Still in pool</option>
+                <option value="unsold">Unsold</option>
+              </select>
+            </div>
           </div>
           <div class="auc-table-box" style="max-height:560px; overflow-y:auto;">
             <table class="auc-table">
               <thead><tr>
-                <th>Player</th><th>Category</th><th>Status</th>
+                <th>ID</th><th>Player</th><th>Category</th><th>Status</th>
                 <th>Team</th><th>Price</th><th>Retained</th><th>Actions</th>
               </tr></thead>
               <tbody id="auc-pool-body"></tbody>

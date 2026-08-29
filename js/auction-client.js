@@ -129,6 +129,11 @@
     openLot:        function (playerId)       { return this.rpc("auction_open_lot", { p_player: playerId }); },
     /* Server-side draw — the browser never chooses who comes up next. */
     drawRandom:     function ()               { return this.rpc("auction_draw_random"); },
+    openBySerial:   function (serial)         { return this.rpc("auction_open_by_serial", { p_serial: serial }); },
+    /* Bidding happens in the room; the organiser records the result. */
+    awardLot:       function (lot, team, price) {
+      return this.rpc("auction_award_lot", { p_lot: lot, p_team: team, p_price: price });
+    },
     sellLot:        function (lotId)          { return this.rpc("auction_sell_lot", { p_lot: lotId }); },
     unsoldLot:      function (lotId)          { return this.rpc("auction_unsold_lot", { p_lot: lotId }); },
     revertSale:     function (playerId)       { return this.rpc("auction_revert_sale", { p_player: playerId }); },

@@ -51,6 +51,51 @@
     }
   }
 
+  /* ---------- keeping typed input alive across refreshes ----
+     The board reloads every 7 seconds and on every realtime push, and each
+     reload used to rebuild these panels with innerHTML. Anything half-typed
+     — a sell price, a captain password, a team name — was destroyed
+     mid-keystroke, which is why entries kept "resetting".
+
+     So: never rebuild a panel while the operator is working inside it.
+     Mark it instead, and redraw the moment focus leaves.               */
+  var deferred = {};
+
+  function holdsFocus(host) {
+    var a = document.activeElement;
+    if (!a || !host) return false;
+    if (a === document.body) return false;
+    /* An open <select> keeps focus, so this covers dropdowns too. */
+    return host.contains(a);
+  }
+
+  /* Wraps a render function: draws now, or defers until the operator
+     clicks away. `key` just needs to be stable per panel. */
+  function renderInto(key, hostId, build) {
+    var host = $(hostId);
+    if (!host) return;
+
+    if (holdsFocus(host)) {
+      if (!deferred[key]) {
+        deferred[key] = true;
+        host.addEventListener("focusout", function onOut() {
+          /* focusout fires before focus lands on its next target, so let
+             the browser settle before deciding the panel is really idle. */
+          setTimeout(function () {
+            if (holdsFocus(host)) return;
+            host.removeEventListener("focusout", onOut);
+            deferred[key] = false;
+            if (board) build(host);
+          }, 60);
+        });
+      }
+      return;
+    }
+
+    deferred[key] = false;
+    build(host);
+  }
+
   function catOf(code) {
     if (!board) return null;
     for (var i = 0; i < board.categories.length; i++) {
@@ -133,6 +178,7 @@
     renderCurrentLot();
     renderTeamPanels();
     renderRandomizer();
+    renderUnsold();
     renderFeed();
     renderPool();
     renderTeamsEditor();
@@ -299,53 +345,77 @@
               ctx.remaining + '</div></div>' +
         '</div>' +
         compulsoryBanner +
+
+        /* Bidding happens in the room. The organiser records the outcome:
+           pick the winning team, type the price it went for, allocate. */
         '<div class="auc-form-row" style="margin-top:1.1rem;">' +
-          '<div class="auc-field"><label for="auc-custom-bid">Organiser custom bid (respects max bid)</label>' +
-            '<input type="number" id="auc-custom-bid" step="1000" placeholder="' + ctx.next_bid + '"></div>' +
-          '<div class="auc-field"><label for="auc-custom-team">On behalf of</label>' +
-            '<select id="auc-custom-team">' + ctx.teams.map(function (t) {
-              return '<option value="' + esc(t.team_id) + '"' + (t.eligible ? "" : " disabled") + '>' +
-                     esc(t.team_name) + (t.eligible ? "" : " — ineligible") + '</option>';
-            }).join("") + '</select></div>' +
-          '<div class="auc-field"><button class="auc-btn auc-btn-cyan" id="auc-btn-custom-bid" style="width:100%;">' +
-            '<i class="fa-solid fa-hand"></i> Place Bid</button></div>' +
+          '<div class="auc-field"><label for="auc-award-team">Sold to</label>' +
+            '<select id="auc-award-team">' +
+              '<option value="">— pick the winning team —</option>' +
+              ctx.teams.map(function (t) {
+                return '<option value="' + esc(t.team_id) + '"' + (t.eligible ? "" : " disabled") + '>' +
+                       esc(t.team_name) +
+                       (t.eligible ? " — max " + money(t.max_bid) : " — cannot buy in this category") +
+                       '</option>';
+              }).join("") + '</select></div>' +
+          '<div class="auc-field"><label for="auc-award-price">Final price</label>' +
+            '<input type="number" id="auc-award-price" step="1000" min="' + ctx.base +
+              '" placeholder="' + ctx.base + '"></div>' +
+          '<div class="auc-field"><button class="auc-btn auc-btn-green" id="auc-btn-award" style="width:100%;">' +
+            '<i class="fa-solid fa-gavel"></i> SELL TO TEAM</button></div>' +
         '</div>' +
+        '<div class="auc-muted" id="auc-award-hint" style="margin-top:0.5rem;">' +
+          'Base ' + money(ctx.base) + '. The price is checked against the max bid of the ' +
+          'team you pick, so every squad can always still fill its minimums.</div>' +
         '<div class="auc-btn-row" style="margin-top:1rem;">' +
-          '<button class="auc-btn auc-btn-green" id="auc-btn-sell"' +
-            (lot.current_bidder_id ? "" : " disabled") + '>' +
-            '<i class="fa-solid fa-gavel"></i> SOLD' +
-            (leader ? " — " + esc(leader.name) + " " + money(lot.current_bid) : "") + '</button>' +
           '<button class="auc-btn auc-btn-red" id="auc-btn-unsold">' +
             '<i class="fa-solid fa-ban"></i> Mark Unsold</button>' +
         '</div>' +
       '</div></div>';
 
-    $("auc-btn-sell").addEventListener("click", function () {
+    /* Live max-bid readout as the operator changes team. */
+    var teamSel = $("auc-award-team");
+    var priceInput = $("auc-award-price");
+    function showLimit() {
+      var row = null;
+      (ctx.teams || []).forEach(function (t) { if (t.team_id === teamSel.value) row = t; });
+      var hint = $("auc-award-hint");
+      if (!row) {
+        hint.innerHTML = "Base " + money(ctx.base) + ". The price is checked against the " +
+          "team's max bid, so a squad can always still fill its minimums.";
+        return;
+      }
+      hint.innerHTML = esc(row.team_name) + " — purse " + money(row.purse_left) +
+        ", must keep " + money(row.reserve) + " for remaining minimums, so the most it " +
+        "can pay for this player is <b>" + money(row.max_bid) + "</b>.";
+      priceInput.max = row.max_bid;
+    }
+    if (teamSel) teamSel.addEventListener("change", showLimit);
+
+    $("auc-btn-award").addEventListener("click", function () {
+      var teamId = teamSel.value;
+      var price = parseInt(priceInput.value, 10);
+      if (!teamId) { toast("Pick the winning team", "err"); return; }
+      if (!price || isNaN(price)) { toast("Enter the final price", "err"); return; }
+      var tName = teamSel.options[teamSel.selectedIndex].text.split(" — ")[0];
+      if (!confirm("Sell " + player.name + " to " + tName + " for " +
+                   money(price) + "?")) return;
       var btn = this;
       busy(btn, true, "Selling…");
-      api.sellLot(lot.id).then(function () {
-        toast("Sold to " + (leader ? leader.name : "team"));
-      }).catch(fail).finally(function () { busy(btn, false); });
+      api.awardLot(lot.id, teamId, price)
+        .then(function () { toast(player.name + " sold to " + tName + " for " + money(price)); })
+        .catch(fail).finally(function () { busy(btn, false); });
     });
 
     $("auc-btn-unsold").addEventListener("click", function () {
-      if (!confirm(player.name + " goes unsold and returns to the available pool. Continue?")) return;
+      if (!confirm(player.name + " goes UNSOLD. They move to the unsold list and the " +
+                   "randomizer will not draw them again — you place them by hand later " +
+                   "using their player ID. Continue?")) return;
       var btn = this;
       busy(btn, true, "Saving…");
       api.unsoldLot(lot.id).then(function () {
-        toast(player.name + " returned to the pool");
+        toast(player.name + " moved to the unsold list");
       }).catch(fail).finally(function () { busy(btn, false); });
-    });
-
-    $("auc-btn-custom-bid").addEventListener("click", function () {
-      var amount = parseInt($("auc-custom-bid").value, 10);
-      var teamId = $("auc-custom-team").value;
-      if (!amount || isNaN(amount)) { toast("Enter a bid amount", "err"); return; }
-      var btn = this;
-      busy(btn, true, "Bidding…");
-      api.placeBid(lot.id, teamId, amount, null, "admin")
-        .then(function () { toast("Bid recorded"); })
-        .catch(fail).finally(function () { busy(btn, false); });
     });
   }
 
@@ -422,12 +492,21 @@
     var note;
     if (board.state.status === "setup") note = "Press Start to go live before drawing.";
     else if (board.state.status === "completed") note = "The auction is closed.";
-    else if (open) note = "Finish the player on the block (SOLD or Unsold) before drawing again.";
-    else if (!pool.length) note = "Every player has been drawn.";
-    else note = "Draws a number from the remaining " + pool.length +
-      " at random, across all categories. A number cannot come up twice unless " +
-      "the player goes unsold and returns to the pool.";
+    else if (open) note = "Finish the player on the block (sell or mark unsold) before drawing again.";
+    else if (!pool.length) {
+      var parked = unsoldPlayers().length;
+      note = parked
+        ? "The pool is empty. " + parked + " player(s) went unsold — place them by hand " +
+          "using their player ID below, or Re-open from the unsold list."
+        : "Every player has been drawn and placed.";
+    } else note = "Draws one of the remaining " + pool.length +
+      " at random, across all categories. A number never comes up twice: drawing " +
+      "takes the player out of the pool for good, sold or unsold.";
     $("auc-draw-note").textContent = note;
+
+    $("auc-manual-note").textContent = board.state.status === "setup"
+      ? "Available once the auction is live."
+      : "Any player ID from 1 to 56 — the only way to bring an unsold player back up.";
 
     /* The player currently on the block is the live draw result. */
     var host = $("auc-draw-display");
@@ -466,6 +545,53 @@
                  p.sort_order + "</span>";
         }).join("")
       : '<span class="auc-muted">None yet.</span>';
+  }
+
+  /* ---------- unsold list ----------------------------------- */
+
+  /* Parked, not pooled: the randomizer draws only from 'available', so
+     anything here has to be brought back by hand. */
+  function unsoldPlayers() {
+    return board.players.filter(function (p) {
+      var c = catOf(p.category);
+      return c && !c.is_retained && !p.is_retained && p.status === "unsold";
+    }).sort(function (a, b) { return a.sort_order - b.sort_order; });
+  }
+
+  function renderUnsold() {
+    var rows = unsoldPlayers();
+    var open = !!board.current_lot;
+    var live = board.state.status === "live" || board.state.status === "paused";
+
+    $("auc-unsold-count").textContent = rows.length + (rows.length === 1 ? " player" : " players");
+
+    if (holdsFocus($("auc-unsold-body"))) return;
+    $("auc-unsold-body").innerHTML = rows.length ? rows.map(function (p) {
+      var c = catOf(p.category);
+      return "<tr>" +
+        '<td style="font-family:monospace; font-weight:800; color:var(--primary-gold);">' +
+          p.sort_order + "</td>" +
+        "<td><b>" + esc(p.name) + "</b></td>" +
+        '<td style="color:' + esc(c ? c.color : "#00e5ff") + '; font-weight:700;">' +
+          esc(c ? c.label : p.category) + "</td>" +
+        "<td>" + money(c ? c.base_price : 0) + "</td>" +
+        '<td style="text-align:center;">' + (p.unsold_count || 1) + "</td>" +
+        '<td><button class="auc-btn auc-btn-cyan auc-reopen" data-serial="' + p.sort_order +
+          '" style="padding:0.4rem 0.7rem; font-size:0.78rem;"' +
+          (open || !live ? " disabled" : "") + '>' +
+          '<i class="fa-solid fa-rotate-left"></i> Re-open</button></td>' +
+      "</tr>";
+    }).join("")
+      : '<tr><td colspan="6" style="text-align:center; padding:1.6rem; color:var(--text-muted);">' +
+        "Nobody has gone unsold.</td></tr>";
+
+    document.querySelectorAll(".auc-reopen").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var b = btn; busy(b, true, "Opening…");
+        api.openBySerial(parseInt(btn.dataset.serial, 10))
+          .catch(fail).finally(function () { busy(b, false); });
+      });
+    });
   }
 
   function playerById(id) {
@@ -535,8 +661,12 @@
     /* Player rows */
     var q = ($("auc-pool-search").value || "").toLowerCase().trim();
     var fcat = filter.value || "ALL";
-    var rows = board.players.filter(function (p) {
+    var fstatus = ($("auc-pool-status") || {}).value || "ALL";
+    var rows = board.players.slice().sort(function (a, b) {
+      return (a.sort_order || 0) - (b.sort_order || 0);
+    }).filter(function (p) {
       if (fcat !== "ALL" && p.category !== fcat) return false;
+      if (fstatus !== "ALL" && p.status !== fstatus) return false;
       return !q || p.name.toLowerCase().indexOf(q) >= 0;
     });
 
@@ -544,6 +674,7 @@
       return '<option value="' + esc(t.id) + '">' + esc(t.name) + "</option>";
     }).join("");
 
+    if (holdsFocus($("auc-pool-body"))) return;
     $("auc-pool-body").innerHTML = rows.length ? rows.map(function (p) {
       var c = catOf(p.category);
       var team = teamOf(p.team_id);
@@ -556,6 +687,8 @@
             '<option value="CAPTAIN">Captain</option><option value="VICE_CAPTAIN">Vice Captain</option></select>';
       }
       return "<tr>" +
+        '<td style="font-family:monospace; font-weight:800; color:var(--primary-gold);">' +
+          (p.is_retained ? "&mdash;" : p.sort_order) + "</td>" +
         "<td><b>" + esc(p.name) + "</b></td>" +
         '<td><select class="auc-row-cat" data-player="' + esc(p.id) + '"' +
           (p.status === "sold" ? " disabled" : "") + ' style="max-width:150px;">' +
@@ -576,7 +709,7 @@
             '" title="Delete player"><i class="fa-solid fa-trash"></i></button>' +
         "</td></tr>";
     }).join("")
-      : '<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--text-muted);">No players match.</td></tr>';
+      : '<tr><td colspan="8" style="text-align:center; padding:2rem; color:var(--text-muted);">No players match.</td></tr>';
 
     /* Reflect current retained assignment in the selects */
     board.players.forEach(function (p) {
@@ -636,7 +769,8 @@
 
   /* ---------- teams & captain passwords --------------------- */
   function renderTeamsEditor() {
-    $("auc-teams-editor").innerHTML = board.teams.map(function (t) {
+    renderInto("teams", "auc-teams-editor", function (host) {
+    host.innerHTML = board.teams.map(function (t) {
       return '<div class="auc-card" style="border-top:3px solid ' + esc(t.color) + ';">' +
         '<div class="auc-card-title" style="color:' + esc(t.color) + ';">' +
           '<i class="fa-solid fa-shield"></i> ' + esc(t.name) +
@@ -694,6 +828,7 @@
           .then(function () { input.value = ""; toast("Captain password set"); })
           .catch(fail).finally(function () { busy(btn, false); });
       });
+    });
     });
   }
 
@@ -809,6 +944,7 @@
             " captains have a password</span>")
       : "";
 
+    if (holdsFocus($("auc-captains-body"))) return;
     $("auc-captains-body").innerHTML = accounts.length ? accounts.map(function (a) {
       var extra = adminAccounts[a.team_id] || {};
       var pwCell = a.has_password
@@ -964,6 +1100,7 @@
     });
     $("auc-pool-search").addEventListener("input", renderPool);
     $("auc-pool-filter").addEventListener("change", renderPool);
+    $("auc-pool-status").addEventListener("change", renderPool);
 
     $("auc-btn-add-player").addEventListener("click", function () {
       var name = $("auc-new-name").value.trim();
@@ -994,13 +1131,22 @@
         .catch(fail).finally(function () { busy(b, false); });
     });
 
-    $("auc-btn-reset").addEventListener("click", function () {
-      var typed = prompt('This clears every bid, lot and sale and restores full purses.\n' +
-                         'Type RESET AUCTION to confirm:');
-      if (typed !== "RESET AUCTION") { if (typed !== null) toast("Reset cancelled", "err"); return; }
-      var b = this; busy(b, true, "Resetting…");
-      api.resetAuction("RESET AUCTION").then(function () { toast("Auction reset"); })
+    $("auc-btn-reset").addEventListener("click", resetAuction);
+    $("auc-btn-reset-top").addEventListener("click", resetAuction);
+
+    $("auc-btn-open-serial").addEventListener("click", function () {
+      var input = $("auc-manual-serial");
+      var n = parseInt(input.value, 10);
+      if (!n || isNaN(n)) { toast("Enter a player ID", "err"); return; }
+      var b = this; busy(b, true, "Opening…");
+      api.openBySerial(n)
+        .then(function () { input.value = ""; })
         .catch(fail).finally(function () { busy(b, false); });
+    });
+
+    /* Enter in the ID box opens that player. */
+    $("auc-manual-serial").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); $("auc-btn-open-serial").click(); }
     });
 
     $("auc-btn-export-squads").addEventListener("click", exportSquads);
@@ -1049,6 +1195,28 @@
       document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(url);
     });
+  }
+
+  /* Wipes every sale and the unsold list, restores full purses and puts all
+     56 players back in the pool. Retained captains and vice captains
+     survive. Reachable from the Control Room header and from Setup. */
+  function resetAuction() {
+    var btn = this && this.tagName ? this : null;
+    var typed = prompt(
+      "This restarts the whole auction:\n" +
+      "  - every sale is undone and all purses go back to full\n" +
+      "  - the unsold list is cleared\n" +
+      "  - all 56 players return to the pool for the randomizer\n" +
+      "Retained captains and vice captains are kept.\n\n" +
+      "Type RESET AUCTION to confirm:");
+    if (typed !== "RESET AUCTION") {
+      if (typed !== null) toast("Reset cancelled", "err");
+      return;
+    }
+    if (btn) busy(btn, true, "Resetting…");
+    api.resetAuction("RESET AUCTION")
+      .then(function () { toast("Auction reset — all 56 back in the pool"); })
+      .catch(fail).finally(function () { if (btn) busy(btn, false); });
   }
 
   function exportSquads() {

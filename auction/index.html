@@ -53,38 +53,28 @@
       <div id="pub-lot"></div>
     </div>
 
-    <!-- Team captains and their sign-in accounts -->
+    <!-- One board: captains, wallets and squads, four teams as columns -->
     <div class="auc-card">
       <div class="auc-card-title">
-        <i class="fa-solid fa-shield-halved"></i> Team Captains
+        <i class="fa-solid fa-shield-halved"></i> Teams
         <span class="auc-muted" style="font-weight:500; letter-spacing:0; text-transform:none;">
-          &mdash; who is bidding for each team
+          &mdash; captains, wallets and squads
         </span>
       </div>
-      <div class="auc-teams-grid" id="pub-captains"></div>
-      <div class="auc-muted" style="margin-top:0.9rem;">
-        Captains bid from the
-        <a href="/captain" id="pub-captain-link" style="color:var(--primary-cyan);">Team Captain Console</a>
-        using the team code and the password issued by the organiser.
+      <div class="auc-table-box">
+        <table class="auc-table auc-teamboard" id="pub-teamboard"></table>
       </div>
-    </div>
-
-    <!-- Team purses / wallets -->
-    <div class="auc-card">
-      <div class="auc-card-title"><i class="fa-solid fa-sack-dollar"></i> Team Wallets</div>
-      <div class="auc-teams-grid" id="pub-teams"></div>
+      <div class="auc-muted" style="margin-top:0.9rem;">
+        Captains sign in at the
+        <a href="/captain" id="pub-captain-link" style="color:var(--primary-cyan);">Team Captain Console</a>
+        with the team code and the password issued by the organiser.
+      </div>
     </div>
 
     <!-- Live feed -->
     <div class="auc-card">
       <div class="auc-card-title"><i class="fa-solid fa-satellite-dish"></i> Live Feed</div>
       <div class="auc-feed" id="pub-feed"></div>
-    </div>
-
-    <!-- Squads so far -->
-    <div class="auc-card">
-      <div class="auc-card-title"><i class="fa-solid fa-list-check"></i> Squads So Far</div>
-      <div class="auc-squads" id="pub-squads"></div>
     </div>
 
     <!-- Every player in the auction, and who bought them -->
@@ -112,6 +102,7 @@
             <option value="ALL">All</option>
             <option value="sold">Sold</option>
             <option value="available">Still in pool</option>
+            <option value="unsold">Unsold</option>
           </select>
         </div>
       </div>
@@ -130,7 +121,7 @@
       <div class="auc-card-title"><i class="fa-solid fa-layer-group"></i> Pool Remaining</div>
       <div class="auc-table-box">
         <table class="auc-table">
-          <thead><tr><th>Category</th><th>Base Price</th><th>Sold</th><th>Left</th><th>Progress</th></tr></thead>
+          <thead><tr><th>Category</th><th>Base Price</th><th>Sold</th><th>In Pool</th><th>Unsold</th><th>Progress</th></tr></thead>
           <tbody id="pub-pool"></tbody>
         </table>
       </div>
