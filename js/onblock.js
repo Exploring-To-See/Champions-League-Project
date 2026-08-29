@@ -56,16 +56,18 @@
            "</div></div>";
   }
 
-  /* Branding strip along the bottom of the card: the tournament logo first,
-     then the three organising bodies. The organiser opts in, because this is
-     the card that goes on the big screen. */
-  function footerStrip() {
-    return '<div class="otb-footer">' +
-      '<img class="otb-footer-main" src="/assets/champions-logo.png?v=3" alt="1727 Champions League">' +
-      '<span class="otb-footer-rule"></span>' +
-      '<img src="/assets/partner-csrt17.png" alt="Calcutta South Round Table 17">' +
-      '<img src="/assets/partner-csrt-cclc.png" alt="CSRT 17 and CCLC 27">' +
-      '<img src="/assets/partner-cclc27.png" alt="Calcutta Cosmopolitan Ladies Circle 27">' +
+  /* Branding across the top of the card: the tournament mark in the left
+     corner, the three organising bodies centred. Identical in the normal
+     view and in full screen — it is the same DOM either way, so what the
+     organiser checks on their screen is what the room sees. */
+  function brandStrip() {
+    return '<div class="otb-brand">' +
+      '<img class="otb-brand-main" src="/assets/champions-logo.png?v=3" alt="1727 Champions League">' +
+      '<div class="otb-brand-partners">' +
+        '<img src="/assets/partner-csrt17.png" alt="Calcutta South Round Table 17">' +
+        '<img src="/assets/partner-csrt-cclc.png" alt="CSRT 17 and CCLC 27">' +
+        '<img src="/assets/partner-cclc27.png" alt="Calcutta Cosmopolitan Ladies Circle 27">' +
+      "</div>" +
     "</div>";
   }
 
@@ -98,6 +100,7 @@
       : base;
 
     return '<div class="otb">' +
+      (opts.logos ? brandStrip() : "") +
       '<div class="otb-photo"><div class="otb-photo-inner">' + photo + "</div></div>" +
       '<div class="otb-fields">' +
 
@@ -121,7 +124,7 @@
           box(player.achievement ? esc(player.achievement) : ""),
           { className: player.achievement ? "has-achievement" : "" }) +
 
-      "</div>" + (opts.logos ? footerStrip() : "") + "</div>";
+      "</div></div>";
   }
 
   /* Font Awesome stand-ins for the sport glyphs in the captain design.
@@ -162,6 +165,7 @@
     var price = base === null || base === undefined ? (cat ? cat.base_price : null) : base;
 
     return '<div class="otb otb-captain">' +
+      (opts.logos ? brandStrip() : "") +
       '<div class="otb-photo"><div class="otb-photo-inner">' + photo + "</div></div>" +
       '<div class="otb-fields">' +
 
@@ -189,7 +193,7 @@
 
         (tiles ? '<div class="otb-tiles">' + tiles + "</div>" : "") +
 
-      "</div>" + (opts.logos ? footerStrip() : "") + "</div>";
+      "</div></div>";
   }
 
   global.OnBlockCard = { render: card, renderCaptain: captainCard, money: money };

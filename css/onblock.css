@@ -238,44 +238,56 @@
   .otb-pair { grid-template-columns: 1fr; }
 }
 
-/* ---- branding strip under the card -------------------------
-   Tournament logo, then the three organising bodies. Spans both columns
-   so it reads as the card's own footer rather than a caption on the photo. */
-.otb-footer {
+/* ---- branding across the top of the card -------------------
+   Tournament mark hard left, the three organising bodies centred. The
+   1fr/auto/1fr track keeps the partners centred on the CARD, not on the
+   space left over beside the logo. */
+.otb-brand {
   grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: clamp(0.7rem, 1.6vw, 1.2rem);
+  padding-bottom: clamp(0.6rem, 1.4vw, 1rem);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.otb-brand-main {
+  grid-column: 1;
+  justify-self: start;
+  height: clamp(42px, 6cqw, 86px);
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.75));
+}
+
+.otb-brand-partners {
+  grid-column: 2;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(0.9rem, 2.4vw, 2rem);
-  margin-top: clamp(0.9rem, 2vw, 1.6rem);
-  padding-top: clamp(0.7rem, 1.6vw, 1.2rem);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  flex-wrap: wrap;
+  gap: clamp(0.8rem, 2.2cqw, 2rem);
 }
-.otb-footer img {
-  height: clamp(34px, 4.4cqw, 62px);
+
+.otb-brand-partners img {
+  height: clamp(32px, 4.2cqw, 60px);
   width: auto;
   object-fit: contain;
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.7));
 }
-/* the tournament mark leads, so give it more room than the partners */
-.otb-footer .otb-footer-main { height: clamp(44px, 6cqw, 88px); }
-.otb-footer-rule {
-  width: 1px;
-  align-self: stretch;
-  background: rgba(255, 255, 255, 0.16);
-}
 
 @media (max-width: 780px) {
-  .otb-footer { gap: 0.85rem; }
-  .otb-footer img { height: 30px; }
-  .otb-footer .otb-footer-main { height: 40px; }
-  .otb-footer-rule { display: none; }
+  /* too little width to hold three tracks — stack, logo still leading */
+  .otb-brand { grid-template-columns: 1fr; gap: 0.6rem; justify-items: center; }
+  .otb-brand-main { grid-column: 1; justify-self: center; height: 46px; }
+  .otb-brand-partners { grid-column: 1; gap: 1rem; }
+  .otb-brand-partners img { height: 30px; }
 }
 
 /* ---- full screen: the same card, sized for the room --------- */
 .auc-card.auc-fullscreen .otb { max-width: 1500px; margin: 0 auto; width: 100%; }
 .auc-card.auc-fullscreen .otb-photo { aspect-ratio: 3 / 4.1; }
 /* on the big screen the branding should read from the back of the room */
-.auc-card.auc-fullscreen .otb-footer img { height: 66px; }
-.auc-card.auc-fullscreen .otb-footer .otb-footer-main { height: 96px; }
+.auc-card.auc-fullscreen .otb-brand-main { height: 104px; }
+.auc-card.auc-fullscreen .otb-brand-partners img { height: 72px; }
