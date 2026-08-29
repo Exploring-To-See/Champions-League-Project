@@ -160,7 +160,6 @@
   border: 1.5px solid var(--otb-line);
   clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
 }
-.otb-sport-rating { margin-left: auto; color: var(--otb-blue); font-weight: 800; opacity: 0.9; }
 
 /* an achievement is the rare thing on this card — make it glow */
 .otb-field.has-achievement { box-shadow: 0 0 22px -1px var(--otb-red); }

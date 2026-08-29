@@ -96,12 +96,7 @@
       : "";
 
     /* Identical card to the organiser console, from js/onblock.js. */
-    host.innerHTML =
-      '<div class="auc-muted" style="margin-bottom:0.75rem;">Player ID <b style="color:var(--primary-cyan);">' +
-        player.sort_order + "</b> · " + esc(cat ? cat.label : player.category) +
-        " · " + ctx.remaining + " left in " + esc(cat ? cat.short_code : "") + "</div>" +
-      window.OnBlockCard.render(player, cat, ctx.base) +
-      compulsory;
+    host.innerHTML = window.OnBlockCard.render(player, cat, ctx.base) + compulsory;
   }
 
   /* Captains, wallet and squad for all four teams in one grid, teams as

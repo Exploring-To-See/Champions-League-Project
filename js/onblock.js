@@ -18,7 +18,8 @@
     });
   }
 
-  /* Indian grouping, matching the server's auction_money(). */
+  /* Indian digit grouping, without the symbol — the card carries a rupee
+     token beside the figure, so repeating it in the value reads twice. */
   function money(n) {
     if (n === null || n === undefined) return "—";
     var s = String(Math.abs(Math.round(n))), out;
@@ -28,7 +29,14 @@
       while (rest.length > 2) { parts.unshift(rest.slice(-2)); rest = rest.slice(0, -2); }
       out = (rest ? rest + "," : "") + (parts.length ? parts.join(",") + "," : "") + last3;
     }
-    return "₹" + out;
+    return out;
+  }
+
+  /* The registrations tab shows these as DEBUT / VETERAN; the stored value
+     is the longer "Previous Participant". Same word everywhere. */
+  function historyLabel(v) {
+    if (!v) return "";
+    return v === "Previous Participant" ? "Veteran" : esc(v);
   }
 
   function box(value, extraClass) {
@@ -67,9 +75,7 @@
       var s = sports[i];
       sportRows +=
         '<div class="otb-sport"><div class="otb-rank">' + (i + 1) + "</div>" +
-        box(s ? esc(s.sport) +
-                '<span class="otb-sport-rating">' + Number(s.rating).toFixed(1) + "</span>"
-              : "") +
+        box(s ? esc(s.sport) : "") +
         "</div>";
     }
 
@@ -88,7 +94,7 @@
               box(player.age ? esc(player.age) : "") + "</div>" +
             '<div class="otb-rule"></div>' +
             '<div><span class="otb-label">History</span>' +
-              box(player.history ? esc(player.history) : "") + "</div>" +
+              box(historyLabel(player.history)) + "</div>" +
           "</div>", { cyan: true }) +
 
         field("Base Price", '<div class="otb-price">' + box(money(price)) +

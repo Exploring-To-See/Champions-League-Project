@@ -286,15 +286,10 @@
         money(ctx.base) + '. No other team may compete.</div></div>'
       : "";
 
-    /* Same card the room sees on the public view, from js/onblock.js. */
-    host.innerHTML =
-      '<div class="auc-muted" style="margin-bottom:0.75rem;">Player ID <b style="color:var(--primary-cyan);">' +
-        player.sort_order + '</b> &middot; ' + esc(cat ? cat.label : player.category) +
-        ' &middot; ' + ctx.remaining + ' left in ' + esc(cat ? cat.short_code : "") +
-        (player.unsold_count ? ' &middot; previously unsold &times;' + player.unsold_count : '') +
-      '</div>' +
-      window.OnBlockCard.render(player, cat, ctx.base) +
-      compulsoryBanner;
+    /* Just the card — the same one the room sees on the public view, from
+       js/onblock.js. Nothing above it: the card names the player itself, and
+       in full screen any heading is only in the way. */
+    host.innerHTML = window.OnBlockCard.render(player, cat, ctx.base) + compulsoryBanner;
   }
 
   /* ---------- selling the drawn player ---------------------- */
@@ -1124,9 +1119,9 @@
     function setFs(on) {
       fsCard.classList.toggle("auc-fullscreen", on);
       document.body.classList.toggle("auc-fs-open", on);
-      $("auc-fs-label").textContent = on ? "Exit full screen" : "Full screen";
-      var icon = $("auc-btn-fullscreen").querySelector("i");
-      if (icon) icon.className = on ? "fa-solid fa-compress" : "fa-solid fa-expand";
+      /* Nothing on screen once it is up — Escape is the way out, and the
+         browser says so itself when it grants native fullscreen. */
+      $("auc-btn-fullscreen").style.display = on ? "none" : "";
       try {
         if (on && fsCard.requestFullscreen) fsCard.requestFullscreen();
         else if (!on && document.fullscreenElement && document.exitFullscreen) document.exitFullscreen();
