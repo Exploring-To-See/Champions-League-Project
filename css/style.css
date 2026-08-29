@@ -42,7 +42,11 @@ body {
   font-family: var(--font-body);
   background-color: var(--bg-dark);
   color: var(--text-main);
-  background-image: url('../assets/sports-bg.png');
+  /* Served as JPEG: the source PNG is 2.4 MB, this is 290 KB and visually
+     identical on a soft-focus photograph. One rule covers every view —
+     registration, captain, public auction and the organiser console all
+     load this stylesheet. */
+  background-image: url('../assets/stadium-bg.jpg');
   background-size: cover;
   background-position: center center;
   background-attachment: fixed;

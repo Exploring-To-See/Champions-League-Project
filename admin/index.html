@@ -38,18 +38,13 @@
        than the 1040px registration frame. */
     .admin-wrapper.wide { max-width: 1240px; }
 
-    .admin-header {
+    .admin-actions {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
       align-items: center;
-      margin-bottom: 1.5rem;
+      gap: 0.6rem;
       flex-wrap: wrap;
-      gap: 1rem;
-      background: var(--bg-card);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(0, 229, 255, 0.3);
-      border-radius: var(--radius-lg);
-      padding: 1.25rem 1.75rem;
+      margin-bottom: 0.9rem;
     }
 
     .admin-title-box h1 {
@@ -304,13 +299,7 @@
         margin: 0.5rem auto 2rem;
       }
 
-      .admin-header {
-        padding: 1rem;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.85rem;
-        text-align: center;
-      }
+      .admin-actions { justify-content: center; }
 
       .admin-title-box h1 {
         font-size: 1.35rem;
@@ -436,18 +425,17 @@
 
   <!-- Main Protected Admin Dashboard -->
   <div class="admin-wrapper" id="admin-main-content" style="display: none;">
-    <header class="admin-header">
-      <div class="admin-title-box">
-        <h1><i class="fa-solid fa-shield-halved"></i> Organiser Console</h1>
-        <p>1727 Champion's League 2.0 — Live Player Registrations</p>
-      </div>
-      <div class="admin-user-info">
-        <a href="https://1727championsleague.vercel.app" class="btn-submit" style="width:auto; padding:0.5rem 1rem; font-size:0.85rem; text-decoration:none;">
-          <i class="fa-solid fa-globe"></i> View Public Site
-        </a>
-        <button class="btn-logout" id="btn-logout-admin"><i class="fa-solid fa-power-off"></i> Logout</button>
-      </div>
-    </header>
+    <!-- The console already names itself in the banner above; only the two
+         actions from the old header card are worth keeping. -->
+    <div class="admin-actions">
+      <a href="https://1727championsleague.vercel.app" class="auc-btn auc-btn-ghost"
+         style="text-decoration:none;">
+        <i class="fa-solid fa-globe"></i> View Public Site
+      </a>
+      <button class="btn-logout" id="btn-logout-admin">
+        <i class="fa-solid fa-power-off"></i> Logout
+      </button>
+    </div>
 
     <!-- Console Tab Bar -->
     <div class="auc-tabs" role="tablist">
@@ -571,8 +559,16 @@
       <div class="auc-panel active" id="auc-tab-control">
         <div id="auc-alerts"></div>
 
-        <div class="auc-card">
-          <div class="auc-card-title"><i class="fa-solid fa-hammer"></i> On The Block</div>
+        <!-- Display only. Selling moved into the Randomizer so this can be
+             thrown up on a screen for the room. -->
+        <div class="auc-card" id="auc-block-card">
+          <div class="auc-card-title">
+            <i class="fa-solid fa-hammer"></i> On The Block
+            <button class="auc-btn auc-btn-ghost" id="auc-btn-fullscreen"
+                    style="margin-left:auto; padding:0.35rem 0.8rem; font-size:0.78rem;">
+              <i class="fa-solid fa-expand"></i> <span id="auc-fs-label">Full screen</span>
+            </button>
+          </div>
           <div id="auc-current-lot"></div>
         </div>
 
@@ -593,6 +589,9 @@
           </div>
 
           <div id="auc-draw-display"></div>
+
+          <!-- Sell the drawn player: team, price, allocate. -->
+          <div id="auc-award-panel"></div>
 
           <div class="auc-btn-row" style="margin-top:1rem;">
             <button class="auc-btn auc-btn-cyan" id="auc-btn-draw"
@@ -658,7 +657,7 @@
       <!-- ---------- PLAYER POOL ---------- -->
       <div class="auc-panel" id="auc-tab-pool">
         <div class="auc-card">
-          <div class="auc-card-title"><i class="fa-solid fa-user-plus"></i> Add / Import Players</div>
+          <div class="auc-card-title"><i class="fa-solid fa-user-plus"></i> Add Player</div>
           <div class="auc-form-row">
             <div class="auc-field">
               <label for="auc-new-name">Player name</label>
@@ -673,11 +672,7 @@
                 <i class="fa-solid fa-plus"></i> Add Player
               </button>
             </div>
-            <div class="auc-field">
-              <button class="auc-btn auc-btn-ghost" id="auc-btn-import" style="width:100%;">
-                <i class="fa-solid fa-file-import"></i> Import Registrations
-              </button>
-            </div>
+
           </div>
           <div class="auc-muted" style="margin-top:0.6rem;">
             Import pulls every registration not already in the pool into the category selected above.

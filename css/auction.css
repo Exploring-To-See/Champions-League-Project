@@ -391,6 +391,42 @@
 /* Unsold is parked, not pooled — red so it reads as needing action. */
 .auc-pill.unsold    { background: rgba(255,59,92,0.16); color: var(--primary-red); border: 1px solid var(--primary-red); }
 
+/* ---- On the block, blown up for the room -------------------
+   A CSS overlay rather than the Fullscreen API alone, so it still works
+   where the API is refused (iframes, older Safari) and so the page keeps
+   its own styling instead of a bare white canvas. */
+.auc-card.auc-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  margin: 0;
+  border-radius: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: #04070e url('../assets/stadium-bg.jpg') center/cover no-repeat fixed;
+}
+.auc-card.auc-fullscreen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 7, 14, 0.82);
+  z-index: -1;
+}
+.auc-card.auc-fullscreen .auc-card-title { font-size: 1.4rem; }
+.auc-card.auc-fullscreen .auc-lot-name { font-size: clamp(2.4rem, 8vw, 5.5rem); line-height: 1.05; }
+.auc-card.auc-fullscreen .auc-lot-photo,
+.auc-card.auc-fullscreen .auc-lot-photo-empty { width: 260px; height: 260px; }
+.auc-card.auc-fullscreen .auc-bid-now { font-size: clamp(2rem, 6vw, 4rem); }
+.auc-card.auc-fullscreen .auc-bid-label { font-size: 0.95rem; }
+.auc-card.auc-fullscreen .auc-cat-badge { font-size: 1.1rem; }
+
+/* The overlay is opaque and covers the viewport, so the page behind only
+   needs its scrolling locked. Hiding ancestors would hide the card too,
+   since it lives inside them and visibility inherits. */
+body.auc-fs-open { overflow: hidden; }
+
 /* ---- Team board: four teams as columns ---------------------- */
 .auc-teamboard th[scope="row"] {
   background: rgba(6, 10, 20, 0.75);

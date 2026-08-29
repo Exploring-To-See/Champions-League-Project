@@ -176,6 +176,7 @@
     renderStatus();
     renderAlerts();
     renderCurrentLot();
+    renderAwardPanel();
     renderTeamPanels();
     renderRandomizer();
     renderUnsold();
@@ -247,13 +248,12 @@
     host.innerHTML = html;
   }
 
-  /* Which player this card was last built for. Nothing on the card changes
-     while a player is on the block — there is no bidding here any more, so
-     the base price, category and pool count are all fixed for the duration.
-     Rebuilding it on the 7-second refresh therefore gained nothing and cost
-     everything: it replaced the team dropdown and the price box mid-entry,
-     which is why a team selection kept disappearing as soon as the price
-     was typed. Build once per player, then leave the DOM alone. */
+  /* ---------- on the block (display only) ------------------- */
+
+  /* Nothing here changes while a player is up, so build once per player.
+     Rebuilding on the 7-second refresh is what used to wipe the form that
+     lived here; the form has since moved to the Randomizer, but the same
+     guard also keeps the fullscreen view from flickering every few seconds. */
   var renderedLotId = null;
 
   function renderCurrentLot() {
@@ -271,62 +271,81 @@
       return;
     }
 
-    /* Same player still up: keep the form exactly as the operator left it. */
     if (renderedLotId === lot.id) return;
     renderedLotId = lot.id;
 
-    var player = null;
-    for (var i = 0; i < board.players.length; i++) {
-      if (board.players[i].id === lot.player_id) { player = board.players[i]; break; }
-    }
+    var player = playerById(lot.player_id);
     if (!player) { host.innerHTML = ""; return; }
 
     var cat = catOf(player.category);
-    var leader = teamOf(lot.current_bidder_id);
     var photo = player.photo_url
       ? '<img src="' + esc(player.photo_url) + '" class="auc-lot-photo" alt="">'
       : '<div class="auc-lot-photo-empty"><i class="fa-solid fa-user"></i></div>';
 
-    var compulsoryBanner = "";
-    if (ctx.compulsory_team_id) {
-      compulsoryBanner =
-        '<div class="auc-alert forced" style="margin-top:0.9rem;">' +
-        '<i class="fa-solid fa-gavel"></i><div>Compulsory fill — <b>' +
+    var compulsoryBanner = ctx.compulsory_team_id
+      ? '<div class="auc-alert forced" style="margin-top:0.9rem;">' +
+        '<i class="fa-solid fa-gavel"></i><div>Compulsory fill &mdash; <b>' +
         esc(ctx.compulsory_team_name) + '</b> must take this player at base ' +
-        money(ctx.base) + '. No other team may bid.</div></div>';
-    }
+        money(ctx.base) + '. No other team may compete.</div></div>'
+      : "";
 
     host.innerHTML =
       '<div class="auc-lot">' + photo +
       '<div style="width:100%;">' +
         '<div class="auc-lot-name">' + esc(player.name) + '</div>' +
         '<span class="auc-cat-badge" style="color:' + esc(cat ? cat.color : "#00e5ff") + '">' +
-          esc(cat ? cat.label : player.category) + ' · base ' + money(ctx.base) + '</span>' +
-        (player.unsold_count ? '<span class="auc-muted" style="margin-left:0.6rem;">re-queued ×' +
-            player.unsold_count + '</span>' : '') +
+          esc(cat ? cat.label : player.category) + ' &middot; base ' + money(ctx.base) + '</span>' +
+        (player.unsold_count ? '<span class="auc-muted" style="margin-left:0.6rem;">' +
+            'previously unsold &times;' + player.unsold_count + '</span>' : '') +
         '<div class="auc-bid-row">' +
-          '<div><div class="auc-bid-label">Current Bid</div>' +
-            '<div class="auc-bid-now">' + (ctx.current_bid === null ? "—" : money(ctx.current_bid)) + '</div></div>' +
-          '<div><div class="auc-bid-label">Leading</div>' +
-            '<div style="font-family:var(--font-heading); font-weight:900; font-size:1.35rem; color:' +
-              (leader ? esc(leader.color) : "var(--text-muted)") + ';">' +
-              (leader ? esc(leader.name) : "No bids yet") + '</div></div>' +
-          '<div><div class="auc-bid-label">Next Valid Bid</div>' +
-            '<div style="font-family:var(--font-heading); font-weight:900; font-size:1.35rem; color:var(--primary-cyan);">' +
-              money(ctx.next_bid) + '</div>' +
-            '<div class="auc-muted" style="font-size:0.72rem;">step ' + money(ctx.step) + '</div></div>' +
+          '<div><div class="auc-bid-label">Player ID</div>' +
+            '<div class="auc-bid-now">' + player.sort_order + '</div></div>' +
+          '<div><div class="auc-bid-label">Base Price</div>' +
+            '<div style="font-family:var(--font-heading); font-weight:900; font-size:1.6rem; color:var(--primary-gold);">' +
+              money(ctx.base) + '</div></div>' +
+          '<div><div class="auc-bid-label">Category</div>' +
+            '<div style="font-family:var(--font-heading); font-weight:900; font-size:1.6rem; color:' +
+              esc(cat ? cat.color : "#00e5ff") + ';">' + esc(cat ? cat.short_code : "") + '</div></div>' +
           '<div><div class="auc-bid-label">Left in ' + esc(cat ? cat.short_code : "") + '</div>' +
-            '<div style="font-family:var(--font-heading); font-weight:900; font-size:1.35rem;">' +
+            '<div style="font-family:var(--font-heading); font-weight:900; font-size:1.6rem;">' +
               ctx.remaining + '</div></div>' +
         '</div>' +
         compulsoryBanner +
+      '</div></div>';
+  }
 
-        /* Bidding happens in the room. The organiser records the outcome:
-           pick the winning team, type the price it went for, allocate. */
-        '<div class="auc-form-row" style="margin-top:1.1rem;">' +
+  /* ---------- selling the drawn player ---------------------- */
+
+  /* Lives in the Randomizer card: draw a number, then allocate that player.
+     Built once per player so the refresh cannot replace the dropdown or the
+     price box while they are being filled in. */
+  var renderedAwardLotId = null;
+
+  function renderAwardPanel() {
+    var host = $("auc-award-panel");
+    var lot = board.current_lot;
+    var ctx = board.lot_context;
+
+    if (!lot || !ctx) {
+      if (renderedAwardLotId !== null || host.innerHTML) {
+        renderedAwardLotId = null;
+        host.innerHTML = "";
+      }
+      return;
+    }
+
+    if (renderedAwardLotId === lot.id) return;
+    renderedAwardLotId = lot.id;
+
+    var player = playerById(lot.player_id);
+    if (!player) { host.innerHTML = ""; return; }
+
+    host.innerHTML =
+      '<div style="margin-top:1.1rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.08);">' +
+        '<div class="auc-form-row">' +
           '<div class="auc-field"><label for="auc-award-team">Sold to</label>' +
             '<select id="auc-award-team">' +
-              '<option value="">— pick the winning team —</option>' +
+              '<option value="">&mdash; pick the winning team &mdash;</option>' +
               ctx.teams.map(function (t) {
                 return '<option value="' + esc(t.team_id) + '"' + (t.eligible ? "" : " disabled") + '>' +
                        esc(t.team_name) +
@@ -335,46 +354,48 @@
               }).join("") + '</select></div>' +
           '<div class="auc-field"><label for="auc-award-price">Final price</label>' +
             '<input type="number" id="auc-award-price" step="1000" min="' + ctx.base +
-              '" placeholder="' + ctx.base + '"></div>' +
+              '" placeholder="' + ctx.base + '" autocomplete="off"></div>' +
           '<div class="auc-field"><button class="auc-btn auc-btn-green" id="auc-btn-award" style="width:100%;">' +
             '<i class="fa-solid fa-gavel"></i> SELL TO TEAM</button></div>' +
         '</div>' +
         '<div class="auc-muted" id="auc-award-hint" style="margin-top:0.5rem;">' +
-          'Base ' + money(ctx.base) + '. The price is checked against the max bid of the ' +
-          'team you pick, so every squad can always still fill its minimums.</div>' +
-        '<div class="auc-btn-row" style="margin-top:1rem;">' +
+          esc(player.name) + ' &mdash; base ' + money(ctx.base) +
+          '. The price is checked against the max bid of the team you pick.</div>' +
+        '<div class="auc-btn-row" style="margin-top:0.8rem;">' +
           '<button class="auc-btn auc-btn-red" id="auc-btn-unsold">' +
             '<i class="fa-solid fa-ban"></i> Mark Unsold</button>' +
         '</div>' +
-      '</div></div>';
+      '</div>';
 
-    /* Live max-bid readout as the operator changes team. */
     var teamSel = $("auc-award-team");
     var priceInput = $("auc-award-price");
+
     function showLimit() {
       var row = null;
       (ctx.teams || []).forEach(function (t) { if (t.team_id === teamSel.value) row = t; });
       var hint = $("auc-award-hint");
       if (!row) {
-        hint.innerHTML = "Base " + money(ctx.base) + ". The price is checked against the " +
-          "team's max bid, so a squad can always still fill its minimums.";
+        hint.innerHTML = esc(player.name) + " &mdash; base " + money(ctx.base) +
+          ". The price is checked against the max bid of the team you pick.";
         return;
       }
-      hint.innerHTML = esc(row.team_name) + " — purse " + money(row.purse_left) +
-        ", must keep " + money(row.reserve) + " for remaining minimums, so the most it " +
-        "can pay for this player is <b>" + money(row.max_bid) + "</b>.";
+      hint.innerHTML = "<b>" + esc(row.team_name) + "</b> &mdash; purse " + money(row.purse_left) +
+        ", keeps " + money(row.reserve) + " for remaining minimums, so the most it can pay " +
+        "here is <b>" + money(row.max_bid) + "</b>.";
       priceInput.max = row.max_bid;
     }
-    if (teamSel) teamSel.addEventListener("change", showLimit);
+    teamSel.addEventListener("change", showLimit);
 
+    /* No browser confirm. This is the console's main action, once per
+       player, and a modal on every one is a click that buys nothing: the
+       server still rejects anything below base or above the team's max
+       bid, and a mistake is undone from the Player Pool with Revert. */
     $("auc-btn-award").addEventListener("click", function () {
       var teamId = teamSel.value;
       var price = parseInt(priceInput.value, 10);
       if (!teamId) { toast("Pick the winning team", "err"); return; }
       if (!price || isNaN(price)) { toast("Enter the final price", "err"); return; }
       var tName = teamSel.options[teamSel.selectedIndex].text.split(" — ")[0];
-      if (!confirm("Sell " + player.name + " to " + tName + " for " +
-                   money(price) + "?")) return;
       var btn = this;
       busy(btn, true, "Selling…");
       api.awardLot(lot.id, teamId, price)
@@ -383,9 +404,6 @@
     });
 
     $("auc-btn-unsold").addEventListener("click", function () {
-      if (!confirm(player.name + " goes UNSOLD. They move to the unsold list and the " +
-                   "randomizer will not draw them again — you place them by hand later " +
-                   "using their player ID. Continue?")) return;
       var btn = this;
       busy(btn, true, "Saving…");
       api.unsoldLot(lot.id).then(function () {
@@ -1088,17 +1106,6 @@
         .catch(fail).finally(function () { busy(b, false); });
     });
 
-    $("auc-btn-import").addEventListener("click", function () {
-      var cat = $("auc-new-cat").value;
-      var label = (catOf(cat) || {}).label || cat;
-      if (!confirm("Import every registration not already in the pool as " + label + "?")) return;
-      var b = this; busy(b, true, "Importing…");
-      api.importRegistrations(cat)
-        .then(function (n) { return api.refresh().then(function () {
-          toast(n + " player(s) imported into " + label);
-        }); })
-        .catch(fail).finally(function () { busy(b, false); });
-    });
 
     $("auc-btn-sync").addEventListener("click", function () {
       var b = this; busy(b, true, "Syncing…");
@@ -1107,6 +1114,32 @@
     });
 
     $("auc-btn-reset-top").addEventListener("click", resetAuction);
+
+    /* Blow the current player up for the room. Native fullscreen on top of
+       the CSS overlay where the browser allows it; the overlay alone is
+       enough if it refuses. */
+    var fsCard = $("auc-block-card");
+    function setFs(on) {
+      fsCard.classList.toggle("auc-fullscreen", on);
+      document.body.classList.toggle("auc-fs-open", on);
+      $("auc-fs-label").textContent = on ? "Exit full screen" : "Full screen";
+      var icon = $("auc-btn-fullscreen").querySelector("i");
+      if (icon) icon.className = on ? "fa-solid fa-compress" : "fa-solid fa-expand";
+      try {
+        if (on && fsCard.requestFullscreen) fsCard.requestFullscreen();
+        else if (!on && document.fullscreenElement && document.exitFullscreen) document.exitFullscreen();
+      } catch (e) { /* overlay already does the job */ }
+    }
+    $("auc-btn-fullscreen").addEventListener("click", function () {
+      setFs(!fsCard.classList.contains("auc-fullscreen"));
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && fsCard.classList.contains("auc-fullscreen")) setFs(false);
+    });
+    /* Leaving native fullscreen by any other route must drop the overlay too. */
+    document.addEventListener("fullscreenchange", function () {
+      if (!document.fullscreenElement && fsCard.classList.contains("auc-fullscreen")) setFs(false);
+    });
 
     $("auc-btn-open-serial").addEventListener("click", function () {
       var input = $("auc-manual-serial");
