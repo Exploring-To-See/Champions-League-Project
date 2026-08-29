@@ -58,8 +58,14 @@
           &mdash; captains, wallets and squads
         </span>
       </div>
-      <div class="auc-table-box">
+      <!-- desktop: four columns side by side -->
+      <div class="auc-table-box auc-teamboard-wrap">
         <table class="auc-table auc-teamboard" id="pub-teamboard"></table>
+      </div>
+      <!-- mobile: one team at a time, no sideways swiping -->
+      <div class="auc-teamtabs">
+        <div class="auc-teamtabs-bar" id="pub-teamtabs"></div>
+        <div id="pub-teampanel"></div>
       </div>
       <div class="auc-muted" style="margin-top:0.9rem;">
         Captains sign in at the

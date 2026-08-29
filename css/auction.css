@@ -429,13 +429,81 @@ body.auc-fs-open { overflow: hidden; }
 
 /* ---- Team board: four teams as columns ---------------------- */
 .auc-teamboard th[scope="row"] {
-  background: rgba(6, 10, 20, 0.75);
+  background: rgba(6, 10, 20, 0.95);
   position: sticky;
   left: 0;
   z-index: 1;
 }
 .auc-teamboard td { vertical-align: top; min-width: 190px; }
 .auc-teamboard .auc-squad-list { max-height: 260px; overflow-y: auto; }
+
+/* Desktop shows the four columns side by side; mobile gets one team at a
+   time behind tabs. On a phone the four-column table had to be swiped
+   sideways, and the sticky label column slid over the values as it went. */
+.auc-teamtabs { display: none; }
+
+@media (max-width: 780px) {
+  .auc-teamboard-wrap { display: none; }
+  .auc-teamtabs { display: block; }
+
+  .auc-teamtabs-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.4rem;
+    margin-bottom: 0.9rem;
+  }
+  .auc-teamtab {
+    border: 1px solid var(--team-color, var(--primary-cyan));
+    background: rgba(6, 10, 20, 0.75);
+    color: var(--team-color, var(--primary-cyan));
+    border-radius: var(--radius-md);
+    padding: 0.5rem 0.2rem;
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    line-height: 1.15;
+    min-height: 46px;
+    transition: all var(--transition);
+  }
+  .auc-teamtab.active {
+    background: var(--team-color, var(--primary-cyan));
+    color: #04070e;
+  }
+
+  .auc-teampanel {
+    border: 1px solid color-mix(in srgb, var(--team-color, #00e5ff) 45%, transparent);
+    border-top: 3px solid var(--team-color, var(--primary-cyan));
+    border-radius: var(--radius-md);
+    background: rgba(6, 10, 20, 0.6);
+    padding: 0.9rem 1rem 1.1rem;
+  }
+  .auc-teampanel h4 {
+    font-family: var(--font-heading);
+    font-weight: 900;
+    font-size: 1.15rem;
+    color: var(--team-color, var(--primary-cyan));
+    margin-bottom: 0.7rem;
+  }
+  /* label / value rows, so nothing has to be scrolled sideways to read */
+  .auc-teamrow {
+    display: grid;
+    grid-template-columns: 8.5rem 1fr;
+    gap: 0.6rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    align-items: baseline;
+  }
+  .auc-teamrow > dt {
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .auc-teamrow > dd { font-weight: 700; }
+  .auc-teampanel .auc-squad-list { max-height: none; }
+}
 
 /* ---- Live feed --------------------------------------------- */
 .auc-feed { max-height: 340px; overflow-y: auto; }

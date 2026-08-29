@@ -42,18 +42,45 @@ body {
   font-family: var(--font-body);
   background-color: var(--bg-dark);
   color: var(--text-main);
-  /* Served as JPEG: the source PNG is 2.4 MB, this is 290 KB and visually
-     identical on a soft-focus photograph. One rule covers every view —
-     registration, captain, public auction and the organiser console all
-     load this stylesheet. */
-  background-image: url('../assets/stadium-bg.jpg');
-  background-size: cover;
-  background-position: center center;
-  background-attachment: fixed;
-  background-repeat: no-repeat;
   min-height: 100vh;
   line-height: 1.6;
   overflow-x: hidden;
+}
+
+/* The page background is a fixed layer of its own rather than
+   background-attachment: fixed on the body.
+   Mobile browsers re-rasterise a fixed body background on every scroll
+   frame, and resize the viewport as the URL bar hides — together that is
+   the juddering and the jump at the end of a scroll. A fixed pseudo-element
+   is composited once and simply stays put.
+   Shipped as JPEG: the source art is 2.3-2.4 MB, these are under 300 KB
+   and visually identical on a soft-focus photograph. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: url('../assets/stadium-bg.jpg') center center / cover no-repeat;
+}
+
+/* Portrait artwork for portrait screens. */
+@media (max-width: 780px) {
+  body::before {
+    background-image: url('../assets/stadium-bg-mobile.jpg');
+    background-position: center top;
+  }
+}
+
+/* Everything the visitor reads sits above the decorative layers. Without
+   this the fixed mascot watermark (z-index 0) paints over any static
+   content, which is what covered the footer on mobile. */
+.main-wrapper,
+.auc-wrap,
+.admin-wrapper,
+.clp-footer,
+.confirmation-wrapper {
+  position: relative;
+  z-index: 1;
 }
 
 /* Header with Official Logo & Motion Entry */
@@ -703,19 +730,17 @@ input[type="range"]::-webkit-slider-thumb:hover {
    ============================================================ */
 
 @media (max-width: 992px) {
-  body {
-    background-size: cover;
-    background-position: center top;
-  }
-
   /* Display full-page transparent mascot watermark background on mobile */
   .mobile-mascot-bg {
     display: block;
     position: fixed;
     top: 0;
     left: 0;
-    width: 100vw;
+    /* 100vw includes the scrollbar and 100vh ignores the collapsing URL
+       bar; both made the page shift during a scroll. */
+    width: 100%;
     height: 100vh;
+    height: 100dvh;
     pointer-events: none;
     z-index: 0;
     overflow: hidden;
@@ -730,13 +755,11 @@ input[type="range"]::-webkit-slider-thumb:hover {
     max-width: 540px;
     height: auto;
     opacity: 0.38;
+    /* No looping animation here. A fixed, filtered, forever-animating layer
+       forces a full repaint on every scroll frame, which is the single
+       biggest cause of the stutter on mobile. It is a watermark; it does
+       not need to breathe. */
     filter: drop-shadow(0 0 30px rgba(0, 229, 255, 0.45)) drop-shadow(0 15px 35px rgba(0, 0, 0, 0.9)) contrast(1.12) saturate(1.2);
-    animation: floatMascotMobile 6s ease-in-out infinite;
-  }
-
-  @keyframes floatMascotMobile {
-    0%, 100% { transform: translate(-50%, -42%) scale(1.4); }
-    50% { transform: translate(-50%, -42%) scale(1.45); }
   }
 
   .header-banner {
