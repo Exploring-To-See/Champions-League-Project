@@ -1,0 +1,184 @@
+/* ============================================================
+   ON THE BLOCK — player card
+   One component, two layouts: photo beside the details on desktop,
+   photo above them on mobile, matching the supplied designs.
+   Used by the Organiser console and the public live view, and it is
+   what the console blows up in full screen.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap');
+
+.otb {
+  --otb-red: #ff2f4a;
+  --otb-blue: #29b6ff;
+  --otb-ink: rgba(4, 7, 14, 0.92);
+
+  display: grid;
+  grid-template-columns: minmax(210px, 0.9fr) 2fr;
+  gap: clamp(1rem, 2.2vw, 2rem);
+  align-items: start;
+  container-type: inline-size;
+}
+
+/* ---- the photo, in its blue-to-red frame -------------------- */
+.otb-photo {
+  position: relative;
+  aspect-ratio: 3 / 4.1;
+  padding: 3px;
+  background: linear-gradient(150deg, var(--otb-blue) 0%, var(--otb-blue) 34%,
+                                      #7b3fa8 50%, var(--otb-red) 66%, var(--otb-red) 100%);
+  clip-path: polygon(26px 0, calc(100% - 26px) 0, 100% 26px, 100% calc(100% - 26px),
+                     calc(100% - 26px) 100%, 26px 100%, 0 calc(100% - 26px), 0 26px);
+  filter: drop-shadow(0 0 18px rgba(41, 182, 255, 0.35))
+          drop-shadow(0 0 18px rgba(255, 47, 74, 0.28));
+}
+
+.otb-photo-inner {
+  height: 100%;
+  background: #0a0e18;
+  clip-path: polygon(24px 0, calc(100% - 24px) 0, 100% 24px, 100% calc(100% - 24px),
+                     calc(100% - 24px) 100%, 24px 100%, 0 calc(100% - 24px), 0 24px);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* cover crops to fill the frame — the "zoom" the design needs, with the
+   top of the frame favoured so faces are not cut off. */
+.otb-photo-inner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 22%;
+  display: block;
+}
+
+.otb-photo-empty {
+  color: rgba(160, 174, 192, 0.35);
+  font-size: 4rem;
+}
+
+/* the little colour chips along the bottom of the frame */
+.otb-photo::after {
+  content: "";
+  position: absolute;
+  right: 30px;
+  bottom: 7px;
+  width: 78px;
+  height: 6px;
+  background: repeating-linear-gradient(90deg,
+    var(--otb-blue) 0 9px, transparent 9px 13px,
+    #7b3fa8 13px 22px, transparent 22px 26px,
+    var(--otb-red) 26px 35px, transparent 35px 39px);
+  opacity: 0.85;
+}
+
+/* ---- the field stack --------------------------------------- */
+.otb-fields { display: flex; flex-direction: column; gap: clamp(0.6rem, 1.2vw, 0.95rem); }
+
+.otb-field {
+  --otb-line: var(--otb-red);
+  padding: 2px;
+  background: var(--otb-line);
+  clip-path: polygon(0 14px, 14px 0, calc(100% - 22px) 0, 100% 22px,
+                     100% calc(100% - 14px), calc(100% - 14px) 100%,
+                     22px 100%, 0 calc(100% - 22px));
+  box-shadow: 0 0 14px -2px var(--otb-line);
+}
+.otb-field.cyan { --otb-line: var(--otb-blue); }
+
+.otb-field > .otb-body {
+  background: var(--otb-ink);
+  clip-path: polygon(0 13px, 13px 0, calc(100% - 21px) 0, 100% 21px,
+                     100% calc(100% - 13px), calc(100% - 13px) 100%,
+                     21px 100%, 0 calc(100% - 21px));
+  padding: 0.55rem 1rem 0.85rem;
+}
+
+.otb-label {
+  font-family: 'Orbitron', var(--font-heading), sans-serif;
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--otb-line);
+  font-size: clamp(0.62rem, 1.05cqw, 0.95rem);
+  margin-bottom: 0.4rem;
+  display: block;
+}
+
+/* the inset box each value sits in */
+.otb-box {
+  border: 1px solid color-mix(in srgb, var(--otb-line) 55%, transparent);
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 0.5rem 0.85rem;
+  min-height: 2.5rem;
+  display: flex;
+  align-items: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: clamp(0.9rem, 1.5cqw, 1.35rem);
+  line-height: 1.25;
+  overflow: hidden;
+}
+.otb-box.empty { color: rgba(160, 174, 192, 0.5); font-weight: 500; font-style: italic; }
+
+.otb-name .otb-box {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: clamp(1.3rem, 3.4cqw, 3rem);
+  letter-spacing: -0.01em;
+  min-height: 3.2rem;
+}
+
+/* AGE | HISTORY share one frame, split by a rule */
+.otb-split { display: grid; grid-template-columns: 1fr 1px 1.6fr; gap: 0.9rem; }
+.otb-split > .otb-rule { background: color-mix(in srgb, var(--otb-line) 45%, transparent); }
+
+/* BASE PRICE keeps a rupee token on the right */
+.otb-price { display: grid; grid-template-columns: 1fr auto; gap: 0.7rem; align-items: center; }
+.otb-rupee {
+  width: 46px; height: 52px;
+  display: grid; place-items: center;
+  color: var(--otb-line);
+  font-size: 1.5rem; font-weight: 800;
+  border: 1.5px solid var(--otb-line);
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+}
+
+/* TOP 2 SPORTS — numbered badge beside each row */
+.otb-sport { display: grid; grid-template-columns: auto 1fr; gap: 0.7rem; align-items: center; }
+.otb-sport + .otb-sport { margin-top: 0.5rem; }
+.otb-rank {
+  width: 40px; height: 40px;
+  display: grid; place-items: center;
+  color: var(--otb-line);
+  font-family: 'Orbitron', var(--font-heading), sans-serif;
+  font-weight: 700; font-size: 1.05rem;
+  border: 1.5px solid var(--otb-line);
+  clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+}
+.otb-sport-rating { margin-left: auto; color: var(--otb-blue); font-weight: 800; opacity: 0.9; }
+
+/* an achievement is the rare thing on this card — make it glow */
+.otb-field.has-achievement { box-shadow: 0 0 22px -1px var(--otb-red); }
+.otb-field.has-achievement .otb-box {
+  color: var(--primary-gold);
+  border-color: var(--primary-gold);
+  text-shadow: 0 0 12px rgba(245, 197, 24, 0.5);
+}
+
+/* ---- mobile: photo on top, everything stacked --------------- */
+@media (max-width: 780px) {
+  .otb { grid-template-columns: 1fr; gap: 1rem; }
+  .otb-photo { aspect-ratio: 3 / 3.6; max-width: 420px; margin: 0 auto; width: 100%; }
+  /* the mobile design draws BASE PRICE in cyan rather than red */
+  .otb-field.price-mobile-cyan { --otb-line: var(--otb-blue); }
+  .otb-split { grid-template-columns: 1fr 1px 1fr; gap: 0.7rem; }
+}
+
+/* ---- full screen: the same card, sized for the room --------- */
+.auc-card.auc-fullscreen .otb { max-width: 1500px; margin: 0 auto; width: 100%; }
+.auc-card.auc-fullscreen .otb-photo { aspect-ratio: 3 / 4.1; }

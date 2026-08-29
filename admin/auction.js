@@ -278,40 +278,23 @@
     if (!player) { host.innerHTML = ""; return; }
 
     var cat = catOf(player.category);
-    var photo = player.photo_url
-      ? '<img src="' + esc(player.photo_url) + '" class="auc-lot-photo" alt="">'
-      : '<div class="auc-lot-photo-empty"><i class="fa-solid fa-user"></i></div>';
 
     var compulsoryBanner = ctx.compulsory_team_id
-      ? '<div class="auc-alert forced" style="margin-top:0.9rem;">' +
+      ? '<div class="auc-alert forced" style="margin-top:1rem;">' +
         '<i class="fa-solid fa-gavel"></i><div>Compulsory fill &mdash; <b>' +
         esc(ctx.compulsory_team_name) + '</b> must take this player at base ' +
         money(ctx.base) + '. No other team may compete.</div></div>'
       : "";
 
+    /* Same card the room sees on the public view, from js/onblock.js. */
     host.innerHTML =
-      '<div class="auc-lot">' + photo +
-      '<div style="width:100%;">' +
-        '<div class="auc-lot-name">' + esc(player.name) + '</div>' +
-        '<span class="auc-cat-badge" style="color:' + esc(cat ? cat.color : "#00e5ff") + '">' +
-          esc(cat ? cat.label : player.category) + ' &middot; base ' + money(ctx.base) + '</span>' +
-        (player.unsold_count ? '<span class="auc-muted" style="margin-left:0.6rem;">' +
-            'previously unsold &times;' + player.unsold_count + '</span>' : '') +
-        '<div class="auc-bid-row">' +
-          '<div><div class="auc-bid-label">Player ID</div>' +
-            '<div class="auc-bid-now">' + player.sort_order + '</div></div>' +
-          '<div><div class="auc-bid-label">Base Price</div>' +
-            '<div style="font-family:var(--font-heading); font-weight:900; font-size:1.6rem; color:var(--primary-gold);">' +
-              money(ctx.base) + '</div></div>' +
-          '<div><div class="auc-bid-label">Category</div>' +
-            '<div style="font-family:var(--font-heading); font-weight:900; font-size:1.6rem; color:' +
-              esc(cat ? cat.color : "#00e5ff") + ';">' + esc(cat ? cat.short_code : "") + '</div></div>' +
-          '<div><div class="auc-bid-label">Left in ' + esc(cat ? cat.short_code : "") + '</div>' +
-            '<div style="font-family:var(--font-heading); font-weight:900; font-size:1.6rem;">' +
-              ctx.remaining + '</div></div>' +
-        '</div>' +
-        compulsoryBanner +
-      '</div></div>';
+      '<div class="auc-muted" style="margin-bottom:0.75rem;">Player ID <b style="color:var(--primary-cyan);">' +
+        player.sort_order + '</b> &middot; ' + esc(cat ? cat.label : player.category) +
+        ' &middot; ' + ctx.remaining + ' left in ' + esc(cat ? cat.short_code : "") +
+        (player.unsold_count ? ' &middot; previously unsold &times;' + player.unsold_count : '') +
+      '</div>' +
+      window.OnBlockCard.render(player, cat, ctx.base) +
+      compulsoryBanner;
   }
 
   /* ---------- selling the drawn player ---------------------- */
@@ -689,6 +672,10 @@
             return '<option value="' + esc(cc.code) + '"' + (cc.code === p.category ? " selected" : "") +
                    ">" + esc(cc.label) + "</option>";
           }).join("") + "</select></td>" +
+        '<td><input type="text" class="auc-row-ach" data-player="' + esc(p.id) +
+          '" value="' + esc(p.achievement || "") + '" placeholder="—" autocomplete="off"' +
+          ' style="width:170px; font-size:0.82rem;' +
+          (p.achievement ? " color:var(--primary-gold); font-weight:700;" : "") + '"></td>' +
         '<td><span class="auc-pill ' + esc(p.status) + '">' +
           esc(p.status === "in_lot" ? "on the block" : p.status) + "</span></td>" +
         "<td>" + (team ? '<span style="color:' + esc(team.color) + '; font-weight:700;">' + esc(team.name) + "</span>" : "—") + "</td>" +
@@ -702,7 +689,7 @@
             '" title="Delete player"><i class="fa-solid fa-trash"></i></button>' +
         "</td></tr>";
     }).join("")
-      : '<tr><td colspan="8" style="text-align:center; padding:2rem; color:var(--text-muted);">No players match.</td></tr>';
+      : '<tr><td colspan="9" style="text-align:center; padding:2rem; color:var(--text-muted);">No players match.</td></tr>';
 
     /* Reflect current retained assignment in the selects */
     board.players.forEach(function (p) {
@@ -710,6 +697,21 @@
       if (ts) ts.value = p.team_id || "";
       var rs = document.querySelector('.auc-retain-role[data-player="' + p.id + '"]');
       if (rs && p.retained_role) rs.value = p.retained_role;
+    });
+
+    /* Saved when the operator leaves the cell, not on every keystroke —
+       and the pool table already refuses to redraw while focus is in it,
+       so typing here is safe from the refresh. */
+    document.querySelectorAll(".auc-row-ach").forEach(function (input) {
+      var initial = input.value;
+      input.addEventListener("change", function () {
+        if (input.value === initial) return;
+        var id = input.dataset.player;
+        api.setAchievement(id, input.value)
+          .then(function () { initial = input.value; return api.refresh(); })
+          .then(function () { toast("Achievement saved"); })
+          .catch(function (e) { input.value = initial; fail(e); });
+      });
     });
 
     document.querySelectorAll(".auc-row-cat").forEach(function (sel) {

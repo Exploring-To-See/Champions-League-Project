@@ -89,6 +89,8 @@ create table if not exists public.auction_players (
   is_retained     boolean not null default false,
   retained_role   text check (retained_role in ('CAPTAIN','VICE_CAPTAIN')),
   unsold_count    int not null default 0,
+  -- what this player won last time, shown on the card when they come up
+  achievement     text,
   sort_order      int not null default 0,
   created_at      timestamptz not null default now()
 );
@@ -161,6 +163,8 @@ insert into public.auction_state  (id, status) values (1, 'setup') on conflict (
 -- 2b) IN-PLACE MIGRATIONS for databases created by an earlier
 --     version of this file. All are no-ops on a fresh install.
 -- ------------------------------------------------------------
+
+alter table public.auction_players add column if not exists achievement text;
 
 -- Allow 'unsold' on installs whose check constraint predates it.
 do $$
@@ -544,6 +548,33 @@ set search_path = public as $$
                      from public.auction_team_auth where team_id = p_team), false);
 $$;
 
+-- The two sports a player rated themselves highest in, for the card shown
+-- when they come up. Unrated sports (0) are skipped rather than padded, so
+-- someone who rated only one sport shows one, and a player who rated none
+-- shows none instead of an arbitrary pair of zeroes.
+create or replace function public.auction_top_sports(p_reg uuid)
+returns jsonb language sql stable as $$
+  select coalesce(jsonb_agg(jsonb_build_object('sport', label, 'rating', val)
+                            order by ord), '[]'::jsonb)
+    from (
+      select v.label, v.val,
+             row_number() over (order by v.val desc, v.label) as ord
+        from public.registrations r
+        cross join lateral (values
+          ('Pickleball',         r.rating_pickleball),
+          ('Poker',              r.rating_poker),
+          ('Cricket',            r.rating_cricket),
+          ('Triathlon',          r.rating_triathlon),
+          ('Archery & Shooting', r.rating_archery_shooting),
+          ('Badminton',          r.rating_badminton),
+          ('Table Tennis',       r.rating_table_tennis)
+        ) as v(label, val)
+       where r.id = p_reg and v.val > 0
+       order by v.val desc, v.label
+       limit 2
+    ) t;
+$$;
+
 -- Captain roster for the PUBLIC live view: who leads each team, what their
 -- wallet looks like, and whether a sign-in has been provisioned at all.
 --
@@ -660,9 +691,14 @@ begin
                     'photo_url', p.photo_url, 'status', p.status,
                     'team_id', p.team_id, 'sold_price', p.sold_price,
                     'is_retained', p.is_retained, 'retained_role', p.retained_role,
-                    'unsold_count', p.unsold_count, 'sort_order', p.sort_order
+                    'unsold_count', p.unsold_count, 'sort_order', p.sort_order,
+                    'achievement', p.achievement,
+                    -- straight off the player's own registration
+                    'age', r.age, 'history', r.tournament_status,
+                    'top_sports', public.auction_top_sports(p.registration_id)
                   ) order by p.sort_order, p.name), '[]'::jsonb)
-                  from public.auction_players p),
+                  from public.auction_players p
+                  left join public.registrations r on r.id = p.registration_id),
     'captains', public.auction_captain_accounts(),
     'alerts', public.auction_alerts(),
     'stranded', public.auction_stranded(),
@@ -945,6 +981,18 @@ begin
     where id = p_id returning id into v_id;
   end if;
   return v_id;
+end $$;
+
+-- Previous-tournament achievement, editable from the Player Pool. Kept on
+-- the pool row rather than the registration because the retained captains
+-- have achievements too and not all of them registered.
+create or replace function public.auction_set_achievement(p_id uuid, p_text text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  perform public.auction_require_admin();
+  update public.auction_players
+     set achievement = nullif(trim(coalesce(p_text, '')), '')
+   where id = p_id;
 end $$;
 
 create or replace function public.auction_delete_player(p_id uuid)
@@ -1563,6 +1611,7 @@ grant execute on function
   public.auction_blocker_summary(),
   public.auction_board(),
   public.auction_team_has_password(uuid),
+  public.auction_top_sports(uuid),
   public.auction_captain_accounts(),
   public.auction_captain_login(text, text),
   public.auction_captain_logout(text),
@@ -1580,6 +1629,7 @@ grant execute on function
   public.auction_captain_admin_accounts(),
   public.auction_upsert_player(uuid, text, text, text, uuid, int),
   public.auction_delete_player(uuid),
+  public.auction_set_achievement(uuid, text),
   public.auction_set_retained(uuid, uuid, text),
   public.auction_import_registrations(text),
   public.auction_set_status(text),

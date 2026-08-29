@@ -87,45 +87,21 @@
     if (!player) { host.innerHTML = ""; return; }
 
     var cat = catOf(player.category);
-    var leader = teamOf(lot.current_bidder_id);
-    var photo = player.photo_url
-      ? '<img src="' + esc(player.photo_url) + '" class="auc-lot-photo" alt="">'
-      : '<div class="auc-lot-photo-empty"><i class="fa-solid fa-user"></i></div>';
 
     var compulsory = ctx.compulsory_team_id
-      ? '<div class="auc-alert forced" style="margin-top:0.9rem;">' +
+      ? '<div class="auc-alert forced" style="margin-top:1rem;">' +
         '<i class="fa-solid fa-gavel"></i><div>Compulsory fill — <b>' +
         esc(ctx.compulsory_team_name) + "</b> takes this player at base " +
         money(ctx.base) + ".</div></div>"
       : "";
 
-    /* Who is still in the running, for the crowd to follow */
-    var chase = (ctx.teams || []).filter(function (t) { return t.can_meet_next; })
-      .map(function (t) { return esc(t.team_name); });
-
+    /* Identical card to the organiser console, from js/onblock.js. */
     host.innerHTML =
-      '<div class="auc-lot">' + photo +
-      '<div style="width:100%;">' +
-        '<div class="auc-lot-name">' + esc(player.name) + "</div>" +
-        '<span class="auc-cat-badge" style="color:' + esc(cat ? cat.color : "#00e5ff") + '">' +
-          esc(cat ? cat.label : player.category) + " · base " + money(ctx.base) + "</span>" +
-        '<div class="auc-bid-row">' +
-          '<div><div class="auc-bid-label">Current Bid</div><div class="auc-bid-now">' +
-            (ctx.current_bid === null ? "—" : money(ctx.current_bid)) + "</div></div>" +
-          '<div><div class="auc-bid-label">Leading</div>' +
-            '<div style="font-family:var(--font-heading); font-weight:900; font-size:1.4rem; color:' +
-              (leader ? esc(leader.color) : "var(--text-muted)") + ';">' +
-              (leader ? esc(leader.name) : "No bids yet") + "</div></div>" +
-          '<div><div class="auc-bid-label">Next Bid</div>' +
-            '<div style="font-family:var(--font-heading); font-weight:900; font-size:1.4rem; color:var(--primary-cyan);">' +
-              money(ctx.next_bid) + "</div></div>" +
-        "</div>" +
-        compulsory +
-        '<div class="auc-muted" style="margin-top:0.9rem;">' +
-          (chase.length ? "Still in the running: <b>" + chase.join(", ") + "</b>"
-                        : "No team can meet the next bid — the hammer is about to fall.") +
-        "</div>" +
-      "</div></div>";
+      '<div class="auc-muted" style="margin-bottom:0.75rem;">Player ID <b style="color:var(--primary-cyan);">' +
+        player.sort_order + "</b> · " + esc(cat ? cat.label : player.category) +
+        " · " + ctx.remaining + " left in " + esc(cat ? cat.short_code : "") + "</div>" +
+      window.OnBlockCard.render(player, cat, ctx.base) +
+      compulsory;
   }
 
   /* Captains, wallet and squad for all four teams in one grid, teams as

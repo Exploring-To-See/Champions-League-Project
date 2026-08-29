@@ -139,6 +139,7 @@
     revertSale:     function (playerId)       { return this.rpc("auction_revert_sale", { p_player: playerId }); },
     resetAuction:   function (confirm)        { return this.rpc("auction_reset", { p_confirm: confirm }); },
     deletePlayer:   function (id)             { return this.rpc("auction_delete_player", { p_id: id }); },
+    setAchievement: function (id, text)       { return this.rpc("auction_set_achievement", { p_id: id, p_text: text }); },
     setRetained:    function (p, t, role)     { return this.rpc("auction_set_retained", { p_player: p, p_team: t, p_role: role }); },
     setTeamPassword: function (t, pw)         { return this.rpc("auction_set_team_password", { p_team: t, p_password: pw }); },
     /* Pass no team to reissue every captain password in one go. The
