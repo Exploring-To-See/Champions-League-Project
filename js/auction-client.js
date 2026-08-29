@@ -27,6 +27,22 @@
     el.innerHTML = html;
   };
 
+  /* Draw one section of a view, and do not let it take the others down.
+
+     A view's render() is a list of independent panels, but it ran as one
+     block: the first one to throw stopped every panel after it, and the
+     board listener swallows the error, so the page just quietly came up
+     half-drawn. That is exactly how a missing renderFeed emptied the
+     All Players table below it. Now a broken panel is the only thing that
+     breaks, and it says so in the console. */
+  global.section = function (name, fn) {
+    try {
+      fn();
+    } catch (e) {
+      console.error("[render] " + name + " failed:", e);
+    }
+  };
+
   global.keepScroll = function (fn) {
     var y = global.scrollY || global.pageYOffset || 0;
     var before = document.documentElement.scrollHeight;

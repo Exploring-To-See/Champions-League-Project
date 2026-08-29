@@ -41,13 +41,13 @@
     board = b;
     if (!board) return;
     keepScroll(function () {
-    renderStatus();
-    renderLot();
-    renderTeamBoard();
-    renderTeamTabs();
-    renderFeed();
-    renderAllPlayers();
-    renderPool();
+    section("status", renderStatus);
+    section("lot", renderLot);
+    section("teamboard", renderTeamBoard);
+    section("teamtabs", renderTeamTabs);
+    section("feed", renderFeed);
+    section("allplayers", renderAllPlayers);
+    section("pool", renderPool);
     });
   }
 
@@ -247,7 +247,7 @@
     bar.querySelectorAll(".auc-teamtab").forEach(function (btn) {
       btn.addEventListener("click", function () {
         activeTeamTab = parseInt(btn.dataset.i, 10) || 0;
-        renderTeamTabs();
+        section("teamtabs", renderTeamTabs);
       });
     });
 
@@ -314,6 +314,14 @@
             : '<div class="auc-muted" style="margin-top:0.4rem;">No players yet</div>') +
         "</div>" +
       "</div>";
+  }
+
+  function renderFeed() {
+    var events = board.events || [];
+    setHTML($("pub-feed"), events.length ? events.map(function (e) {
+      return '<div class="auc-feed-item ' + esc(e.kind) + '">' + esc(e.message) +
+        '<div class="auc-feed-time">' + new Date(e.created_at).toLocaleTimeString() + "</div></div>";
+    }).join("") : '<div class="auc-muted">The auction has not started yet.</div>');
   }
 
   function renderAllPlayers() {

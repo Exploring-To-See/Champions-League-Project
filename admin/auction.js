@@ -174,19 +174,19 @@
     if (!b) return;
     $("auc-setup-hint").style.display = "none";
     keepScroll(function () {
-    renderStatus();
-    renderAlerts();
-    renderCurrentLot();
-    renderAwardPanel();
-    renderTeamPanels();
-    renderRandomizer();
-    renderUnsold();
-    renderFeed();
-    renderPool();
-    renderTeamsEditor();
-    renderCaptainAccounts();
-    renderSquads();
-    renderConfigView();
+    section("status", renderStatus);
+    section("alerts", renderAlerts);
+    section("currentlot", renderCurrentLot);
+    section("awardpanel", renderAwardPanel);
+    section("teampanels", renderTeamPanels);
+    section("randomizer", renderRandomizer);
+    section("unsold", renderUnsold);
+    section("feed", renderFeed);
+    section("pool", renderPool);
+    section("teamseditor", renderTeamsEditor);
+    section("captainaccounts", renderCaptainAccounts);
+    section("squads", renderSquads);
+    section("configview", renderConfigView);
     });
   }
 

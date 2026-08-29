@@ -185,14 +185,14 @@
       return;
     }
     keepScroll(function () {
-      renderStatus();
-      renderStats(me);
-      renderAlerts(me);
-      renderLot(me);
-      renderSquad(me);
-      renderRivals(me);
-      renderFeed();
-      AllPlayers.render("cap", board);
+      section("status", renderStatus);
+      section("stats", function () { renderStats(me); });
+      section("alerts", function () { renderAlerts(me); });
+      section("lot", function () { renderLot(me); });
+      section("squad", function () { renderSquad(me); });
+      section("rivals", function () { renderRivals(me); });
+      section("feed", renderFeed);
+      section("allplayers", function () { AllPlayers.render("cap", board); });
     });
   }
 
