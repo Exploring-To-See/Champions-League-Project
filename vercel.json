@@ -4,32 +4,45 @@
   "redirects": [
     {
       "source": "/",
-      "has": [{ "type": "host", "value": "championsadmin.vercel.app" }],
-      "destination": "/admin/",
-      "permanent": false
-    },
-    {
-      "source": "/",
-      "has": [{ "type": "host", "value": "1727championsauction.vercel.app" }],
-      "destination": "/auction/",
-      "permanent": false
-    },
-    {
-      "source": "/",
       "has": [{ "type": "host", "value": "1727championstats.vercel.app" }],
       "destination": "/auction/",
       "permanent": false
     },
     {
       "source": "/",
-      "has": [{ "type": "host", "value": "championsauction.vercel.app" }],
-      "destination": "/auction/",
+      "has": [{ "type": "host", "value": "1727championsauction.vercel.app" }],
+      "destination": "/captain/",
       "permanent": false
     },
     {
       "source": "/",
-      "has": [{ "type": "host", "value": "championscaptain.vercel.app" }],
+      "has": [{ "type": "host", "value": "championsadmin.vercel.app" }],
+      "destination": "/admin/",
+      "permanent": false
+    },
+
+    {
+      "source": "/:path((?!auction|assets|css|js|favicon|apple-touch-icon).+)",
+      "has": [{ "type": "host", "value": "1727championstats.vercel.app" }],
+      "destination": "/auction/",
+      "permanent": false
+    },
+    {
+      "source": "/:path((?!captain|assets|css|js|favicon|apple-touch-icon).+)",
+      "has": [{ "type": "host", "value": "1727championsauction.vercel.app" }],
       "destination": "/captain/",
+      "permanent": false
+    },
+    {
+      "source": "/:path((?!admin|assets|css|js|favicon|apple-touch-icon).+)",
+      "has": [{ "type": "host", "value": "championsadmin.vercel.app" }],
+      "destination": "/admin/",
+      "permanent": false
+    },
+    {
+      "source": "/:path((?!confirmation|assets|css|js|favicon|apple-touch-icon).+)",
+      "has": [{ "type": "host", "value": "1727championsleague.vercel.app" }],
+      "destination": "/",
       "permanent": false
     }
   ],

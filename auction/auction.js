@@ -40,6 +40,7 @@
   function render(b) {
     board = b;
     if (!board) return;
+    keepScroll(function () {
     renderStatus();
     renderLot();
     renderTeamBoard();
@@ -47,6 +48,7 @@
     renderFeed();
     renderAllPlayers();
     renderPool();
+    });
   }
 
   function renderStatus() {
@@ -74,9 +76,9 @@
             '<div class="auc-muted" style="margin-top:0.5rem;">Waiting for the next draw…</div>' +
           "</div>";
       } else {
-        host.innerHTML = '<div class="auc-muted" style="text-align:center; padding:2rem 0;">' +
+        setHTML(host, '<div class="auc-muted" style="text-align:center; padding:2rem 0;">' +
           '<i class="fa-solid fa-hourglass-half" style="font-size:2.4rem; opacity:0.35; display:block; margin-bottom:0.7rem;"></i>' +
-          "The auction has not opened a lot yet.</div>";
+          "The auction has not opened a lot yet.</div>");
       }
       return;
     }
@@ -85,7 +87,7 @@
     for (var i = 0; i < board.players.length; i++) {
       if (board.players[i].id === lot.player_id) { player = board.players[i]; break; }
     }
-    if (!player) { host.innerHTML = ""; return; }
+    if (!player) { setHTML(host, ""); return; }
 
     var cat = catOf(player.category);
 
@@ -97,7 +99,7 @@
       : "";
 
     /* Identical card to the organiser console, from js/onblock.js. */
-    host.innerHTML = window.OnBlockCard.render(player, cat, ctx.base) + compulsory;
+    setHTML(host, window.OnBlockCard.render(player, cat, ctx.base) + compulsory);
   }
 
   /* Captains, wallet and squad for all four teams in one grid, teams as
@@ -210,7 +212,7 @@
         : '<span class="auc-pill in_lot">AWAITING PASSWORD</span>';
     }) + "</tr>";
 
-    $("pub-teamboard").innerHTML = head + "<tbody>" + rows + "</tbody>";
+    setHTML($("pub-teamboard"), head + "<tbody>" + rows + "</tbody>");
   }
 
   /* ---------- mobile team tabs ------------------------------
@@ -227,8 +229,8 @@
     if (!bar || !panel) return;
 
     if (!teams.length) {
-      bar.innerHTML = "";
-      panel.innerHTML = '<div class="auc-muted">Teams have not been set up yet.</div>';
+      setHTML(bar, "");
+      setHTML(panel, '<div class="auc-muted">Teams have not been set up yet.</div>');
       return;
     }
     if (activeTeamTab >= teams.length) activeTeamTab = 0;
@@ -236,11 +238,11 @@
     var acc = {};
     (board.captains || []).forEach(function (a) { acc[a.team_id] = a; });
 
-    bar.innerHTML = teams.map(function (t, i) {
+    setHTML(bar, teams.map(function (t, i) {
       return '<button class="auc-teamtab' + (i === activeTeamTab ? " active" : "") +
         '" style="--team-color:' + esc(t.color) + '" data-i="' + i + '">' +
         esc(t.short_name || t.name) + "</button>";
-    }).join("");
+    }).join(""));
 
     bar.querySelectorAll(".auc-teamtab").forEach(function (btn) {
       btn.addEventListener("click", function () {
@@ -329,7 +331,7 @@
     function syncSelect(sel, signature, html) {
       if (sel.dataset.sig === signature) return;
       var prev = sel.value;
-      sel.innerHTML = html;
+      setHTML(sel, html);
       sel.dataset.sig = signature;
       var kept = false;
       for (var i = 0; i < sel.options.length; i++) {
@@ -373,7 +375,7 @@
     $("pub-players-count").textContent =
       rows.length + " shown · " + soldTotal + " of " + board.players.length + " placed";
 
-    $("pub-players-body").innerHTML = rows.length ? rows.map(function (p) {
+    setHTML($("pub-players-body"), rows.length ? rows.map(function (p) {
       var c = catOf(p.category);
       var t = teamOf(p.team_id);
       var statusLabel = p.status === "in_lot" ? "on the block" : p.status;
@@ -397,19 +399,19 @@
         "</td></tr>";
     }).join("")
       : '<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted);">' +
-        "No players match these filters.</td></tr>";
+        "No players match these filters.</td></tr>");
   }
 
   function renderFeed() {
     var events = board.events || [];
-    $("pub-feed").innerHTML = events.length ? events.map(function (e) {
+    setHTML($("pub-feed"), events.length ? events.map(function (e) {
       return '<div class="auc-feed-item ' + esc(e.kind) + '">' + esc(e.message) +
         '<div class="auc-feed-time">' + new Date(e.created_at).toLocaleTimeString() + "</div></div>";
-    }).join("") : '<div class="auc-muted">The auction has not started yet.</div>';
+    }).join("") : '<div class="auc-muted">The auction has not started yet.</div>');
   }
 
   function renderPool() {
-    $("pub-pool").innerHTML = board.categories.map(function (c) {
+    setHTML($("pub-pool"), board.categories.map(function (c) {
       var inCat = board.players.filter(function (p) { return p.category === c.code; });
       var sold = inCat.filter(function (p) { return p.status === "sold"; }).length;
       var uns = inCat.filter(function (p) { return p.status === "unsold"; }).length;
@@ -423,7 +425,7 @@
         '<td style="min-width:120px;"><div class="auc-progress" style="margin:0;">' +
           '<div style="width:' + pct.toFixed(1) + '%"></div></div></td>' +
         "</tr>";
-    }).join("");
+    }).join(""));
   }
 
   /* Filters only re-draw the table, so they stay responsive between the
@@ -439,23 +441,13 @@
       });
   }
 
-  /* Point the in-page captain link at the same origin the nav uses. A
-     captain's session token is per-origin, so sending them to /captain on
-     whichever domain they happen to be reading would hand them an empty
-     session store and a second sign-in. */
-  function alignCaptainLink() {
-    var el = $("pub-captain-link");
-    if (el && window.CLP_NAV) el.href = window.CLP_NAV.urlFor("CAPTAIN");
-  }
-
   document.addEventListener("DOMContentLoaded", function () {
-    alignCaptainLink();
     wireFilters();
     api = window.createAuctionClient();
     if (!api.ready()) {
       $("pub-status-text").textContent = "NOT CONFIGURED";
-      $("pub-lot").innerHTML = '<div class="auc-alert info"><i class="fa-solid fa-circle-info"></i>' +
-        "<div>Supabase is not configured for this deployment.</div></div>";
+      setHTML($("pub-lot"), '<div class="auc-alert info"><i class="fa-solid fa-circle-info"></i>' +
+        "<div>Supabase is not configured for this deployment.</div></div>");
       return;
     }
     api.onChange(render);
@@ -464,8 +456,8 @@
     }).catch(function (e) {
       console.error(e);
       $("pub-status-text").textContent = "UNAVAILABLE";
-      $("pub-lot").innerHTML = '<div class="auc-alert info"><i class="fa-solid fa-circle-info"></i>' +
-        "<div>The auction has not been set up yet. Check back shortly.</div></div>";
+      setHTML($("pub-lot"), '<div class="auc-alert info"><i class="fa-solid fa-circle-info"></i>' +
+        "<div>The auction has not been set up yet. Check back shortly.</div></div>");
     });
   });
 })();

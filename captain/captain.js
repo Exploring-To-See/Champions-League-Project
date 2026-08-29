@@ -57,15 +57,15 @@
     api.refresh().then(function (b) {
       var accounts = (b && b.captains) || [];
       if (!accounts.length) {
-        sel.innerHTML = '<option value="">No teams have been set up yet</option>';
-        roster.innerHTML = "";
+        setHTML(sel, '<option value="">No teams have been set up yet</option>');
+        setHTML(roster, "");
         return;
       }
 
-      sel.innerHTML = '<option value="">— choose your team —</option>' +
+      setHTML(sel, '<option value="">— choose your team —</option>' +
         accounts.map(function (a) {
           return '<option value="' + esc(a.team_code) + '">' + esc(a.team_name) + "</option>";
-        }).join("");
+        }).join(""));
 
       roster.innerHTML =
         '<div style="color:var(--primary-cyan); font-weight:700; margin-bottom:0.35rem;">' +
@@ -80,7 +80,7 @@
             "</div>";
         }).join("");
     }).catch(function () {
-      sel.innerHTML = '<option value="">Could not load teams</option>';
+      setHTML(sel, '<option value="">Could not load teams</option>');
     });
   }
 
@@ -178,13 +178,15 @@
       toast("This team is no longer in the auction", "err");
       return;
     }
-    renderStatus();
-    renderStats(me);
-    renderAlerts(me);
-    renderLot(me);
-    renderSquad(me);
-    renderRivals(me);
-    renderFeed();
+    keepScroll(function () {
+      renderStatus();
+      renderStats(me);
+      renderAlerts(me);
+      renderLot(me);
+      renderSquad(me);
+      renderRivals(me);
+      renderFeed();
+    });
   }
 
   function renderStatus() {
@@ -229,7 +231,7 @@
       }
     });
 
-    $("cap-alerts").innerHTML = html;
+    setHTML($("cap-alerts"), html);
   }
 
   /* ---------- the player on the block -----------------------
@@ -242,9 +244,9 @@
     var ctx = board.lot_context;
 
     if (!lot || !ctx) {
-      host.innerHTML = '<div class="auc-muted" style="text-align:center; padding:1.8rem 0;">' +
+      setHTML(host, '<div class="auc-muted" style="text-align:center; padding:1.8rem 0;">' +
         '<i class="fa-solid fa-hourglass-half" style="font-size:2.2rem; opacity:0.35; display:block; margin-bottom:0.6rem;"></i>' +
-        "Waiting for the auctioneer to draw the next player…</div>";
+        "Waiting for the auctioneer to draw the next player…</div>");
       return;
     }
 
@@ -252,7 +254,7 @@
     for (var i = 0; i < board.players.length; i++) {
       if (board.players[i].id === lot.player_id) { player = board.players[i]; break; }
     }
-    if (!player) { host.innerHTML = ""; return; }
+    if (!player) { setHTML(host, ""); return; }
 
     var cat = catOf(player.category);
     var row = myRow();
@@ -268,7 +270,7 @@
         esc(row.reason) + "</div></div></div>"
       : "";
 
-    host.innerHTML = window.OnBlockCard.renderCaptain(player, cat, ctx.base) + limit;
+    setHTML(host, window.OnBlockCard.renderCaptain(player, cat, ctx.base) + limit);
   }
 
   /* ---------- my squad -------------------------------------- */
@@ -297,7 +299,7 @@
       return p.team_id === me.id && p.status === "sold";
     }).sort(function (a, b) { return (a.sort_order || 0) - (b.sort_order || 0); });
 
-    $("cap-squad").innerHTML = squad.length ? squad.map(function (p) {
+    setHTML($("cap-squad"), squad.length ? squad.map(function (p) {
       var c = catOf(p.category);
       return "<li><span>" +
         (p.is_retained ? "" : '<span style="font-family:monospace; color:var(--primary-cyan);">#' +
@@ -310,7 +312,7 @@
         "<span style='font-weight:800;'>" +
           (p.is_retained ? '<span class="auc-muted">retained</span>' : money(p.sold_price || 0)) +
         "</span></li>";
-    }).join("") : '<li class="auc-muted">No players yet</li>';
+    }).join("") : '<li class="auc-muted">No players yet</li>');
   }
 
   /* ---------- the other three teams -------------------------
@@ -322,7 +324,7 @@
   function renderRivals(me) {
     var ctx = board.lot_context;
 
-    $("cap-rivals").innerHTML = board.teams.filter(function (t) { return t.id !== me.id; })
+    setHTML($("cap-rivals"), board.teams.filter(function (t) { return t.id !== me.id; })
       .map(function (t) {
         var row = null;
         if (ctx) {
@@ -364,7 +366,7 @@
                 : '<li class="auc-muted">No players yet</li>') + "</ul>"
             : "") +
         "</div>";
-      }).join("");
+      }).join(""));
 
     document.querySelectorAll(".cap-team-toggle").forEach(function (btn) {
       btn.addEventListener("click", function () {
@@ -377,10 +379,10 @@
 
   function renderFeed() {
     var events = board.events || [];
-    $("cap-feed").innerHTML = events.length ? events.map(function (e) {
+    setHTML($("cap-feed"), events.length ? events.map(function (e) {
       return '<div class="auc-feed-item ' + esc(e.kind) + '">' + esc(e.message) +
         '<div class="auc-feed-time">' + new Date(e.created_at).toLocaleTimeString() + "</div></div>";
-    }).join("") : '<div class="auc-muted">Nothing has happened yet.</div>';
+    }).join("") : '<div class="auc-muted">Nothing has happened yet.</div>');
   }
 
   /* ---------- boot ------------------------------------------ */

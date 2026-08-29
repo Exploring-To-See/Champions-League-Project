@@ -173,6 +173,7 @@
     board = b;
     if (!b) return;
     $("auc-setup-hint").style.display = "none";
+    keepScroll(function () {
     renderStatus();
     renderAlerts();
     renderCurrentLot();
@@ -186,6 +187,7 @@
     renderCaptainAccounts();
     renderSquads();
     renderConfigView();
+    });
   }
 
   function renderStatus() {
@@ -245,7 +247,7 @@
               '. No team has purse above the base price for these.</div></div></div>';
     });
 
-    host.innerHTML = html;
+    setHTML(host, html);
   }
 
   /* ---------- on the block (display only) ------------------- */
@@ -264,9 +266,9 @@
     if (!lot || !ctx) {
       if (renderedLotId !== null || !host.innerHTML) {
         renderedLotId = null;
-        host.innerHTML = '<div class="auc-muted" style="padding:1.5rem 0; text-align:center;">' +
+        setHTML(host, '<div class="auc-muted" style="padding:1.5rem 0; text-align:center;">' +
           '<i class="fa-solid fa-gavel" style="font-size:2.2rem; opacity:0.35; display:block; margin-bottom:0.6rem;"></i>' +
-          'Nobody is on the block. Use the <b>Randomizer</b> below to draw the next player.</div>';
+          'Nobody is on the block. Use the <b>Randomizer</b> below to draw the next player.</div>');
       }
       return;
     }
@@ -275,7 +277,7 @@
     renderedLotId = lot.id;
 
     var player = playerById(lot.player_id);
-    if (!player) { host.innerHTML = ""; return; }
+    if (!player) { setHTML(host, ""); return; }
 
     var cat = catOf(player.category);
 
@@ -289,7 +291,7 @@
     /* Just the card — the same one the room sees on the public view, from
        js/onblock.js. Nothing above it: the card names the player itself, and
        in full screen any heading is only in the way. */
-    host.innerHTML = window.OnBlockCard.render(player, cat, ctx.base, { logos: true }) + compulsoryBanner;
+    setHTML(host, window.OnBlockCard.render(player, cat, ctx.base, { logos: true }) + compulsoryBanner);
   }
 
   /* ---------- selling the drawn player ---------------------- */
@@ -307,7 +309,7 @@
     if (!lot || !ctx) {
       if (renderedAwardLotId !== null || host.innerHTML) {
         renderedAwardLotId = null;
-        host.innerHTML = "";
+        setHTML(host, "");
       }
       return;
     }
@@ -316,7 +318,7 @@
     renderedAwardLotId = lot.id;
 
     var player = playerById(lot.player_id);
-    if (!player) { host.innerHTML = ""; return; }
+    if (!player) { setHTML(host, ""); return; }
 
     host.innerHTML =
       '<div style="margin-top:1.1rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.08);">' +
@@ -353,13 +355,13 @@
       (ctx.teams || []).forEach(function (t) { if (t.team_id === teamSel.value) row = t; });
       var hint = $("auc-award-hint");
       if (!row) {
-        hint.innerHTML = esc(player.name) + " &mdash; base " + money(ctx.base) +
-          ". The price is checked against the max bid of the team you pick.";
+        setHTML(hint, esc(player.name) + " &mdash; base " + money(ctx.base) +
+          ". The price is checked against the max bid of the team you pick.");
         return;
       }
-      hint.innerHTML = "<b>" + esc(row.team_name) + "</b> &mdash; purse " + money(row.purse_left) +
+      setHTML(hint, "<b>" + esc(row.team_name) + "</b> &mdash; purse " + money(row.purse_left) +
         ", keeps " + money(row.reserve) + " for remaining minimums, so the most it can pay " +
-        "here is <b>" + money(row.max_bid) + "</b>.";
+        "here is <b>" + money(row.max_bid) + "</b>.");
       priceInput.max = row.max_bid;
     }
     teamSel.addEventListener("change", showLimit);
@@ -396,7 +398,7 @@
     var ctx = board.lot_context;
     var lot = board.current_lot;
 
-    host.innerHTML = board.teams.map(function (t) {
+    setHTML(host, board.teams.map(function (t) {
       var row = null;
       if (ctx) {
         for (var i = 0; i < ctx.teams.length; i++) {
@@ -433,7 +435,7 @@
         '<div class="auc-chips">' + chips + '</div>' +
         '<div class="auc-reason ' + reasonCls + '">' + esc(reason) + '</div>' +
         '</div>';
-    }).join("");
+    }).join(""));
   }
 
   /* ---------- randomizer ------------------------------------ */
@@ -497,11 +499,11 @@
           "</span>" +
         "</div>";
     } else {
-      host.innerHTML = '<div class="auc-muted" style="text-align:center; padding:1.4rem 0;">' +
+      setHTML(host, '<div class="auc-muted" style="text-align:center; padding:1.4rem 0;">' +
         '<i class="fa-solid fa-dice" style="font-size:2.4rem; opacity:0.35; display:block; ' +
         'margin-bottom:0.6rem;"></i>' +
         (pool.length ? "Press draw to pull the next number."
-                     : "No numbers left to draw.") + "</div>";
+                     : "No numbers left to draw.") + "</div>");
     }
 
     /* Everyone already out of the pool, by number. */
@@ -510,12 +512,12 @@
       return c && !c.is_retained && !p.is_retained && p.status !== "available";
     }).sort(function (a, b) { return a.sort_order - b.sort_order; });
 
-    $("auc-draw-history").innerHTML = done.length
+    setHTML($("auc-draw-history"), done.length
       ? done.map(function (p) {
           return '<span class="auc-chip met" title="' + esc(p.name) + '">' +
                  p.sort_order + "</span>";
         }).join("")
-      : '<span class="auc-muted">None yet.</span>';
+      : '<span class="auc-muted">None yet.</span>');
   }
 
   /* ---------- unsold list ----------------------------------- */
@@ -537,7 +539,7 @@
     $("auc-unsold-count").textContent = rows.length + (rows.length === 1 ? " player" : " players");
 
     if (holdsFocus($("auc-unsold-body"))) return;
-    $("auc-unsold-body").innerHTML = rows.length ? rows.map(function (p) {
+    setHTML($("auc-unsold-body"), rows.length ? rows.map(function (p) {
       var c = catOf(p.category);
       return "<tr>" +
         '<td style="font-family:monospace; font-weight:800; color:var(--primary-gold);">' +
@@ -554,7 +556,7 @@
       "</tr>";
     }).join("")
       : '<tr><td colspan="6" style="text-align:center; padding:1.6rem; color:var(--text-muted);">' +
-        "Nobody has gone unsold.</td></tr>";
+        "Nobody has gone unsold.</td></tr>");
 
     document.querySelectorAll(".auc-reopen").forEach(function (btn) {
       btn.addEventListener("click", function () {
@@ -578,36 +580,36 @@
     var host = $("auc-feed");
     var events = board.events || [];
     if (!events.length) {
-      host.innerHTML = '<div class="auc-muted">Nothing has happened yet.</div>';
+      setHTML(host, '<div class="auc-muted">Nothing has happened yet.</div>');
       return;
     }
-    host.innerHTML = events.map(function (e) {
+    setHTML(host, events.map(function (e) {
       return '<div class="auc-feed-item ' + esc(e.kind) + '">' +
         esc(e.message) +
         '<div class="auc-feed-time">' + new Date(e.created_at).toLocaleTimeString() + '</div></div>';
-    }).join("");
+    }).join(""));
   }
 
   /* ---------- player pool ----------------------------------- */
   function renderPool() {
     var newCat = $("auc-new-cat");
     if (!newCat.options.length) {
-      newCat.innerHTML = board.categories.map(function (c) {
+      setHTML(newCat, board.categories.map(function (c) {
         return '<option value="' + esc(c.code) + '">' + esc(c.label) + '</option>';
-      }).join("");
+      }).join(""));
     }
     var filter = $("auc-pool-filter");
     if (filter.options.length <= 1) {
-      filter.innerHTML = '<option value="ALL">All categories</option>' +
+      setHTML(filter, '<option value="ALL">All categories</option>' +
         board.categories.map(function (c) {
           return '<option value="' + esc(c.code) + '">' + esc(c.label) + '</option>';
-        }).join("");
+        }).join(""));
     }
 
     /* Pool composition against the configured target */
     var teamsCount = board.config.teams_count;
     var healthy = true;
-    $("auc-pool-summary").innerHTML = board.categories.map(function (c) {
+    setHTML($("auc-pool-summary"), board.categories.map(function (c) {
       var inPool = board.players.filter(function (p) { return p.category === c.code; }).length;
       var sold = board.players.filter(function (p) { return p.category === c.code && p.status === "sold"; }).length;
       var left = inPool - sold;
@@ -623,11 +625,11 @@
         '<td style="color:' + (slack < 0 ? "var(--primary-red)" : slack === 0 ? "var(--primary-gold)" : "#22c55e") +
           '; font-weight:800;">' + slack + "</td>" +
         "<td>" + sold + "</td><td>" + left + "</td></tr>";
-    }).join("");
+    }).join(""));
 
-    $("auc-pool-health").innerHTML = healthy
+    setHTML($("auc-pool-health"), healthy
       ? '<span class="auc-pill sold" style="margin-left:0.5rem;">POOL MATCHES CONFIG</span>'
-      : '<span class="auc-pill in_lot" style="margin-left:0.5rem;">POOL DOES NOT MATCH CONFIG</span>';
+      : '<span class="auc-pill in_lot" style="margin-left:0.5rem;">POOL DOES NOT MATCH CONFIG</span>');
 
     /* Player rows */
     var q = ($("auc-pool-search").value || "").toLowerCase().trim();
@@ -646,7 +648,7 @@
     }).join("");
 
     if (holdsFocus($("auc-pool-body"))) return;
-    $("auc-pool-body").innerHTML = rows.length ? rows.map(function (p) {
+    setHTML($("auc-pool-body"), rows.length ? rows.map(function (p) {
       var c = catOf(p.category);
       var team = teamOf(p.team_id);
       var retainedCell = "—";
@@ -684,7 +686,7 @@
             '" title="Delete player"><i class="fa-solid fa-trash"></i></button>' +
         "</td></tr>";
     }).join("")
-      : '<tr><td colspan="9" style="text-align:center; padding:2rem; color:var(--text-muted);">No players match.</td></tr>';
+      : '<tr><td colspan="9" style="text-align:center; padding:2rem; color:var(--text-muted);">No players match.</td></tr>');
 
     /* Reflect current retained assignment in the selects */
     board.players.forEach(function (p) {
@@ -760,7 +762,7 @@
   /* ---------- teams & captain passwords --------------------- */
   function renderTeamsEditor() {
     renderInto("teams", "auc-teams-editor", function (host) {
-    host.innerHTML = board.teams.map(function (t) {
+    setHTML(host, board.teams.map(function (t) {
       return '<div class="auc-card" style="border-top:3px solid ' + esc(t.color) + ';">' +
         '<div class="auc-card-title" style="color:' + esc(t.color) + ';">' +
           '<i class="fa-solid fa-shield"></i> ' + esc(t.name) +
@@ -792,7 +794,7 @@
         '<div class="auc-kv" style="margin-top:0.7rem;"><span>Spent</span><span>' +
           money(t.purse_spent) + " of " + money(t.purse_total) + '</span></div>' +
       '</div>';
-    }).join("");
+    }).join(""));
 
     document.querySelectorAll(".auc-t-save").forEach(function (btn) {
       btn.addEventListener("click", function () {
@@ -860,7 +862,7 @@
     var csvBtn = $("auc-btn-download-creds");
 
     if (!issued.length) {
-      host.innerHTML = "";
+      setHTML(host, "");
       copyBtn.style.display = "none";
       csvBtn.style.display = "none";
       return;
@@ -927,15 +929,15 @@
     var withPw = accounts.filter(function (a) { return a.has_password; }).length;
 
     $("auc-captain-url").value = captainConsoleUrl();
-    $("auc-captains-health").innerHTML = accounts.length
+    setHTML($("auc-captains-health"), accounts.length
       ? (withPw === accounts.length
           ? '<span class="auc-pill sold">ALL ' + accounts.length + " CAPTAINS CAN SIGN IN</span>"
           : '<span class="auc-pill in_lot">' + withPw + " of " + accounts.length +
             " captains have a password</span>")
-      : "";
+      : "");
 
     if (holdsFocus($("auc-captains-body"))) return;
-    $("auc-captains-body").innerHTML = accounts.length ? accounts.map(function (a) {
+    setHTML($("auc-captains-body"), accounts.length ? accounts.map(function (a) {
       var extra = adminAccounts[a.team_id] || {};
       var pwCell = a.has_password
         ? '<span class="auc-pill sold">SET</span>' +
@@ -962,7 +964,7 @@
       "</tr>";
     }).join("")
       : '<tr><td colspan="8" style="text-align:center; padding:2rem; color:var(--text-muted);">' +
-        "No teams yet — run <b>Setup → Sync Config</b> first.</td></tr>";
+        "No teams yet — run <b>Setup → Sync Config</b> first.</td></tr>");
 
     document.querySelectorAll(".auc-gen-one").forEach(function (btn) {
       btn.addEventListener("click", function () {
@@ -988,7 +990,7 @@
 
   /* ---------- final squads ---------------------------------- */
   function renderSquads() {
-    $("auc-squads").innerHTML = board.teams.map(function (t) {
+    setHTML($("auc-squads"), board.teams.map(function (t) {
       var squad = board.players.filter(function (p) {
         return p.team_id === t.id && p.status === "sold";
       });
@@ -1016,7 +1018,7 @@
               esc(c ? c.short_code : p.category) + "</span></span>" +
             "<span style='font-weight:800;'>" + money(p.sold_price || 0) + "</span></li>";
         }).join("") : '<li class="auc-muted">No players yet</li>') + "</ul></div>";
-    }).join("");
+    }).join(""));
   }
 
   /* ---------- derived config read-out ----------------------- */

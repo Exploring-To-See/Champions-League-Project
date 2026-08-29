@@ -8,6 +8,41 @@
 (function (global) {
   "use strict";
 
+  /* ---- keeping the page still while it refreshes ------------
+     Every view re-renders on a 5-7 second poll. Rewriting a tall
+     container's innerHTML destroys and rebuilds it, and for the instant
+     it is empty the document is shorter — so the browser clamps the
+     scroll position, and a reader sitting at the footer gets thrown back
+     up the page. That is the scroll "glitch".
+
+     Two defences, in order of preference:
+       setHTML   — do not touch the DOM at all when the markup has not
+                   changed, which on a quiet poll is every container.
+       keepScroll — for the renders that genuinely change, put the reader
+                   back where they were once the new content is measured. */
+
+  global.setHTML = function (el, html) {
+    if (!el) return;
+    if (el.innerHTML === html) return;   /* nothing changed; leave it alone */
+    el.innerHTML = html;
+  };
+
+  global.keepScroll = function (fn) {
+    var y = global.scrollY || global.pageYOffset || 0;
+    var before = document.documentElement.scrollHeight;
+
+    fn();
+
+    /* Reading scrollHeight forces layout, so this sees the new height. */
+    var after = document.documentElement.scrollHeight;
+    var now = global.scrollY || global.pageYOffset || 0;
+    if (after !== before && now !== y) {
+      /* scrollTo clamps for us, so a page that really did get shorter
+         still lands somewhere valid. */
+      global.scrollTo(0, y);
+    }
+  };
+
   var cfg = global.CLP_CONFIG || {};
 
   function createClient() {
