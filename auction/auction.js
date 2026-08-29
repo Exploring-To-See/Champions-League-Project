@@ -41,7 +41,6 @@
     board = b;
     if (!board) return;
     renderStatus();
-    renderStats();
     renderLot();
     renderTeamBoard();
     renderFeed();
@@ -56,31 +55,6 @@
       st === "live" ? "LIVE NOW" :
       st === "paused" ? "PAUSED" :
       st === "completed" ? "AUCTION COMPLETE" : "NOT STARTED";
-  }
-
-  function renderStats() {
-    var auctionable = board.players.filter(function (p) {
-      var c = catOf(p.category);
-      return c && !c.is_retained;
-    });
-    var sold = auctionable.filter(function (p) { return p.status === "sold"; });
-    var inPool = auctionable.filter(function (p) { return p.status === "available"; });
-    var unsold = auctionable.filter(function (p) { return p.status === "unsold"; });
-    var spend = board.teams.reduce(function (a, t) { return a + t.purse_spent; }, 0);
-    var top = board.players.filter(function (p) { return p.status === "sold" && p.sold_price; })
-      .sort(function (a, b) { return b.sold_price - a.sold_price; })[0];
-
-    $("pub-stats").innerHTML =
-      '<div class="auc-stat"><b>' + sold.length + " / " + auctionable.length + "</b><span>Players sold</span></div>" +
-      '<div class="auc-stat"><b style="color:var(--primary-gold);">' + shortMoney(spend) +
-        "</b><span>Total spend</span></div>" +
-      '<div class="auc-stat"><b>' + (top ? shortMoney(top.sold_price) : "—") +
-        "</b><span>Top buy</span></div>" +
-      '<div class="auc-stat"><b style="font-size:1rem; line-height:1.5;">' +
-        (top ? esc(top.name) : "—") + "</b><span>Most expensive</span></div>" +
-      '<div class="auc-stat"><b>' + inPool.length + "</b><span>Still in pool</span></div>" +
-      '<div class="auc-stat"><b style="color:' + (unsold.length ? "var(--primary-red)" : "inherit") +
-        ';">' + unsold.length + "</b><span>Unsold</span></div>";
   }
 
   function renderLot() {

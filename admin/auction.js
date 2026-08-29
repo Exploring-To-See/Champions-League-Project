@@ -135,13 +135,13 @@
         document.querySelectorAll("[data-auc-tab]").forEach(function (b) {
           b.classList.toggle("active", b === btn);
         });
-        ["control", "pool", "teams", "captains", "squads", "setup"].forEach(function (n) {
+        ["control", "pool", "squads"].forEach(function (n) {
           var p = $("auc-tab-" + n);
           if (p) p.classList.toggle("active", n === btn.dataset.aucTab);
         });
-        /* Session counts go stale; re-read them when the tab is opened
-           rather than on every 7-second board poll. */
-        if (btn.dataset.aucTab === "captains") refreshAdminAccounts();
+        /* Captain session counts go stale; re-read them when the tab
+           holding them opens, not on every 7-second board poll. */
+        if (btn.dataset.aucTab === "squads") refreshAdminAccounts();
       });
     });
   }
@@ -214,7 +214,15 @@
     $("auc-btn-end").disabled = (st === "completed" || st === "setup");
   }
 
-  /* ---------- Rule 4 alerts + Rule 6 end guard -------------- */
+  /* ---------- alerts ---------------------------------------
+     Only what the organiser has to act on. The squad-count locks and the
+     "cannot be ended yet" bar were advisory noise: with zero slack in three
+     categories they fire from the very first player and never clear, so they
+     pushed the actual controls off the screen for no gain.
+
+     Compulsory fill stays, because it changes what may happen next — one
+     team must take the player at base and nobody may compete. Unsellable
+     stays, because those players cannot be placed at all.               */
   function renderAlerts() {
     var host = $("auc-alerts");
     var html = "";
@@ -224,27 +232,8 @@
       html += '<div class="auc-alert forced"><i class="fa-solid fa-triangle-exclamation"></i>' +
               '<div><b>COMPULSORY FILL — </b>' + esc(f.message) +
               '<div style="font-weight:500; font-size:0.82rem; opacity:0.85; margin-top:0.2rem;">' +
-              'No other team may bid on this category. Draw the player and award at base.</div></div></div>';
+              'No other team may take this category. Award at base price.</div></div></div>';
     });
-
-    /* Count locks fire constantly in zero-slack categories (all four teams,
-       three categories, from lot one). Collapsed so the forced alerts above
-       and the controls below stay visible. */
-    var locked = a.locked || [];
-    if (locked.length) {
-      var cats = [];
-      locked.forEach(function (l) {
-        if (cats.indexOf(l.category_label) < 0) cats.push(l.category_label);
-      });
-      html += '<details class="auc-alert locked" style="display:block;">' +
-        '<summary style="cursor:pointer; list-style:none;">' +
-        '<i class="fa-solid fa-lock"></i> <b>' + locked.length + ' squad count lock' +
-        (locked.length === 1 ? '' : 's') + ' in effect</b> — ' + esc(cats.join(", ")) +
-        '<span class="auc-muted" style="margin-left:0.4rem;">(bidding continues normally)</span>' +
-        '</summary><ul style="margin:0.6rem 0 0 1.2rem; font-size:0.85rem; line-height:1.6;">' +
-        locked.map(function (l) { return "<li>" + esc(l.message) + "</li>"; }).join("") +
-        '</ul></details>';
-    }
 
     (board.stranded || []).forEach(function (st) {
       html += '<div class="auc-alert locked" style="border-color:var(--primary-red); color:#ffd7df;">' +
@@ -252,53 +241,39 @@
               esc(st.message) +
               '<div style="font-weight:500; font-size:0.82rem; opacity:0.85; margin-top:0.2rem;">' +
               esc((st.players || []).join(", ")) +
-              '. Every minimum is still safe, but no purse remains above base. ' +
-              'Re-queueing these lots will not sell them.</div></div></div>';
+              '. No team has purse above the base price for these.</div></div></div>';
     });
-
-    var ec = board.end_check || {};
-    if (board.state.status !== "completed") {
-      if (ec.can_end) {
-        html += '<div class="auc-alert ok"><i class="fa-solid fa-circle-check"></i><div>' +
-                'Every team has met all of its minimums — the auction can be closed.</div></div>';
-      } else if ((ec.blockers || []).length) {
-        var byTeam = {};
-        (ec.blockers || []).forEach(function (b) {
-          byTeam[b.team_name] = (byTeam[b.team_name] || 0) + b.short;
-        });
-        var summary = Object.keys(byTeam).map(function (n) {
-          return esc(n) + " (" + byTeam[n] + ")";
-        }).join(", ");
-        var lines = (ec.blockers || []).map(function (b) {
-          var names = (b.players || []).slice(0, 4).join(", ");
-          var more = (b.players || []).length > 4 ? " +" + ((b.players || []).length - 4) + " more" : "";
-          return "<li><b>" + esc(b.team_name) + "</b> still needs " + b.short + " × " +
-                 esc(b.category_label) + " — unsold: " + esc(names) + esc(more) + "</li>";
-        }).join("");
-        html += '<details class="auc-alert info" style="display:block;">' +
-          '<summary style="cursor:pointer; list-style:none;">' +
-          '<i class="fa-solid fa-hourglass-half"></i> <b>Auction cannot be ended yet</b> — ' +
-          'minimums still short: ' + summary + '</summary>' +
-          '<ul style="margin:0.6rem 0 0 1.2rem; font-size:0.85rem; line-height:1.6;">' +
-          lines + '</ul></details>';
-      }
-    }
 
     host.innerHTML = html;
   }
 
-  /* ---------- the lot on the block -------------------------- */
+  /* Which player this card was last built for. Nothing on the card changes
+     while a player is on the block — there is no bidding here any more, so
+     the base price, category and pool count are all fixed for the duration.
+     Rebuilding it on the 7-second refresh therefore gained nothing and cost
+     everything: it replaced the team dropdown and the price box mid-entry,
+     which is why a team selection kept disappearing as soon as the price
+     was typed. Build once per player, then leave the DOM alone. */
+  var renderedLotId = null;
+
   function renderCurrentLot() {
     var host = $("auc-current-lot");
     var lot = board.current_lot;
     var ctx = board.lot_context;
 
     if (!lot || !ctx) {
-      host.innerHTML = '<div class="auc-muted" style="padding:1.5rem 0; text-align:center;">' +
-        '<i class="fa-solid fa-gavel" style="font-size:2.2rem; opacity:0.35; display:block; margin-bottom:0.6rem;"></i>' +
-        'Nobody is on the block. Use the <b>Randomizer</b> below to draw the next player.</div>';
+      if (renderedLotId !== null || !host.innerHTML) {
+        renderedLotId = null;
+        host.innerHTML = '<div class="auc-muted" style="padding:1.5rem 0; text-align:center;">' +
+          '<i class="fa-solid fa-gavel" style="font-size:2.2rem; opacity:0.35; display:block; margin-bottom:0.6rem;"></i>' +
+          'Nobody is on the block. Use the <b>Randomizer</b> below to draw the next player.</div>';
+      }
       return;
     }
+
+    /* Same player still up: keep the form exactly as the operator left it. */
+    if (renderedLotId === lot.id) return;
+    renderedLotId = lot.id;
 
     var player = null;
     for (var i = 0; i < board.players.length; i++) {
@@ -1131,7 +1106,6 @@
         .catch(fail).finally(function () { busy(b, false); });
     });
 
-    $("auc-btn-reset").addEventListener("click", resetAuction);
     $("auc-btn-reset-top").addEventListener("click", resetAuction);
 
     $("auc-btn-open-serial").addEventListener("click", function () {
