@@ -95,7 +95,7 @@
           '<div style="text-align:center; padding:1.5rem 0;">' +
             '<div class="auc-sold-stamp">SOLD</div>' +
             '<div style="margin-top:1.1rem; font-size:1.05rem;">' + esc(recent.message) + "</div>" +
-            '<div class="auc-muted" style="margin-top:0.5rem;">Waiting for the next lot…</div>' +
+            '<div class="auc-muted" style="margin-top:0.5rem;">Waiting for the next draw…</div>' +
           "</div>";
       } else {
         host.innerHTML = '<div class="auc-muted" style="text-align:center; padding:2rem 0;">' +
@@ -262,7 +262,9 @@
     var fteam = teamSel.value || "ALL";
     var fstatus = $("pub-players-status").value || "ALL";
 
-    var rows = board.players.filter(function (p) {
+    var rows = board.players.slice().sort(function (a, b) {
+      return (a.sort_order || 0) - (b.sort_order || 0);
+    }).filter(function (p) {
       if (q && p.name.toLowerCase().indexOf(q) < 0) return false;
       if (fcat !== "ALL" && p.category !== fcat) return false;
       if (fteam === "NONE" && p.team_id) return false;
@@ -281,6 +283,8 @@
       var t = teamOf(p.team_id);
       var statusLabel = p.status === "in_lot" ? "on the block" : p.status;
       return "<tr>" +
+        '<td style="font-family:monospace; font-weight:800; color:var(--primary-cyan);">' +
+          (p.is_retained ? "&mdash;" : p.sort_order) + "</td>" +
         "<td><b>" + esc(p.name) + "</b>" +
           (p.retained_role
             ? ' <span class="auc-squad-role">' + esc(p.retained_role.replace("_", " ")) + "</span>"
@@ -297,7 +301,7 @@
             : '<span class="auc-muted">base ' + money(c ? c.base_price : 0) + "</span>") +
         "</td></tr>";
     }).join("")
-      : '<tr><td colspan="5" style="text-align:center; padding:2rem; color:var(--text-muted);">' +
+      : '<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted);">' +
         "No players match these filters.</td></tr>";
   }
 

@@ -175,6 +175,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (statPrevious) statPrevious.textContent = previousCount;
   }
 
+
+  /* Category + membership exactly as they appear on the player sheet.
+     "C / VC" marks the eight captains and vice captains, who are retained
+     rather than auctioned and so carry no serial number. */
+  function categoryCell(r) {
+    if (!r.player_category) return '<span style="color:var(--text-muted);">—</span>';
+    if (r.player_category === 'CVC') {
+      return '<span style="background:rgba(245,197,24,0.15); color:var(--primary-gold); ' +
+             'border:1px solid var(--primary-gold); padding:0.2rem 0.55rem; border-radius:12px; ' +
+             'font-size:0.72rem; font-weight:800;">C / VC</span>';
+    }
+    const col = r.member_type === 'Tabler' ? 'var(--primary-red)' : 'var(--primary-cyan)';
+    return `<span style="color:${col}; font-weight:800;">${r.member_type || ''} ${r.player_category}</span>`;
+  }
+
   // 5. Render Data Table with Individual Sports Ratings
   function renderTable() {
     if (!tableBody) return;
@@ -183,7 +198,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const query = (searchInput?.value || '').toLowerCase().trim();
     const statusFilter = filterStatus?.value || 'ALL';
 
-    const filtered = registrationsData.filter(r => {
+    const filtered = registrationsData.slice().sort((a, b) =>
+      (a.player_serial ?? 999) - (b.player_serial ?? 999)).filter(r => {
       const matchQuery = !query || 
         r.full_name?.toLowerCase().includes(query) ||
         r.jersey_name?.toLowerCase().includes(query) ||
@@ -194,7 +210,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     if (filtered.length === 0) {
-      tableBody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding:2.5rem; color:var(--text-muted);">No registration records found.</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="13" style="text-align:center; padding:2.5rem; color:var(--text-muted);">No registration records found.</td></tr>`;
       return;
     }
 
@@ -222,9 +238,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       `;
 
       tr.innerHTML = `
+        <td style="font-family:monospace; font-weight:800; color:var(--primary-gold);">${r.player_serial ?? '—'}</td>
         <td style="font-family:monospace; font-weight:700; color:var(--primary-cyan);">${r.reg_code || '-'}</td>
         <td>${photoHtml}</td>
         <td style="font-weight:700;">${r.full_name || '-'}</td>
+        <td>${categoryCell(r)}</td>
         <td>${r.age || '-'} / ${r.sex || '-'}</td>
         <td>${statusBadge}</td>
         <td style="font-family:var(--font-heading); font-weight:800;">${r.jersey_name || '-'}</td>
@@ -373,6 +391,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       const headers = [
+        "Sr No", "Category", "Member Type",
         "Reg Code", "Full Name", "Age", "Sex", "Status", 
         "Jersey Name", "Jersey Number", "Jersey Size", 
         "Pickleball", "Poker", "Cricket", "Triathlon", "Archery Shooting", "Badminton", "Table Tennis", 
@@ -380,6 +399,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       ];
 
       const rows = registrationsData.map(r => [
+        r.player_serial ?? '',
+        `"${r.player_category || ''}"`,
+        `"${r.member_type || ''}"`,
         `"${r.reg_code || ''}"`,
         `"${r.full_name || ''}"`,
         r.age || '',

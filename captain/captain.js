@@ -213,7 +213,7 @@
     if (!lot || !ctx) {
       host.innerHTML = '<div class="auc-muted" style="text-align:center; padding:1.8rem 0;">' +
         '<i class="fa-solid fa-hourglass-half" style="font-size:2.2rem; opacity:0.35; display:block; margin-bottom:0.6rem;"></i>' +
-        "Waiting for the auctioneer to open the next lot…</div>";
+        "Waiting for the auctioneer to draw the next player…</div>";
       return;
     }
 

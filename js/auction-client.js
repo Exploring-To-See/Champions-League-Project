@@ -127,6 +127,8 @@
     syncConfig:     function (c)              { return this.rpc("auction_sync_config", { p_config: c }); },
     setStatus:      function (s)              { return this.rpc("auction_set_status", { p_status: s }); },
     openLot:        function (playerId)       { return this.rpc("auction_open_lot", { p_player: playerId }); },
+    /* Server-side draw — the browser never chooses who comes up next. */
+    drawRandom:     function ()               { return this.rpc("auction_draw_random"); },
     sellLot:        function (lotId)          { return this.rpc("auction_sell_lot", { p_lot: lotId }); },
     unsoldLot:      function (lotId)          { return this.rpc("auction_unsold_lot", { p_lot: lotId }); },
     revertSale:     function (playerId)       { return this.rpc("auction_revert_sale", { p_player: playerId }); },

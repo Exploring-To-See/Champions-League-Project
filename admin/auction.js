@@ -132,7 +132,7 @@
     renderAlerts();
     renderCurrentLot();
     renderTeamPanels();
-    renderQueue();
+    renderRandomizer();
     renderFeed();
     renderPool();
     renderTeamsEditor();
@@ -156,7 +156,7 @@
     var soldAuction = auctionable.filter(function (p) { return p.status === "sold"; }).length;
 
     $("auc-status-summary").textContent =
-      soldAuction + " of " + auctionable.length + " lots sold · " +
+      soldAuction + " of " + auctionable.length + " players sold · " +
       sold + "/" + total + " players placed · " +
       board.teams.length + " teams";
 
@@ -178,7 +178,7 @@
       html += '<div class="auc-alert forced"><i class="fa-solid fa-triangle-exclamation"></i>' +
               '<div><b>COMPULSORY FILL — </b>' + esc(f.message) +
               '<div style="font-weight:500; font-size:0.82rem; opacity:0.85; margin-top:0.2rem;">' +
-              'No other team may bid on this category. Open the lot and award at base.</div></div></div>';
+              'No other team may bid on this category. Draw the player and award at base.</div></div></div>';
     });
 
     /* Count locks fire constantly in zero-slack categories (all four teams,
@@ -250,7 +250,7 @@
     if (!lot || !ctx) {
       host.innerHTML = '<div class="auc-muted" style="padding:1.5rem 0; text-align:center;">' +
         '<i class="fa-solid fa-gavel" style="font-size:2.2rem; opacity:0.35; display:block; margin-bottom:0.6rem;"></i>' +
-        'No lot is open. Pick a player under <b>Next Lot</b> below.</div>';
+        'Nobody is on the block. Use the <b>Randomizer</b> below to draw the next player.</div>';
       return;
     }
 
@@ -395,57 +395,85 @@
     }).join("");
   }
 
-  /* ---------- next-lot queue -------------------------------- */
-  function renderQueue() {
-    var catSel = $("auc-queue-cat");
-    var playerSel = $("auc-queue-player");
-    var keepCat = catSel.value || "ALL";
-    var keepPlayer = playerSel.value;
+  /* ---------- randomizer ------------------------------------ */
 
-    if (catSel.options.length <= 1) {
-      catSel.innerHTML = '<option value="ALL">All categories</option>' +
-        board.categories.filter(function (c) { return !c.is_retained; })
-          .map(function (c) { return '<option value="' + esc(c.code) + '">' + esc(c.label) + '</option>'; })
-          .join("");
-      catSel.value = keepCat;
-    }
-
-    var avail = board.players.filter(function (p) {
+  /* Who is still in the pool. Retained captains and vice captains are
+     pre-assigned and never drawn. */
+  function drawablePlayers() {
+    return board.players.filter(function (p) {
       var c = catOf(p.category);
-      if (!c || c.is_retained) return false;
-      if (p.status !== "available") return false;
-      return keepCat === "ALL" || p.category === keepCat;
+      return c && !c.is_retained && !p.is_retained && p.status === "available";
     });
+  }
 
-    playerSel.innerHTML = avail.length
-      ? avail.map(function (p) {
-          var c = catOf(p.category);
-          return '<option value="' + esc(p.id) + '">' + esc(p.name) + " — " +
-                 esc(c ? c.label : p.category) + " · " + money(c ? c.base_price : 0) +
-                 (p.unsold_count ? " (unsold ×" + p.unsold_count + ")" : "") + '</option>';
-        }).join("")
-      : '<option value="">No players available in this category</option>';
-
-    /* Keep the operator's selection only if that player is still in the
-       filtered list — otherwise fall through to the first option, or the
-       select ends up with nothing chosen and Open Lot silently no-ops. */
-    var stillThere = false;
-    for (var oi = 0; oi < playerSel.options.length; oi++) {
-      if (playerSel.options[oi].value === keepPlayer) { stillThere = true; break; }
-    }
-    if (keepPlayer && stillThere) playerSel.value = keepPlayer;
-    else if (playerSel.options.length) playerSel.selectedIndex = 0;
-
+  function renderRandomizer() {
+    var pool = drawablePlayers();
     var open = !!board.current_lot;
-    $("auc-btn-open-lot").disabled = open || !avail.length || board.state.status === "setup";
-    $("auc-btn-random-lot").disabled = open || !avail.length || board.state.status === "setup";
+    var live = board.state.status === "live" || board.state.status === "paused";
 
-    var note = "";
-    if (board.state.status === "setup") note = "Press Start to go live before opening a lot.";
-    else if (open) note = "Close the open lot (SOLD or Unsold) before opening the next one.";
-    else note = avail.length + " player(s) available" +
-      (keepCat === "ALL" ? "" : " in " + (catOf(keepCat) || {}).label) + ".";
-    $("auc-queue-note").textContent = note;
+    $("auc-draw-remaining").textContent = pool.length + " of " +
+      board.players.filter(function (p) {
+        var c = catOf(p.category);
+        return c && !c.is_retained && !p.is_retained;
+      }).length + " left in the pool";
+
+    $("auc-btn-draw").disabled = open || !pool.length || !live;
+
+    var note;
+    if (board.state.status === "setup") note = "Press Start to go live before drawing.";
+    else if (board.state.status === "completed") note = "The auction is closed.";
+    else if (open) note = "Finish the player on the block (SOLD or Unsold) before drawing again.";
+    else if (!pool.length) note = "Every player has been drawn.";
+    else note = "Draws a number from the remaining " + pool.length +
+      " at random, across all categories. A number cannot come up twice unless " +
+      "the player goes unsold and returns to the pool.";
+    $("auc-draw-note").textContent = note;
+
+    /* The player currently on the block is the live draw result. */
+    var host = $("auc-draw-display");
+    var lot = board.current_lot;
+    var drawn = lot ? playerById(lot.player_id) : null;
+    if (drawn) {
+      var dc = catOf(drawn.category);
+      host.innerHTML =
+        '<div style="text-align:center; padding:1.1rem 0;">' +
+          '<div class="auc-bid-label">Drawn number</div>' +
+          '<div style="font-family:var(--font-heading); font-weight:900; font-size:3.4rem; ' +
+            'line-height:1; color:var(--primary-gold);">' + drawn.sort_order + "</div>" +
+          '<div style="font-family:var(--font-heading); font-weight:900; font-size:1.5rem; ' +
+            'margin-top:0.4rem;">' + esc(drawn.name) + "</div>" +
+          '<span class="auc-cat-badge" style="color:' + esc(dc ? dc.color : "#00e5ff") + '">' +
+            esc(dc ? dc.label : drawn.category) + " · base " + money(dc ? dc.base_price : 0) +
+          "</span>" +
+        "</div>";
+    } else {
+      host.innerHTML = '<div class="auc-muted" style="text-align:center; padding:1.4rem 0;">' +
+        '<i class="fa-solid fa-dice" style="font-size:2.4rem; opacity:0.35; display:block; ' +
+        'margin-bottom:0.6rem;"></i>' +
+        (pool.length ? "Press draw to pull the next number."
+                     : "No numbers left to draw.") + "</div>";
+    }
+
+    /* Everyone already out of the pool, by number. */
+    var done = board.players.filter(function (p) {
+      var c = catOf(p.category);
+      return c && !c.is_retained && !p.is_retained && p.status !== "available";
+    }).sort(function (a, b) { return a.sort_order - b.sort_order; });
+
+    $("auc-draw-history").innerHTML = done.length
+      ? done.map(function (p) {
+          return '<span class="auc-chip met" title="' + esc(p.name) + '">' +
+                 p.sort_order + "</span>";
+        }).join("")
+      : '<span class="auc-muted">None yet.</span>';
+  }
+
+  function playerById(id) {
+    if (!board || !id) return null;
+    for (var i = 0; i < board.players.length; i++) {
+      if (board.players[i].id === id) return board.players[i];
+    }
+    return null;
   }
 
   /* ---------- live feed ------------------------------------- */
@@ -535,7 +563,8 @@
             return '<option value="' + esc(cc.code) + '"' + (cc.code === p.category ? " selected" : "") +
                    ">" + esc(cc.label) + "</option>";
           }).join("") + "</select></td>" +
-        '<td><span class="auc-pill ' + esc(p.status) + '">' + esc(p.status.replace("_", " ")) + "</span></td>" +
+        '<td><span class="auc-pill ' + esc(p.status) + '">' +
+          esc(p.status === "in_lot" ? "on the block" : p.status) + "</span></td>" +
         "<td>" + (team ? '<span style="color:' + esc(team.color) + '; font-weight:700;">' + esc(team.name) + "</span>" : "—") + "</td>" +
         "<td>" + (p.sold_price !== null && p.sold_price !== undefined ? money(p.sold_price) : "—") + "</td>" +
         "<td>" + retainedCell + "</td>" +
@@ -921,23 +950,18 @@
         .catch(fail).finally(function () { busy(b, false); });
     });
 
-    $("auc-btn-open-lot").addEventListener("click", function () {
-      var id = $("auc-queue-player").value;
-      if (!id) { toast("Pick a player first", "err"); return; }
-      var b = this; busy(b, true, "Opening…");
-      api.openLot(id).catch(fail).finally(function () { busy(b, false); });
+    $("auc-btn-draw").addEventListener("click", function () {
+      var b = this; busy(b, true, "Drawing…");
+      /* The server picks the number. Asking the browser to shuffle would let
+         a draw be re-rolled until it produced a convenient name. */
+      api.drawRandom()
+        .then(function () {
+          var lot = board && board.current_lot;
+          var p = lot ? playerById(lot.player_id) : null;
+          if (p) toast("Drawn #" + p.sort_order + " — " + p.name);
+        })
+        .catch(fail).finally(function () { busy(b, false); });
     });
-
-    $("auc-btn-random-lot").addEventListener("click", function () {
-      var sel = $("auc-queue-player");
-      var opts = Array.prototype.filter.call(sel.options, function (o) { return o.value; });
-      if (!opts.length) { toast("No players available", "err"); return; }
-      var pick = opts[Math.floor(Math.random() * opts.length)];
-      var b = this; busy(b, true, "Opening…");
-      api.openLot(pick.value).catch(fail).finally(function () { busy(b, false); });
-    });
-
-    $("auc-queue-cat").addEventListener("change", renderQueue);
     $("auc-pool-search").addEventListener("input", renderPool);
     $("auc-pool-filter").addEventListener("change", renderPool);
 

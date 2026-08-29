@@ -105,9 +105,9 @@ window.CLP_AUCTION_CONFIG = {
 
   /* ---- Default team slots (names/colours editable in admin) -- */
   teamSlots: [
-    { code: "T1", name: "Team Alpha",   short: "ALP", color: "#00e5ff" },
-    { code: "T2", name: "Team Bravo",   short: "BRV", color: "#ff3b5c" },
-    { code: "T3", name: "Team Charlie", short: "CHR", color: "#f5c518" },
-    { code: "T4", name: "Team Delta",   short: "DLT", color: "#a855f7" }
+    { code: "T1", name: "Thunder Titans", short: "THU", color: "#00e5ff" },
+    { code: "T2", name: "The Aces",       short: "ACE", color: "#ff3b5c" },
+    { code: "T3", name: "Flying Dragons", short: "DRA", color: "#f5c518" },
+    { code: "T4", name: "The Destroyers", short: "DES", color: "#a855f7" }
   ]
 };

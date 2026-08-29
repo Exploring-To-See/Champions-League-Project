@@ -507,9 +507,11 @@
       <table>
         <thead>
           <tr>
+            <th>Sr</th>
             <th>Code</th>
             <th>Photo</th>
             <th>Player Name</th>
+            <th>Category</th>
             <th>Age / Sex</th>
             <th>History</th>
             <th>Jersey Name</th>
@@ -587,28 +589,27 @@
         </div>
 
         <div class="auc-card">
-          <div class="auc-card-title"><i class="fa-solid fa-list-ol"></i> Next Lot</div>
-          <div class="auc-form-row">
-            <div class="auc-field">
-              <label for="auc-queue-cat">Filter by category</label>
-              <select id="auc-queue-cat"><option value="ALL">All categories</option></select>
-            </div>
-            <div class="auc-field">
-              <label for="auc-queue-player">Player to put on the block</label>
-              <select id="auc-queue-player"></select>
-            </div>
-            <div class="auc-field">
-              <button class="auc-btn auc-btn-cyan" id="auc-btn-open-lot" style="width:100%;">
-                <i class="fa-solid fa-gavel"></i> Open Lot
-              </button>
-            </div>
-            <div class="auc-field">
-              <button class="auc-btn auc-btn-ghost" id="auc-btn-random-lot" style="width:100%;">
-                <i class="fa-solid fa-shuffle"></i> Random
-              </button>
-            </div>
+          <div class="auc-card-title">
+            <i class="fa-solid fa-dice"></i> Randomizer
+            <span class="auc-pill available" id="auc-draw-remaining"></span>
           </div>
-          <div class="auc-muted" style="margin-top:0.6rem;" id="auc-queue-note"></div>
+
+          <div id="auc-draw-display"></div>
+
+          <div class="auc-btn-row" style="margin-top:1rem;">
+            <button class="auc-btn auc-btn-cyan" id="auc-btn-draw"
+                    style="font-size:1.05rem; padding:0.85rem 2rem;">
+              <i class="fa-solid fa-shuffle"></i> DRAW NEXT PLAYER
+            </button>
+          </div>
+
+          <div class="auc-muted" style="margin-top:0.6rem;" id="auc-draw-note"></div>
+
+          <div style="margin-top:1rem;">
+            <div class="auc-bid-label">Numbers drawn so far</div>
+            <div class="auc-chips" id="auc-draw-history"
+                 style="margin-top:0.45rem; max-height:120px; overflow-y:auto;"></div>
+          </div>
         </div>
 
         <div class="auc-card">

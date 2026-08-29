@@ -1079,6 +1079,55 @@ begin
   return public.auction_board();
 end $$;
 
+-- Draw the next player at random and put them straight on the block.
+--
+-- Replaces picking a name off a list: the organiser cannot choose who comes
+-- up, so nobody can be held back for a favourable moment. The draw is over
+-- every player still in the pool, ignoring category entirely, and a player
+-- can only be drawn once because being sold or being on the block takes them
+-- out of the pool. An unsold player returns and can come up again.
+--
+-- The shuffle happens HERE rather than in the browser: a client-side draw
+-- could be re-rolled until it produced a convenient name.
+create or replace function public.auction_draw_random()
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare v_player uuid; v_left int;
+begin
+  perform public.auction_require_admin();
+
+  if exists (select 1 from public.auction_lots where status = 'open') then
+    raise exception 'Finish the current player (sold or unsold) before drawing again';
+  end if;
+
+  if (select status from public.auction_state where id = 1) not in ('live','paused') then
+    raise exception 'Start the auction before drawing a player';
+  end if;
+
+  select p.id into v_player
+    from public.auction_players p
+    join public.auction_categories c on c.code = p.category_code
+   where p.status = 'available' and not p.is_retained and not c.is_retained
+   order by random()
+   limit 1;
+
+  if v_player is null then
+    raise exception 'Every player has been drawn — none left in the pool';
+  end if;
+
+  select count(*) into v_left
+    from public.auction_players p
+    join public.auction_categories c on c.code = p.category_code
+   where p.status = 'available' and not p.is_retained and not c.is_retained;
+
+  insert into public.auction_events (kind, message, payload)
+  select 'draw',
+         'Draw #' || p.sort_order || ' — ' || p.name || ' (' || (v_left - 1) || ' left in the pool)',
+         jsonb_build_object('player_id', p.id, 'serial', p.sort_order, 'remaining', v_left - 1)
+    from public.auction_players p where p.id = v_player;
+
+  return public.auction_open_lot(v_player);
+end $$;
+
 -- The gate every bid passes through. Recomputes purse, reserve,
 -- eligibility, the feasibility guard and compulsory pinning from the
 -- tables — a tampered client cannot get an illegal bid through here.
@@ -1383,6 +1432,7 @@ grant execute on function
   public.auction_import_registrations(text),
   public.auction_set_status(text),
   public.auction_open_lot(uuid),
+  public.auction_draw_random(),
   public.auction_sell_lot(uuid),
   public.auction_unsold_lot(uuid),
   public.auction_revert_sale(uuid),
@@ -1457,10 +1507,10 @@ on conflict (code) do update set
 
 insert into public.auction_teams (code, name, short_name, color, purse_total, sort_order)
 values
-  ('T1', 'Team Alpha',   'ALP', '#00e5ff', 10000000, 0),
-  ('T2', 'Team Bravo',   'BRV', '#ff3b5c', 10000000, 1),
-  ('T3', 'Team Charlie', 'CHR', '#f5c518', 10000000, 2),
-  ('T4', 'Team Delta',   'DLT', '#a855f7', 10000000, 3)
+  ('T1', 'Thunder Titans', 'THU', '#00e5ff', 10000000, 0),
+  ('T2', 'The Aces',       'ACE', '#ff3b5c', 10000000, 1),
+  ('T3', 'Flying Dragons', 'DRA', '#f5c518', 10000000, 2),
+  ('T4', 'The Destroyers', 'DES', '#a855f7', 10000000, 3)
 on conflict (code) do nothing;
 
 insert into public.auction_team_auth (team_id, password_hash)
