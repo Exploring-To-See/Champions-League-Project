@@ -575,6 +575,27 @@ returns jsonb language sql stable as $$
     ) t;
 $$;
 
+-- Every sport a player rated, in the order the registration form asks them.
+-- The captain console shows all seven with their scores, so unlike
+-- auction_top_sports this keeps the zeroes: "rated 0 at Poker" is a fact a
+-- captain wants, where the player card only wants the two best.
+create or replace function public.auction_player_ratings(p_reg uuid)
+returns jsonb language sql stable as $$
+  select coalesce(jsonb_agg(jsonb_build_object('sport', label, 'rating', val)
+                            order by ord), '[]'::jsonb)
+    from public.registrations r
+    cross join lateral (values
+      (1, 'Pickleball',         r.rating_pickleball),
+      (2, 'Poker',              r.rating_poker),
+      (3, 'Cricket',            r.rating_cricket),
+      (4, 'Triathlon',          r.rating_triathlon),
+      (5, 'Archery & Shooting', r.rating_archery_shooting),
+      (6, 'Badminton',          r.rating_badminton),
+      (7, 'Table Tennis',       r.rating_table_tennis)
+    ) as v(ord, label, val)
+   where r.id = p_reg;
+$$;
+
 -- Captain roster for the PUBLIC live view: who leads each team, what their
 -- wallet looks like, and whether a sign-in has been provisioned at all.
 --
@@ -695,7 +716,8 @@ begin
                     'achievement', p.achievement,
                     -- straight off the player's own registration
                     'age', r.age, 'history', r.tournament_status,
-                    'top_sports', public.auction_top_sports(p.registration_id)
+                    'top_sports', public.auction_top_sports(p.registration_id),
+                    'ratings', public.auction_player_ratings(p.registration_id)
                   ) order by p.sort_order, p.name), '[]'::jsonb)
                   from public.auction_players p
                   left join public.registrations r on r.id = p.registration_id),
@@ -1612,6 +1634,7 @@ grant execute on function
   public.auction_board(),
   public.auction_team_has_password(uuid),
   public.auction_top_sports(uuid),
+  public.auction_player_ratings(uuid),
   public.auction_captain_accounts(),
   public.auction_captain_login(text, text),
   public.auction_captain_logout(text),

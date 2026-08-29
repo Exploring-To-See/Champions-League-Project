@@ -1,9 +1,9 @@
 /* ============================================================
    1727 CHAMPION'S LEAGUE 2.0 — TEAM CAPTAIN CONSOLE
-   Password sign-in per team, then a live bidding console showing
-   this team's purse, reserve and live max bid. The bid button is
-   greyed out with a one-line reason whenever the team is not
-   eligible; the server re-checks every rule regardless.
+   Sign in by team, then a read-only console: this team's purse, the
+   reserve it must hold back, and above all its max bid for the player on
+   the block. Bidding happens in the room and the organiser records the
+   result, so there is nothing to press here.
    ============================================================ */
 
 (function () {
@@ -17,7 +17,6 @@
   var api = null;
   var session = null;   /* { token, team_id, team_name, team_code } */
   var board = null;
-  var bidding = false;
 
   function $(id) { return document.getElementById(id); }
   function esc(s) {
@@ -46,6 +45,45 @@
   }
 
   /* ---------- login ----------------------------------------- */
+  /* The teams, read with the anon key before anyone signs in, so a captain
+     picks their team by name instead of remembering a code. Names come from
+     auction_captain_accounts, which reports who leads each team and whether
+     a password has been issued — never the password itself. */
+  function loadTeams() {
+    var sel = $("cap-team");
+    var roster = $("cap-team-roster");
+    if (!sel) return;
+
+    api.refresh().then(function (b) {
+      var accounts = (b && b.captains) || [];
+      if (!accounts.length) {
+        sel.innerHTML = '<option value="">No teams have been set up yet</option>';
+        roster.innerHTML = "";
+        return;
+      }
+
+      sel.innerHTML = '<option value="">— choose your team —</option>' +
+        accounts.map(function (a) {
+          return '<option value="' + esc(a.team_code) + '">' + esc(a.team_name) + "</option>";
+        }).join("");
+
+      roster.innerHTML =
+        '<div style="color:var(--primary-cyan); font-weight:700; margin-bottom:0.35rem;">' +
+          "Captain logins</div>" +
+        accounts.map(function (a) {
+          var who = [a.captain, a.vice_captain].filter(Boolean).join(" · ");
+          return "<div><b style=\"color:" + esc(a.color) + '">' + esc(a.team_name) + "</b> " +
+            (who ? "&mdash; " + esc(who) + " " : "") +
+            (a.has_password
+              ? '<span style="color:#22c55e;">ready</span>'
+              : '<span style="color:var(--primary-red);">no password yet</span>') +
+            "</div>";
+        }).join("");
+    }).catch(function () {
+      sel.innerHTML = '<option value="">Could not load teams</option>';
+    });
+  }
+
   function initLogin() {
     var form = $("cap-login-form");
     var err = $("cap-login-err");
@@ -61,9 +99,10 @@
 
     form.addEventListener("submit", function (e) {
       e.preventDefault();
-      var code = $("cap-code").value.trim();
+      var code = $("cap-team").value;
       var pw = $("cap-password").value;
-      if (!code || !pw) return;
+      if (!code) { err.textContent = "Choose your team"; err.style.display = "block"; return; }
+      if (!pw) return;
 
       err.style.display = "none";
       btn.disabled = true;
@@ -75,7 +114,7 @@
         $("cap-password").value = "";
         showConsole();
       }).catch(function (e2) {
-        err.textContent = (e2 && e2.message) || "Invalid team code or password";
+        err.textContent = (e2 && e2.message) || "Wrong password for that team";
         err.style.display = "block";
       }).finally(function () {
         btn.disabled = false;
@@ -169,42 +208,35 @@
       '<div class="auc-stat"><b>' + shortMoney(me.purse_spent) + "</b><span>Spent</span></div>";
   }
 
+  /* ---------- alerts ----------------------------------------
+     Only what changes what this captain can do. The "locked into exactly N
+     more X" notices fired from the first player and never cleared — with
+     zero slack in three categories they are permanently true — so they just
+     buried the console. Compulsory fill stays, because it decides whether
+     this team must take the player at base or may not bid at all. */
   function renderAlerts(me) {
     var html = "";
-    var alerts = board.alerts || { forced: [], locked: [] };
+    var alerts = board.alerts || { forced: [] };
 
     (alerts.forced || []).forEach(function (f) {
       if (f.team_id === me.id) {
         html += '<div class="auc-alert forced"><i class="fa-solid fa-triangle-exclamation"></i>' +
           "<div><b>COMPULSORY — </b>" + esc(f.message) +
           '<div style="font-weight:500; font-size:0.82rem; opacity:0.85; margin-top:0.2rem;">' +
-          "These players are yours at base price. No other team can bid.</div></div></div>";
+          "These players are yours at base price. No other team can take them.</div></div></div>";
       } else {
         html += '<div class="auc-alert locked"><i class="fa-solid fa-lock"></i><div>' +
-          esc(f.message) + " — you cannot bid in this category.</div></div>";
+          esc(f.message) + " — you cannot take this category.</div></div>";
       }
     });
-
-    (alerts.locked || []).forEach(function (l) {
-      if (l.team_id !== me.id) return;
-      html += '<div class="auc-alert locked"><i class="fa-solid fa-lock"></i><div>' +
-        esc(l.message) + "</div></div>";
-    });
-
-    (board.stranded || []).forEach(function (st) {
-      html += '<div class="auc-alert locked"><i class="fa-solid fa-circle-exclamation"></i><div>' +
-        esc(st.message) + "</div></div>";
-    });
-
-    if (me.total_unmet === 0 && me.complete) {
-      html += '<div class="auc-alert ok"><i class="fa-solid fa-circle-check"></i><div>' +
-        "<b>Squad complete.</b> All minimums met and no surplus is available to you " +
-        "under the feasibility guard.</div></div>";
-    }
 
     $("cap-alerts").innerHTML = html;
   }
 
+  /* ---------- the player on the block -----------------------
+     Read-only. Bidding happens in the room, so there is nothing to press
+     here: the card is what a captain needs while the bidding runs, and the
+     organiser records the result afterwards. */
   function renderLot(me) {
     var host = $("cap-lot");
     var lot = board.current_lot;
@@ -225,80 +257,35 @@
 
     var cat = catOf(player.category);
     var row = myRow();
-    var leader = null;
-    for (var j = 0; j < board.teams.length; j++) {
-      if (board.teams[j].id === lot.current_bidder_id) leader = board.teams[j];
-    }
-    var iLead = lot.current_bidder_id === me.id;
 
-    var photo = player.photo_url
-      ? '<img src="' + esc(player.photo_url) + '" class="auc-lot-photo" alt="">'
-      : '<div class="auc-lot-photo-empty"><i class="fa-solid fa-user"></i></div>';
+    /* The one number a captain acts on: what this team may pay for THIS
+       player, purse less the reserve it must keep for its minimums. */
+    var limit = row
+      ? '<div class="auc-alert ' + (row.eligible ? "ok" : "locked") + '" style="margin-top:1rem;">' +
+        '<i class="fa-solid fa-' + (row.eligible ? "wallet" : "ban") + '"></i>' +
+        "<div><b>Your max bid for " + esc(player.name) + ": " +
+        '<span class="cap-maxbid" style="font-size:1.5rem;">' + money(row.max_bid) + "</span></b>" +
+        '<div style="font-weight:500; font-size:0.85rem; opacity:0.9; margin-top:0.25rem;">' +
+        esc(row.reason) + "</div></div></div>"
+      : "";
 
-    /* Rule 5: captains bid the exact next step. On a compulsory fill the
-       price is pinned to base. */
-    var isCompulsory = row && row.compulsory;
-    var bidAmount = isCompulsory ? ctx.base : ctx.next_bid;
-    var canBid = board.state.status === "live" && row && row.eligible && !iLead &&
-                 (isCompulsory ? true : row.can_meet_next);
-
-    var label;
-    if (board.state.status !== "live") label = "AUCTION " + board.state.status.toUpperCase();
-    else if (iLead) label = "YOU ARE LEADING";
-    else if (isCompulsory) label = "TAKE AT BASE " + money(ctx.base);
-    else if (canBid) label = "BID " + money(bidAmount);
-    else label = "CANNOT BID";
-
-    host.innerHTML =
-      '<div class="auc-lot">' + photo +
-      '<div style="width:100%;">' +
-        '<div class="auc-lot-name">' + esc(player.name) + "</div>" +
-        '<span class="auc-cat-badge" style="color:' + esc(cat ? cat.color : "#00e5ff") + '">' +
-          esc(cat ? cat.label : player.category) + " · base " + money(ctx.base) + "</span>" +
-        '<div class="auc-bid-row">' +
-          '<div><div class="auc-bid-label">Current Bid</div><div class="auc-bid-now">' +
-            (ctx.current_bid === null ? "—" : money(ctx.current_bid)) + "</div></div>" +
-          '<div><div class="auc-bid-label">Leading</div>' +
-            '<div style="font-family:var(--font-heading); font-weight:900; font-size:1.3rem; color:' +
-              (leader ? esc(leader.color) : "var(--text-muted)") + ';">' +
-              (leader ? esc(leader.name) + (iLead ? " (you)" : "") : "No bids yet") + "</div></div>" +
-          '<div><div class="auc-bid-label">Your Max Bid</div>' +
-            '<div style="font-family:var(--font-heading); font-weight:900; font-size:1.3rem; color:var(--primary-cyan);">' +
-              (row ? money(row.max_bid) : "—") + "</div></div>" +
-          '<div><div class="auc-bid-label">Left in ' + esc(cat ? cat.short_code : "") + "</div>" +
-            '<div style="font-family:var(--font-heading); font-weight:900; font-size:1.3rem;">' +
-              ctx.remaining + "</div></div>" +
-        "</div>" +
-        '<button class="auc-bid-btn' + (isCompulsory ? " compulsory" : "") + '" id="cap-bid-btn"' +
-          (canBid && !bidding ? "" : " disabled") + ">" + label + "</button>" +
-        '<div class="auc-reason ' + (row && row.eligible ? "good" : "warn") +
-          '" style="text-align:center; margin-top:0.6rem; font-size:0.85rem;">' +
-          esc(row ? row.reason : "") + "</div>" +
-      "</div></div>";
-
-    var btn = $("cap-bid-btn");
-    if (btn && canBid) {
-      btn.addEventListener("click", function () {
-        if (bidding) return;
-        bidding = true;
-        btn.disabled = true;
-        btn.textContent = "PLACING…";
-        api.placeBid(lot.id, me.id, bidAmount, session.token, "captain")
-          .then(function () { toast("Bid placed: " + money(bidAmount)); })
-          .catch(function (e) {
-            toast((e && e.message) || "Bid rejected", "err");
-            /* A rejected bid usually means the board moved on — resync. */
-            return api.refresh().catch(function () {});
-          })
-          .finally(function () { bidding = false; });
-      });
-    }
+    host.innerHTML = window.OnBlockCard.renderCaptain(player, cat, ctx.base) + limit;
   }
 
+  /* ---------- my squad -------------------------------------- */
   function renderSquad(me) {
     $("cap-squad-count").textContent = me.squad_size + " players";
 
-    $("cap-requirements").innerHTML = '<div class="auc-chips" style="margin-bottom:0.9rem;">' +
+    var row = myRow();
+    $("cap-requirements").innerHTML =
+      '<div class="auc-kv" style="margin-bottom:0.7rem;">' +
+        "<span>Max bid on the player up now</span>" +
+        '<span class="cap-maxbid" style="font-size:1.15rem;">' +
+          (row ? money(row.max_bid) : "—") + "</span></div>" +
+      '<div class="auc-kv" style="margin-bottom:0.7rem;">' +
+        "<span>Purse left &middot; reserve held back</span>" +
+        "<span>" + money(me.purse_left) + " &middot; " + money(me.reserve) + "</span></div>" +
+      '<div class="auc-chips" style="margin-bottom:0.9rem;">' +
       board.categories.map(function (c) {
         var own = (me.owned && me.owned[c.code]) || 0;
         var un = (me.unmet && me.unmet[c.code]) || 0;
@@ -309,35 +296,84 @@
 
     var squad = board.players.filter(function (p) {
       return p.team_id === me.id && p.status === "sold";
-    });
+    }).sort(function (a, b) { return (a.sort_order || 0) - (b.sort_order || 0); });
 
     $("cap-squad").innerHTML = squad.length ? squad.map(function (p) {
       var c = catOf(p.category);
-      return "<li><span>" + esc(p.name) +
+      return "<li><span>" +
+        (p.is_retained ? "" : '<span style="font-family:monospace; color:var(--primary-cyan);">#' +
+                              p.sort_order + "</span> ") +
+        esc(p.name) +
         (p.retained_role ? ' <span class="auc-squad-role">' +
           esc(p.retained_role.replace("_", " ")) + "</span>" : "") +
         '<br><span class="auc-muted" style="font-size:0.72rem;">' +
           esc(c ? c.label : p.category) + "</span></span>" +
-        "<span style='font-weight:800;'>" + money(p.sold_price || 0) + "</span></li>";
+        "<span style='font-weight:800;'>" +
+          (p.is_retained ? '<span class="auc-muted">retained</span>' : money(p.sold_price || 0)) +
+        "</span></li>";
     }).join("") : '<li class="auc-muted">No players yet</li>';
   }
 
+  /* ---------- the other three teams -------------------------
+     Their max bid for the current player is the thing worth knowing — it is
+     what they can outbid you by. Squads are folded away so the page stays
+     short on a phone; which ones are open survives the refresh. */
+  var openRivals = {};
+
   function renderRivals(me) {
+    var ctx = board.lot_context;
+
     $("cap-rivals").innerHTML = board.teams.filter(function (t) { return t.id !== me.id; })
       .map(function (t) {
+        var row = null;
+        if (ctx) {
+          (ctx.teams || []).forEach(function (r) { if (r.team_id === t.id) row = r; });
+        }
+
         var chips = board.categories.map(function (c) {
           var own = (t.owned && t.owned[c.code]) || 0;
           var un = (t.unmet && t.unmet[c.code]) || 0;
           return '<span class="auc-chip ' + (un > 0 ? "short" : "met") + '">' +
             esc(c.short_code) + " " + own + "/" + c.min_per_team + "</span>";
         }).join("");
+
+        var squad = board.players.filter(function (p) {
+          return p.team_id === t.id && p.status === "sold";
+        }).sort(function (a, b) { return (a.sort_order || 0) - (b.sort_order || 0); });
+
+        var open = !!openRivals[t.id];
+
         return '<div class="auc-team" style="--team-color:' + esc(t.color) + '">' +
           '<div class="auc-team-name"><span>' + esc(t.name) + "</span></div>" +
+          '<div class="auc-kv"><span>Max bid now</span>' +
+            '<span class="cap-maxbid">' +
+              (row ? (row.eligible ? money(row.max_bid) : "cannot bid") : "—") + "</span></div>" +
           '<div class="auc-kv"><span>Purse left</span><span style="color:var(--primary-gold);">' +
             money(t.purse_left) + "</span></div>" +
           '<div class="auc-kv"><span>Squad</span><span>' + t.squad_size + "</span></div>" +
-          '<div class="auc-chips">' + chips + "</div></div>";
+          '<div class="auc-chips">' + chips + "</div>" +
+          '<button class="cap-team-toggle" data-team="' + esc(t.id) + '">' +
+            (open ? "Hide team" : "Show team (" + squad.length + ")") + "</button>" +
+          (open
+            ? '<ul class="auc-squad-list cap-team-squad">' + (squad.length
+                ? squad.map(function (p) {
+                    var c = catOf(p.category);
+                    return "<li><span>" +
+                      (p.is_retained ? "" : "#" + p.sort_order + " ") + esc(p.name) + "</span>" +
+                      "<span>" + esc(c ? c.label : p.category) + "</span></li>";
+                  }).join("")
+                : '<li class="auc-muted">No players yet</li>') + "</ul>"
+            : "") +
+        "</div>";
       }).join("");
+
+    document.querySelectorAll(".cap-team-toggle").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.dataset.team;
+        openRivals[id] = !openRivals[id];
+        renderRivals(me);
+      });
+    });
   }
 
   function renderFeed() {
@@ -357,6 +393,7 @@
       return;
     }
     initLogin();
+    loadTeams();
 
     /* Resume a stored session, but only if the server still honours the
        token — it expires after 16 hours, on sign-out, or the moment the

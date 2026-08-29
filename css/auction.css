@@ -427,6 +427,74 @@
    since it lives inside them and visibility inherits. */
 body.auc-fs-open { overflow: hidden; }
 
+/* ---- Captain identity bar ----------------------------------
+   One row, and it stays one row on a phone: the team, whether the auction
+   is live, and the way out. */
+.cap-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: nowrap;
+  background: var(--bg-card);
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  border-radius: var(--radius-md);
+  padding: 0.55rem 0.8rem;
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+.cap-bar-team {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 1.05rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cap-bar-sub { font-size: 0.78rem; white-space: nowrap; margin-left: auto; }
+.cap-bar-out { flex-shrink: 0; padding: 0.4rem 0.7rem; font-size: 0.78rem; }
+
+@media (max-width: 640px) {
+  .cap-bar { gap: 0.45rem; padding: 0.5rem 0.6rem; }
+  .cap-bar-team { font-size: 0.92rem; }
+  /* the team code is the first thing to go when space runs out */
+  .cap-bar-sub { display: none; }
+  .cap-bar-out span { display: none; }
+  .cap-bar-out { padding: 0.4rem 0.55rem; }
+}
+
+/* ---- Other teams: name + category, folded away by default --- */
+.cap-team-toggle {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--primary-cyan);
+  border-radius: var(--radius-full);
+  padding: 0.28rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 0.6rem;
+  width: 100%;
+  transition: all var(--transition);
+}
+.cap-team-toggle:hover { border-color: var(--primary-cyan); background: rgba(0, 229, 255, 0.08); }
+.cap-team-squad { margin-top: 0.55rem; }
+.cap-team-squad li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.28rem 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.07);
+  font-size: 0.82rem;
+}
+.cap-team-squad li span:last-child { color: var(--text-muted); font-size: 0.75rem; white-space: nowrap; }
+
+/* max bid is the number a captain acts on — never let it read as small print */
+.cap-maxbid {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  color: var(--primary-cyan);
+}
+
 /* ---- Team board: four teams as columns ---------------------- */
 .auc-teamboard th[scope="row"] {
   background: rgba(6, 10, 20, 0.95);

@@ -110,5 +110,72 @@
       "</div></div>";
   }
 
-  global.OnBlockCard = { render: card, money: money };
+  /* Font Awesome stand-ins for the sport glyphs in the captain design.
+     Keyed by the label auction_player_ratings returns. */
+  var SPORT_ICON = {
+    "Pickleball":         "fa-table-tennis-paddle-ball",
+    "Poker":              "fa-spade",
+    "Cricket":            "fa-baseball-bat-ball",
+    "Triathlon":          "fa-person-running",
+    "Archery & Shooting": "fa-bullseye",
+    "Badminton":          "fa-feather-pointed",
+    "Table Tennis":       "fa-table-tennis-paddle-ball"
+  };
+
+  /*
+    The captain's card. Same player, different question: a captain is
+    deciding what to pay, so they get the category, and every sport score
+    rather than only the best two.
+  */
+  function captainCard(player, cat, base) {
+    if (!player) return "";
+
+    var photo = player.photo_url
+      ? '<img src="' + esc(player.photo_url) + '" alt="' + esc(player.name) + '">'
+      : '<div class="otb-photo-empty"><i class="fa-solid fa-user"></i></div>';
+
+    var ratings = player.ratings || [];
+    var tiles = ratings.map(function (r) {
+      var val = Number(r.rating);
+      return '<div class="otb-tile' + (val > 0 ? "" : " zero") + '">' +
+        '<i class="fa-solid ' + (SPORT_ICON[r.sport] || "fa-medal") + '"></i>' +
+        '<div class="otb-tile-name">' + esc(r.sport) + "</div>" +
+        '<div class="otb-tile-score"><b>' + val.toFixed(1) + "</b><span>/10</span></div>" +
+      "</div>";
+    }).join("");
+
+    var price = base === null || base === undefined ? (cat ? cat.base_price : null) : base;
+
+    return '<div class="otb otb-captain">' +
+      '<div class="otb-photo"><div class="otb-photo-inner">' + photo + "</div></div>" +
+      '<div class="otb-fields">' +
+
+        field("Name", box("<span>" + esc(player.name) + "</span>"), { className: "otb-name" }) +
+
+        field(null, '<div class="otb-split">' +
+            '<div><span class="otb-label">Age</span>' +
+              box(player.age ? esc(player.age) : "") + "</div>" +
+            '<div class="otb-rule"></div>' +
+            '<div><span class="otb-label">History</span>' +
+              box(historyLabel(player.history)) + "</div>" +
+          "</div>", { cyan: true }) +
+
+        /* category and price side by side, as the captain design has them */
+        '<div class="otb-pair">' +
+          field("Category", box(esc(cat ? cat.label : player.category)), { cyan: true }) +
+          field("Base Price", '<div class="otb-price">' + box(money(price)) +
+            '<div class="otb-rupee">₹</div></div>') +
+        "</div>" +
+
+        field("Last Tournament Achievement",
+          box(player.achievement ? esc(player.achievement) : ""),
+          { cyan: !player.achievement,
+            className: player.achievement ? "has-achievement" : "" }) +
+
+        (tiles ? '<div class="otb-tiles">' + tiles + "</div>" : "") +
+
+      "</div></div>";
+  }
+
+  global.OnBlockCard = { render: card, renderCaptain: captainCard, money: money };
 })(window);

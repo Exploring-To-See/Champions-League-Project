@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="/css/nav.css">
   <link rel="stylesheet" href="/css/auction.css">
+  <link rel="stylesheet" href="/css/onblock.css">
 </head>
 <body data-view="CAPTAIN">
 
@@ -43,15 +44,16 @@
           CAPTAIN SIGN IN
         </div>
         <div style="font-size:0.82rem; color:var(--text-muted);">
-          Use the team code and password issued by the organiser
+          Pick your team, then enter the password issued by the organiser
         </div>
       </div>
 
       <form id="cap-login-form">
         <div class="auc-field" style="margin-bottom:0.9rem;">
-          <label for="cap-code">Team Code</label>
-          <input type="text" id="cap-code" placeholder="e.g. T1" autocomplete="username"
-                 autocapitalize="characters" required>
+          <label for="cap-team">Your Team</label>
+          <select id="cap-team" required>
+            <option value="">— loading teams —</option>
+          </select>
         </div>
         <div class="auc-field">
           <label for="cap-password">Password</label>
@@ -74,6 +76,10 @@
         </button>
       </form>
 
+      <div id="cap-team-roster" style="margin-top:1.3rem; padding-top:1rem;
+           border-top:1px solid rgba(255,255,255,0.08); font-size:0.8rem;
+           color:var(--text-muted); line-height:1.75;"></div>
+
       <div style="text-align:center; margin-top:1.1rem;">
         <a href="/auction" style="color:var(--text-muted); font-size:0.82rem; text-decoration:none;">
           <i class="fa-solid fa-eye"></i> Just watching? Open the public live view
@@ -85,21 +91,17 @@
   <!-- ---------- Captain Console ---------- -->
   <div class="auc-wrap" id="cap-main" style="display:none;">
 
-    <div class="auc-card" style="padding:1rem 1.25rem;">
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap;">
-        <div>
-          <div style="font-family:var(--font-heading); font-weight:900; font-size:1.3rem;"
-               id="cap-team-name">—</div>
-          <div class="auc-muted" id="cap-team-sub">—</div>
-        </div>
-        <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
-          <span class="auc-status setup" id="cap-status">
-            <span class="auc-live-dot"></span><span id="cap-status-text">—</span>
-          </span>
-          <a href="/auction" class="auc-btn auc-btn-ghost"><i class="fa-solid fa-tv"></i> Live View</a>
-          <button class="auc-btn auc-btn-red" id="cap-logout"><i class="fa-solid fa-power-off"></i> Sign out</button>
-        </div>
-      </div>
+    <!-- One line: who you are, whether the auction is live, and the way out.
+         It used to be a stacked block that ate half a phone screen. -->
+    <div class="cap-bar">
+      <span class="cap-bar-team" id="cap-team-name">—</span>
+      <span class="auc-status setup" id="cap-status">
+        <span class="auc-live-dot"></span><span id="cap-status-text">—</span>
+      </span>
+      <span class="auc-muted cap-bar-sub" id="cap-team-sub">—</span>
+      <button class="auc-btn auc-btn-red cap-bar-out" id="cap-logout">
+        <i class="fa-solid fa-power-off"></i> <span>Sign out</span>
+      </button>
     </div>
 
     <!-- Purse / reserve / max bid -->
@@ -147,6 +149,7 @@
   <script src="/js/auction-config.js"></script>
   <script src="/js/auction-engine.js"></script>
   <script src="/js/auction-client.js"></script>
+  <script src="/js/onblock.js"></script>
   <script src="/captain/captain.js"></script>
 </body>
 </html>

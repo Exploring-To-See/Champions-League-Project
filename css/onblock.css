@@ -169,6 +169,56 @@
   text-shadow: 0 0 12px rgba(245, 197, 24, 0.5);
 }
 
+/* ---- captain variant: category shown, and every sport scored -----
+   A captain is deciding what to pay, so they get the whole rating card
+   rather than the two best sports. */
+.otb-pair { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(0.6rem, 1.2vw, 0.95rem); }
+
+.otb-tiles {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.5rem;
+}
+
+.otb-tile {
+  border: 1px solid rgba(41, 182, 255, 0.45);
+  border-radius: 12px;
+  background: rgba(4, 7, 14, 0.85);
+  padding: 0.6rem 0.35rem 0.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+}
+.otb-tile > i { color: var(--otb-blue); font-size: clamp(1rem, 1.6cqw, 1.5rem); }
+.otb-tile-name {
+  font-family: 'Orbitron', var(--font-heading), sans-serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: clamp(0.5rem, 0.85cqw, 0.72rem);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--otb-blue);
+  line-height: 1.15;
+  min-height: 2.1em;
+  display: flex;
+  align-items: center;
+}
+.otb-tile-score {
+  border: 1px solid rgba(41, 182, 255, 0.4);
+  border-radius: 6px;
+  padding: 0.15rem 0.4rem;
+  font-weight: 800;
+  color: #fff;
+  font-size: clamp(0.75rem, 1.15cqw, 1.05rem);
+  white-space: nowrap;
+}
+.otb-tile-score span { color: var(--text-muted); font-weight: 500; font-size: 0.8em; }
+/* an unrated sport should read as absent, not as a score of nothing */
+.otb-tile.zero { opacity: 0.42; }
+
 /* ---- mobile: photo on top, everything stacked --------------- */
 @media (max-width: 780px) {
   .otb { grid-template-columns: 1fr; gap: 1rem; }
@@ -176,6 +226,16 @@
   /* the mobile design draws BASE PRICE in cyan rather than red */
   .otb-field.price-mobile-cyan { --otb-line: var(--otb-blue); }
   .otb-split { grid-template-columns: 1fr 1px 1fr; gap: 0.7rem; }
+
+  /* captain design on mobile: squarer photo, tiles 4 then 3 */
+  .otb-captain .otb-photo { aspect-ratio: 1 / 1.05; }
+  .otb-tiles { grid-template-columns: repeat(4, 1fr); }
+  .otb-tile-name { font-size: 0.56rem; }
+}
+
+@media (max-width: 420px) {
+  .otb-tiles { grid-template-columns: repeat(3, 1fr); }
+  .otb-pair { grid-template-columns: 1fr; }
 }
 
 /* ---- full screen: the same card, sized for the room --------- */
