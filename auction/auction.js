@@ -316,98 +316,8 @@
       "</div>";
   }
 
-  /* The whole pool in one table: every player, and which captain bought
-     them for how much. Filters are read live so typing re-renders. */
   function renderAllPlayers() {
-    var catSel = $("pub-players-cat");
-    var teamSel = $("pub-players-team");
-
-    /* Rebuild a filter only when its underlying list actually changed, and
-       put the viewer's choice back afterwards. Counting options instead
-       would latch: an empty board still writes the fixed "All"/"Not bought
-       yet" entries, so the count never falls back to 1 and teams added
-       later — the normal case, since the pool is built after the page is
-       already open — would never appear. */
-    function syncSelect(sel, signature, html) {
-      if (sel.dataset.sig === signature) return;
-      var prev = sel.value;
-      setHTML(sel, html);
-      sel.dataset.sig = signature;
-      var kept = false;
-      for (var i = 0; i < sel.options.length; i++) {
-        if (sel.options[i].value === prev) { kept = true; break; }
-      }
-      sel.value = kept ? prev : "ALL";
-    }
-
-    syncSelect(catSel,
-      board.categories.map(function (c) { return c.code + ":" + c.label; }).join("|"),
-      '<option value="ALL">All categories</option>' +
-        board.categories.map(function (c) {
-          return '<option value="' + esc(c.code) + '">' + esc(c.label) + "</option>";
-        }).join(""));
-
-    syncSelect(teamSel,
-      board.teams.map(function (t) { return t.id + ":" + t.name; }).join("|"),
-      '<option value="ALL">All teams</option>' +
-        board.teams.map(function (t) {
-          return '<option value="' + esc(t.id) + '">' + esc(t.name) + "</option>";
-        }).join("") + '<option value="NONE">Not bought yet</option>');
-
-    var q = ($("pub-players-search").value || "").toLowerCase().trim();
-    var fcat = catSel.value || "ALL";
-    var fteam = teamSel.value || "ALL";
-    var fstatus = $("pub-players-status").value || "ALL";
-
-    var rows = board.players.slice().sort(function (a, b) {
-      return (a.sort_order || 0) - (b.sort_order || 0);
-    }).filter(function (p) {
-      if (q && p.name.toLowerCase().indexOf(q) < 0) return false;
-      if (fcat !== "ALL" && p.category !== fcat) return false;
-      if (fteam === "NONE" && p.team_id) return false;
-      if (fteam !== "ALL" && fteam !== "NONE" && p.team_id !== fteam) return false;
-      if (fstatus === "sold" && p.status !== "sold") return false;
-      if (fstatus === "available" && p.status === "sold") return false;
-      return true;
-    });
-
-    var soldTotal = board.players.filter(function (p) { return p.status === "sold"; }).length;
-    $("pub-players-count").textContent =
-      rows.length + " shown · " + soldTotal + " of " + board.players.length + " placed";
-
-    setHTML($("pub-players-body"), rows.length ? rows.map(function (p) {
-      var c = catOf(p.category);
-      var t = teamOf(p.team_id);
-      var statusLabel = p.status === "in_lot" ? "on the block" : p.status;
-      return "<tr>" +
-        '<td style="font-family:monospace; font-weight:800; color:var(--primary-cyan);">' +
-          (p.is_retained ? "&mdash;" : p.sort_order) + "</td>" +
-        "<td><b>" + esc(p.name) + "</b>" +
-          (p.retained_role
-            ? ' <span class="auc-squad-role">' + esc(p.retained_role.replace("_", " ")) + "</span>"
-            : "") + "</td>" +
-        '<td><span style="color:' + esc(c ? c.color : "#00e5ff") + '; font-weight:700;">' +
-          esc(c ? c.label : p.category) + "</span></td>" +
-        '<td><span class="auc-pill ' + esc(p.status) + '">' + esc(statusLabel) + "</span></td>" +
-        "<td>" + (t
-          ? '<span style="color:' + esc(t.color) + '; font-weight:700;">' + esc(t.name) + "</span>"
-          : '<span class="auc-muted">—</span>') + "</td>" +
-        '<td style="font-weight:800;">' +
-          (p.status === "sold"
-            ? (p.is_retained ? '<span class="auc-muted">retained</span>' : money(p.sold_price || 0))
-            : '<span class="auc-muted">base ' + money(c ? c.base_price : 0) + "</span>") +
-        "</td></tr>";
-    }).join("")
-      : '<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted);">' +
-        "No players match these filters.</td></tr>");
-  }
-
-  function renderFeed() {
-    var events = board.events || [];
-    setHTML($("pub-feed"), events.length ? events.map(function (e) {
-      return '<div class="auc-feed-item ' + esc(e.kind) + '">' + esc(e.message) +
-        '<div class="auc-feed-time">' + new Date(e.created_at).toLocaleTimeString() + "</div></div>";
-    }).join("") : '<div class="auc-muted">The auction has not started yet.</div>');
+    AllPlayers.render("pub", board);
   }
 
   function renderPool() {
@@ -428,21 +338,9 @@
     }).join(""));
   }
 
-  /* Filters only re-draw the table, so they stay responsive between the
-     five-second board refreshes. */
-  function wireFilters() {
-    ["pub-players-search", "pub-players-cat", "pub-players-team", "pub-players-status"]
-      .forEach(function (id) {
-        var el = $(id);
-        if (!el) return;
-        el.addEventListener(el.tagName === "SELECT" ? "change" : "input", function () {
-          if (board) renderAllPlayers();
-        });
-      });
-  }
-
   document.addEventListener("DOMContentLoaded", function () {
-    wireFilters();
+    AllPlayers.mount("pub-players-host", "pub");
+    AllPlayers.wire("pub", function () { if (board) renderAllPlayers(); });
     api = window.createAuctionClient();
     if (!api.ready()) {
       $("pub-status-text").textContent = "NOT CONFIGURED";

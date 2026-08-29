@@ -80,44 +80,8 @@
       <div class="auc-feed" id="pub-feed"></div>
     </div>
 
-    <!-- Every player in the auction, and who bought them -->
-    <div class="auc-card">
-      <div class="auc-card-title">
-        <i class="fa-solid fa-users"></i> All Players
-        <span class="auc-pill available" id="pub-players-count"></span>
-      </div>
-      <div class="auc-form-row">
-        <div class="auc-field">
-          <label for="pub-players-search">Search</label>
-          <input type="text" id="pub-players-search" placeholder="Player name…" autocomplete="off">
-        </div>
-        <div class="auc-field">
-          <label for="pub-players-cat">Category</label>
-          <select id="pub-players-cat"><option value="ALL">All categories</option></select>
-        </div>
-        <div class="auc-field">
-          <label for="pub-players-team">Bought by</label>
-          <select id="pub-players-team"><option value="ALL">All teams</option></select>
-        </div>
-        <div class="auc-field">
-          <label for="pub-players-status">Status</label>
-          <select id="pub-players-status">
-            <option value="ALL">All</option>
-            <option value="sold">Sold</option>
-            <option value="available">Still in pool</option>
-            <option value="unsold">Unsold</option>
-          </select>
-        </div>
-      </div>
-      <div class="auc-table-box" style="max-height:560px; overflow-y:auto;">
-        <table class="auc-table">
-          <thead><tr>
-            <th>#</th><th>Player</th><th>Category</th><th>Status</th><th>Bought By</th><th>Price</th>
-          </tr></thead>
-          <tbody id="pub-players-body"></tbody>
-        </table>
-      </div>
-    </div>
+    <!-- Every player in the auction, and who bought them (js/allplayers.js) -->
+    <div id="pub-players-host"></div>
 
     <!-- Remaining pool -->
     <div class="auc-card">
@@ -143,6 +107,7 @@
   <script src="/js/auction-engine.js"></script>
   <script src="/js/auction-client.js"></script>
   <script src="/js/onblock.js"></script>
+  <script src="/js/allplayers.js"></script>
   <script src="/auction/auction.js"></script>
 </body>
 </html>

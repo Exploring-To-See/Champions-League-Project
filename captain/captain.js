@@ -135,6 +135,12 @@
   function showConsole() {
     $("cap-login").style.display = "none";
     $("cap-main").style.display = "block";
+    /* Mounted here rather than at boot: the console is display:none until
+       sign-in, and a table built inside a hidden element measures wrong. */
+    AllPlayers.mount("cap-players-host", "cap");
+    AllPlayers.wire("cap", function () {
+      if (board) AllPlayers.render("cap", board);
+    });
     $("cap-team-name").textContent = session.team_name;
     api.onChange(render);
     api.refresh().then(function () {
@@ -186,6 +192,7 @@
       renderSquad(me);
       renderRivals(me);
       renderFeed();
+      AllPlayers.render("cap", board);
     });
   }
 
