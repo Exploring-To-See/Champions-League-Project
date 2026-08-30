@@ -401,12 +401,23 @@
   z-index: 4000;
   margin: 0;
   border-radius: 0;
-  overflow-y: auto;
+  height: 100dvh;
+  padding: clamp(0.6rem, 2vh, 1.5rem) clamp(1rem, 3vw, 2.5rem);
   display: flex;
   flex-direction: column;
   justify-content: center;
   background: #04070e url('../assets/stadium-bg.jpg') center/cover no-repeat fixed;
+
+  /* The card is sized to the viewport below, so there should be nothing to
+     scroll. Scrolling still works by wheel or touch if a very short screen
+     leaves something over, but the bar itself never shows — this is a
+     display for a room, and a scrollbar down the side of it is furniture. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;          /* Firefox */
+  -ms-overflow-style: none;       /* legacy Edge */
 }
+.auc-card.auc-fullscreen::-webkit-scrollbar { width: 0; height: 0; }
 .auc-card.auc-fullscreen::before {
   content: "";
   position: absolute;
@@ -414,11 +425,14 @@
   background: rgba(4, 7, 14, 0.82);
   z-index: -1;
 }
-.auc-card.auc-fullscreen .auc-card-title { font-size: 1.4rem; }
-.auc-card.auc-fullscreen .auc-lot-name { font-size: clamp(2.4rem, 8vw, 5.5rem); line-height: 1.05; }
-.auc-card.auc-fullscreen .auc-lot-photo,
-.auc-card.auc-fullscreen .auc-lot-photo-empty { width: 260px; height: 260px; }
-.auc-card.auc-fullscreen .auc-bid-now { font-size: clamp(2rem, 6vw, 4rem); }
+/* A flex child will not shrink below its content unless told to, which is
+   what pushed the card past the viewport and produced the scrollbar. */
+.auc-card.auc-fullscreen > div { min-height: 0; width: 100%; }
+
+/* In full screen the title row holds only the button that hides itself, so
+   it is an empty band eating height at the top. */
+.auc-card.auc-fullscreen > .auc-card-title { display: none; }
+/* still generated: the draw read-out and the category badge */
 .auc-card.auc-fullscreen .auc-bid-label { font-size: 0.95rem; }
 .auc-card.auc-fullscreen .auc-cat-badge { font-size: 1.1rem; }
 

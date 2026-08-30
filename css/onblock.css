@@ -286,8 +286,32 @@
 }
 
 /* ---- full screen: the same card, sized for the room --------- */
-.auc-card.auc-fullscreen .otb { max-width: 1500px; margin: 0 auto; width: 100%; }
-.auc-card.auc-fullscreen .otb-photo { aspect-ratio: 3 / 4.1; }
-/* on the big screen the branding should read from the back of the room */
-.auc-card.auc-fullscreen .otb-brand-main { height: 104px; }
-.auc-card.auc-fullscreen .otb-brand-partners img { height: 72px; }
+.auc-card.auc-fullscreen .otb {
+  max-width: 1500px;
+  margin: 0 auto;
+  width: 100%;
+  min-height: 0;                 /* let the grid shrink instead of overflowing */
+}
+
+/* Everything below is measured against the viewport height rather than a
+   fixed pixel size, so the card lands inside the screen it is thrown on and
+   there is nothing to scroll in the first place. */
+.auc-card.auc-fullscreen .otb-photo {
+  aspect-ratio: 3 / 4.1;
+  max-height: 58dvh;
+  width: auto;
+  justify-self: center;
+}
+.auc-card.auc-fullscreen .otb-fields { gap: clamp(0.4rem, 1.1vh, 0.95rem); }
+.auc-card.auc-fullscreen .otb-body { padding: clamp(0.3rem, 0.8vh, 0.55rem) 1rem clamp(0.4rem, 1vh, 0.85rem); }
+.auc-card.auc-fullscreen .otb-box { min-height: clamp(2rem, 5vh, 2.5rem); }
+.auc-card.auc-fullscreen .otb-name .otb-box { min-height: clamp(2.6rem, 7vh, 3.2rem); }
+
+/* on the big screen the branding should read from the back of the room,
+   but never at the cost of pushing the player off it */
+.auc-card.auc-fullscreen .otb-brand {
+  margin-bottom: clamp(0.4rem, 1.4vh, 1.2rem);
+  padding-bottom: clamp(0.35rem, 1.2vh, 1rem);
+}
+.auc-card.auc-fullscreen .otb-brand-main { height: min(10vh, 104px); }
+.auc-card.auc-fullscreen .otb-brand-partners img { height: min(7vh, 72px); }
