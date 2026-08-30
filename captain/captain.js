@@ -253,9 +253,16 @@
     var ctx = board.lot_context;
 
     if (!lot || !ctx) {
+      var st = board.state.status;
+      var text =
+        st === "setup"     ? "The auction has not started yet." :
+        st === "completed" ? "The auction is complete." :
+        st === "paused"    ? "The auction is paused." :
+                             "Waiting for the auctioneer to draw the next player…";
+      var icon = st === "completed" ? "fa-flag-checkered" : "fa-hourglass-half";
       setHTML(host, '<div class="auc-muted" style="text-align:center; padding:1.8rem 0;">' +
-        '<i class="fa-solid fa-hourglass-half" style="font-size:2.2rem; opacity:0.35; display:block; margin-bottom:0.6rem;"></i>' +
-        "Waiting for the auctioneer to draw the next player…</div>");
+        '<i class="fa-solid ' + icon + '" style="font-size:2.2rem; opacity:0.35; display:block; margin-bottom:0.6rem;"></i>' +
+        text + "</div>");
       return;
     }
 

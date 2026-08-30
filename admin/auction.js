@@ -273,12 +273,21 @@
     var ctx = board.lot_context;
 
     if (!lot || !ctx) {
-      if (renderedLotId !== null || !host.innerHTML) {
-        renderedLotId = null;
-        setHTML(host, '<div class="auc-muted" style="padding:1.5rem 0; text-align:center;">' +
-          '<i class="fa-solid fa-gavel" style="font-size:2.2rem; opacity:0.35; display:block; margin-bottom:0.6rem;"></i>' +
-          'Nobody is on the block. Use the <b>Randomizer</b> below to draw the next player.</div>');
-      }
+      /* No guard on this branch: the wording depends on the auction status,
+         which changes without a lot ever opening (reset, start, pause), and
+         a "have I drawn this already" check would freeze the old sentence
+         on screen. setHTML already skips the write when nothing changed. */
+      renderedLotId = null;
+      var st = board.state.status;
+      var text =
+        st === "setup"     ? "The auction has not started yet. Press <b>Start</b> above, then draw." :
+        st === "completed" ? "The auction is complete." :
+        st === "paused"    ? "The auction is paused. Resume with <b>Start</b> above." :
+                             "Nobody is on the block. Use the <b>Randomizer</b> below to draw the next player.";
+      var icon = st === "completed" ? "fa-flag-checkered" : "fa-gavel";
+      setHTML(host, '<div class="auc-muted" style="padding:1.5rem 0; text-align:center;">' +
+        '<i class="fa-solid ' + icon + '" style="font-size:2.2rem; opacity:0.35; display:block; margin-bottom:0.6rem;"></i>' +
+        text + "</div>");
       return;
     }
 

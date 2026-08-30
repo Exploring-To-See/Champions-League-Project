@@ -1148,7 +1148,11 @@ begin
    where id = 1;
 
   insert into public.auction_events (kind, message)
-  values ('state', 'Auction status set to ' || upper(p_status));
+  values ('state', case p_status
+            when 'live'      then 'The auction is LIVE — draw the first player'
+            when 'paused'    then 'The auction is PAUSED'
+            when 'completed' then 'The auction is COMPLETE'
+            else 'Auction status set to ' || upper(p_status) end);
 
   return public.auction_board();
 end $$;
@@ -1583,7 +1587,15 @@ begin
    where is_retained = false;
   update public.auction_teams set purse_spent = 0 where purse_spent <> 0;
 
-  insert into public.auction_events (kind, message) values ('reset', 'Auction reset to setup');
+  -- The feed goes too. Leaving it would keep every draw and sale from the
+  -- run that was just undone on screen in all three views, and the public
+  -- board reads the last 'sold' event to decide what to show between
+  -- players — so a stale one keeps a sold player on the block for good.
+  delete from public.auction_events where id is not null;
+
+  insert into public.auction_events (kind, message)
+  values ('reset', 'Auction reset — the pool is back to full and the auction has not started');
+
   return public.auction_board();
 end $$;
 

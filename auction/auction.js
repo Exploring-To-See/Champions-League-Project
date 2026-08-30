@@ -62,25 +62,44 @@
       st === "completed" ? "AUCTION COMPLETE" : "NOT STARTED";
   }
 
+  /* One place decides what an empty block says, so the three views cannot
+     drift into describing the same state differently. */
+  function waitingMessage(status, liveText) {
+    var text =
+      status === "setup"     ? "The auction has not started yet." :
+      status === "completed" ? "The auction is complete." :
+      status === "paused"    ? "The auction is paused." :
+                               liveText;
+    var icon = status === "completed" ? "fa-flag-checkered" : "fa-hourglass-half";
+    return '<div class="auc-muted" style="text-align:center; padding:2rem 0;">' +
+      '<i class="fa-solid ' + icon + '" style="font-size:2.4rem; opacity:0.35; ' +
+      'display:block; margin-bottom:0.7rem;"></i>' + text + "</div>";
+  }
+
   function renderLot() {
     var host = $("pub-lot");
     var lot = board.current_lot;
     var ctx = board.lot_context;
 
-    /* When no lot is open, show the most recent sale as a SOLD stamp. */
+    /* Nothing on the block. What to say depends on where the auction is —
+       the SOLD stamp is only meaningful while it is running. Reading the
+       feed for the last sale without checking the state is what kept a sold
+       player on the block after a reset. */
     if (!lot || !ctx) {
-      var recent = (board.events || []).filter(function (e) { return e.kind === "sold"; })[0];
+      var st = board.state.status;
+      var recent = (st === "live" || st === "paused")
+        ? (board.events || []).filter(function (e) { return e.kind === "sold"; })[0]
+        : null;
+
       if (recent) {
-        host.innerHTML =
+        setHTML(host,
           '<div style="text-align:center; padding:1.5rem 0;">' +
             '<div class="auc-sold-stamp">SOLD</div>' +
             '<div style="margin-top:1.1rem; font-size:1.05rem;">' + esc(recent.message) + "</div>" +
             '<div class="auc-muted" style="margin-top:0.5rem;">Waiting for the next draw…</div>' +
-          "</div>";
+          "</div>");
       } else {
-        setHTML(host, '<div class="auc-muted" style="text-align:center; padding:2rem 0;">' +
-          '<i class="fa-solid fa-hourglass-half" style="font-size:2.4rem; opacity:0.35; display:block; margin-bottom:0.7rem;"></i>' +
-          "The auction has not opened a lot yet.</div>");
+        setHTML(host, waitingMessage(st, "The auctioneer has not drawn a player yet."));
       }
       return;
     }
