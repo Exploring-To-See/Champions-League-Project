@@ -1561,15 +1561,21 @@ begin
     raise exception 'Reset not confirmed';
   end if;
 
+  -- Every statement here carries a WHERE clause on purpose. Supabase loads
+  -- the safeupdate library for the `authenticator` role, so an unqualified
+  -- DELETE or UPDATE raises "DELETE requires a WHERE clause" for anything
+  -- arriving through the API. SECURITY DEFINER does not exempt it: the
+  -- library is preloaded per session, not per statement owner, which is why
+  -- this worked from a direct psql connection but not from the console.
   update public.auction_state set status = 'setup', current_lot_id = null, updated_at = now() where id = 1;
-  delete from public.auction_bids;
-  delete from public.auction_lots;
+  delete from public.auction_bids where id is not null;
+  delete from public.auction_lots where id is not null;
   -- everything that is not a retained captain goes back into the pool,
   -- including anything parked in the unsold list
   update public.auction_players
      set status = 'available', team_id = null, sold_price = null, unsold_count = 0
    where is_retained = false;
-  update public.auction_teams set purse_spent = 0;
+  update public.auction_teams set purse_spent = 0 where purse_spent <> 0;
 
   insert into public.auction_events (kind, message) values ('reset', 'Auction reset to setup');
   return public.auction_board();
