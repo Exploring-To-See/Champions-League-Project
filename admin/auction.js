@@ -1204,25 +1204,50 @@
   }
 
   /* Wipes every sale and the unsold list, restores full purses and puts all
-     56 players back in the pool. Retained captains and vice captains
-     survive. Reachable from the Control Room header and from Setup. */
+     56 players back in the pool. Retained captains and vice captains survive.
+
+     Confirmed in the page, not through prompt(). The typed-phrase dialog was
+     unreliable in two ways: the phrase is case-sensitive, so "reset auction"
+     silently cancelled, and a browser that has been told to block dialogs —
+     which is easy to do by accident — makes prompt() return null, so the
+     button appeared dead. Arming the button instead cannot be suppressed and
+     cannot be mistyped, and it still takes two deliberate clicks. */
+  var resetArmed = false;
+  var resetTimer = null;
+
+  function disarmReset() {
+    clearTimeout(resetTimer);
+    resetArmed = false;
+    var btn = $("auc-btn-reset-top");
+    if (!btn) return;
+    btn.classList.remove("armed");
+    if (btn.dataset.resetHtml) {
+      btn.innerHTML = btn.dataset.resetHtml;
+      delete btn.dataset.resetHtml;
+    }
+  }
+
   function resetAuction() {
-    var btn = this && this.tagName ? this : null;
-    var typed = prompt(
-      "This restarts the whole auction:\n" +
-      "  - every sale is undone and all purses go back to full\n" +
-      "  - the unsold list is cleared\n" +
-      "  - all 56 players return to the pool for the randomizer\n" +
-      "Retained captains and vice captains are kept.\n\n" +
-      "Type RESET AUCTION to confirm:");
-    if (typed !== "RESET AUCTION") {
-      if (typed !== null) toast("Reset cancelled", "err");
+    var btn = $("auc-btn-reset-top");
+    if (!btn) return;
+
+    if (!resetArmed) {
+      resetArmed = true;
+      btn.dataset.resetHtml = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> CONFIRM RESET';
+      btn.classList.add("armed");
+      toast("Click CONFIRM RESET again to undo every sale and refill the pool. " +
+            "Cancels itself in 8 seconds.", "err");
+      resetTimer = setTimeout(disarmReset, 8000);
       return;
     }
-    if (btn) busy(btn, true, "Resetting…");
+
+    disarmReset();
+    busy(btn, true, "Resetting…");
     api.resetAuction("RESET AUCTION")
       .then(function () { toast("Auction reset — all 56 back in the pool"); })
-      .catch(fail).finally(function () { if (btn) busy(btn, false); });
+      .catch(fail)
+      .finally(function () { busy(btn, false); });
   }
 
   function exportSquads() {

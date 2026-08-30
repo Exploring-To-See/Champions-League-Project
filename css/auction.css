@@ -427,6 +427,19 @@
    since it lives inside them and visibility inherits. */
 body.auc-fs-open { overflow: hidden; }
 
+/* An armed destructive button: it has asked once and is waiting for the
+   second click, so it should look like it is about to do something. */
+.auc-btn.armed {
+  background: var(--primary-red);
+  color: #fff;
+  border-color: #fff;
+  animation: aucArmedPulse 0.9s ease-in-out infinite;
+}
+@keyframes aucArmedPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 59, 92, 0.7); }
+  50%      { box-shadow: 0 0 0 8px rgba(255, 59, 92, 0); }
+}
+
 /* ---- Captain identity bar ----------------------------------
    One row, and it stays one row on a phone: the team, whether the auction
    is live, and the way out. */
