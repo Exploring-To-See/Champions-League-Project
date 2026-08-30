@@ -704,6 +704,18 @@
         </div>
 
         <div class="auc-card">
+          <div class="auc-card-title"><i class="fa-solid fa-file-excel"></i> Backup</div>
+          <p class="auc-muted" style="margin-bottom:0.9rem;">
+            The whole auction as it stands, as an Excel workbook: every player with their
+            category, achievement, status, buyer and price; the per-category figures from
+            this tab; each team&#39;s purse, spend and requirements; and the squads.
+          </p>
+          <button class="auc-btn auc-btn-gold" id="auc-btn-backup">
+            <i class="fa-solid fa-download"></i> Download Player Pool Status (.xlsx)
+          </button>
+        </div>
+
+        <div class="auc-card">
           <div class="auc-card-title"><i class="fa-solid fa-users"></i> All Players</div>
           <div class="auc-form-row" style="margin-bottom:0.9rem;">
             <div class="auc-field">
@@ -891,6 +903,7 @@
   <script src="/js/auction-engine.js"></script>
   <script src="/js/auction-client.js"></script>
   <script src="/js/onblock.js"></script>
+  <script src="/js/xlsx.js"></script>
   <script src="/js/soldflash.js"></script>
   <script src="/admin/admin.js"></script>
   <script src="/admin/auction.js"></script>

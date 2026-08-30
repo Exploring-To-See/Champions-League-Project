@@ -1165,6 +1165,7 @@
     });
 
     $("auc-btn-export-squads").addEventListener("click", exportSquads);
+    $("auc-btn-backup").addEventListener("click", exportBackup);
 
     /* ---- captain logins ---- */
     $("auc-btn-copy-url").addEventListener("click", function () {
@@ -1257,6 +1258,137 @@
       .then(function () { toast("Auction reset — all 56 back in the pool"); })
       .catch(fail)
       .finally(function () { busy(btn, false); });
+  }
+
+  /* ---------- backup workbook ------------------------------
+     A restorable snapshot of the auction, not a pretty report: every
+     figure the Player Pool tab derives, plus the teams and their squads,
+     each on its own sheet. Money is written as a plain number so the
+     sheet can be summed; the rupee grouping is a display detail. */
+  function exportBackup() {
+    if (!board) { toast("Nothing loaded yet", "err"); return; }
+
+    var stamp = new Date();
+    var pad = function (n) { return (n < 10 ? "0" : "") + n; };
+    var stampText = stamp.getFullYear() + "-" + pad(stamp.getMonth() + 1) + "-" +
+                    pad(stamp.getDate()) + " " + pad(stamp.getHours()) + ":" +
+                    pad(stamp.getMinutes());
+    var fileStamp = stampText.replace(/[: ]/g, "-");
+
+    var cats = board.categories || [];
+    var teams = board.teams || [];
+    var players = (board.players || []).slice()
+      .sort(function (a, b) { return (a.sort_order || 0) - (b.sort_order || 0); });
+    var auctionable = players.filter(function (p) {
+      var c = catOf(p.category);
+      return c && !c.is_retained;
+    });
+    var accounts = {};
+    (board.captains || []).forEach(function (a) { accounts[a.team_id] = a; });
+
+    /* ---- 1. Summary ---- */
+    var summary = [
+      ["1727 Champion's League 2.0 — Auction Backup"],
+      ["Generated", stampText],
+      ["Auction status", board.state.status],
+      [],
+      ["Players in pool", players.length],
+      ["Auctionable (excludes retained)", auctionable.length],
+      ["Sold", auctionable.filter(function (p) { return p.status === "sold"; }).length],
+      ["Still in pool", auctionable.filter(function (p) { return p.status === "available"; }).length],
+      ["Unsold", auctionable.filter(function (p) { return p.status === "unsold"; }).length],
+      ["On the block", auctionable.filter(function (p) { return p.status === "in_lot"; }).length],
+      ["Retained captains / vice captains",
+        players.filter(function (p) { return p.is_retained; }).length],
+      [],
+      ["Teams", teams.length],
+      ["Purse per team", board.config.purse],
+      ["Total spent", teams.reduce(function (a, t) { return a + t.purse_spent; }, 0)],
+      ["Total remaining", teams.reduce(function (a, t) { return a + t.purse_left; }, 0)]
+    ];
+
+    /* ---- 2. Player Pool: what the tab shows, column for column ---- */
+    var pool = [["ID", "Player", "Category", "Previous Achievement", "Status",
+                 "Team", "Price Paid", "Base Price", "Retained Role", "Times Unsold"]];
+    players.forEach(function (p) {
+      var c = catOf(p.category);
+      var t = teamOf(p.team_id);
+      pool.push([
+        p.is_retained ? "" : p.sort_order,
+        p.name,
+        c ? c.label : p.category,
+        p.achievement || "",
+        p.status === "in_lot" ? "on the block" : p.status,
+        t ? t.name : "",
+        p.status === "sold" && !p.is_retained ? p.sold_price : "",
+        c ? c.base_price : "",
+        p.retained_role ? p.retained_role.replace("_", " ") : "",
+        p.unsold_count || 0
+      ]);
+    });
+
+    /* ---- 3. Pool Composition: the derived numbers in that tab ---- */
+    var teamsCount = board.config.teams_count;
+    var comp = [["Category", "Base Price", "In Pool", "Target", "Min / Team",
+                 "Committed", "Slack", "Sold", "Unsold", "Left"]];
+    cats.forEach(function (c) {
+      var inCat = players.filter(function (p) { return p.category === c.code; });
+      var sold = inCat.filter(function (p) { return p.status === "sold"; }).length;
+      var uns = inCat.filter(function (p) { return p.status === "unsold"; }).length;
+      comp.push([c.label, c.base_price, inCat.length, c.pool_count, c.min_per_team,
+                 teamsCount * c.min_per_team, inCat.length - teamsCount * c.min_per_team,
+                 sold, uns, inCat.length - sold - uns]);
+    });
+
+    /* ---- 4. Teams ---- */
+    var head = ["Team", "Code", "Captain", "Vice Captain", "Purse", "Spent",
+                "Remaining", "Squad Size", "Minimums Short"];
+    cats.forEach(function (c) { head.push(c.short_code + " owned / min"); });
+    var teamRows = [head];
+    teams.forEach(function (t) {
+      var a = accounts[t.id] || {};
+      var row = [t.name, t.code, a.captain || "", a.vice_captain || "",
+                 t.purse_total, t.purse_spent, t.purse_left, t.squad_size, t.total_unmet];
+      cats.forEach(function (c) {
+        row.push(((t.owned && t.owned[c.code]) || 0) + " / " + c.min_per_team);
+      });
+      teamRows.push(row);
+    });
+
+    /* ---- 5. Squads: one row per player, grouped by team ---- */
+    var squads = [["Team", "ID", "Player", "Category", "Price Paid", "Retained Role"]];
+    teams.forEach(function (t) {
+      players.filter(function (p) { return p.team_id === t.id && p.status === "sold"; })
+        .forEach(function (p) {
+          var c = catOf(p.category);
+          squads.push([
+            t.name,
+            p.is_retained ? "" : p.sort_order,
+            p.name,
+            c ? c.label : p.category,
+            p.is_retained ? 0 : p.sold_price,
+            p.retained_role ? p.retained_role.replace("_", " ") : ""
+          ]);
+        });
+    });
+
+    var blob = MiniXlsx.build([
+      { name: "Summary",          rows: summary },
+      { name: "Player Pool",      rows: pool },
+      { name: "Pool Composition", rows: comp },
+      { name: "Teams",            rows: teamRows },
+      { name: "Squads",           rows: squads }
+    ]);
+
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "1727_CL2_Auction_Backup_" + fileStamp + ".xlsx";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast("Backup downloaded — " + players.length + " players, " + teams.length + " teams");
   }
 
   function exportSquads() {
