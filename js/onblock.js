@@ -56,6 +56,44 @@
            "</div></div>";
   }
 
+  /* The photo, with a fallback that survives a format the browser cannot
+     decode — an iPhone HEIC, say, which only Safari renders.
+
+     alt is deliberately empty: the player's name sits beside the photo in
+     the largest type on the card, so the image adds nothing to read. A
+     populated alt would also print a fragment of the name inside the empty
+     frame while the image is still downloading, which looks like a fault.
+
+     The fallback is an inline handler rather than a listener attached
+     afterwards, because an image can fail before any script gets to it. */
+  function photoMarkup(player) {
+    if (!player.photo_url) {
+      return '<div class="otb-photo-empty"><i class="fa-solid fa-user"></i></div>';
+    }
+    var fallback = "this.style.display=&quot;none&quot;;" +
+                   "this.nextElementSibling.style.display=&quot;flex&quot;;";
+    return '<img src="' + esc(player.photo_url) + '" alt="" decoding="async" ' +
+             'onerror="' + fallback + '">' +
+           '<div class="otb-photo-empty" style="display:none">' +
+             '<i class="fa-solid fa-user"></i></div>';
+  }
+
+  /* Warm every player's photo as soon as the board arrives, so the picture
+     is already in the browser by the time that player is drawn. Supabase
+     serves these with Cache-Control: no-cache, which still stores the bytes
+     — the later request is a cheap revalidation rather than a fresh
+     download of a megabyte over venue wifi. */
+  var warmed = {};
+  function preload(players) {
+    (players || []).forEach(function (p) {
+      if (!p || !p.photo_url || warmed[p.photo_url]) return;
+      warmed[p.photo_url] = true;
+      var im = new Image();
+      im.decoding = "async";
+      im.src = p.photo_url;
+    });
+  }
+
   /* Branding across the top of the card: the tournament mark in the left
      corner, the three organising bodies centred. Identical in the normal
      view and in full screen — it is the same DOM either way, so what the
@@ -81,9 +119,7 @@
     if (!player) return "";
     opts = opts || {};
 
-    var photo = player.photo_url
-      ? '<img src="' + esc(player.photo_url) + '" alt="' + esc(player.name) + '">'
-      : '<div class="otb-photo-empty"><i class="fa-solid fa-user"></i></div>';
+    var photo = photoMarkup(player);
 
     var sports = player.top_sports || [];
     var sportRows = "";
@@ -148,9 +184,7 @@
     if (!player) return "";
     opts = opts || {};
 
-    var photo = player.photo_url
-      ? '<img src="' + esc(player.photo_url) + '" alt="' + esc(player.name) + '">'
-      : '<div class="otb-photo-empty"><i class="fa-solid fa-user"></i></div>';
+    var photo = photoMarkup(player);
 
     var ratings = player.ratings || [];
     var tiles = ratings.map(function (r) {
@@ -196,5 +230,6 @@
       "</div></div>";
   }
 
-  global.OnBlockCard = { render: card, renderCaptain: captainCard, money: money };
+  global.OnBlockCard = { render: card, renderCaptain: captainCard,
+                         preload: preload, money: money };
 })(window);

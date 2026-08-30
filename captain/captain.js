@@ -186,6 +186,7 @@
       return;
     }
     keepScroll(function () {
+      section("photos", function () { OnBlockCard.preload(board.players); });
       section("status", renderStatus);
       section("stats", function () { renderStats(me); });
       section("alerts", function () { renderAlerts(me); });

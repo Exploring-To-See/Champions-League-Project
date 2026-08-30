@@ -42,6 +42,7 @@
     board = b;
     if (!board) return;
     keepScroll(function () {
+    section("photos", function () { OnBlockCard.preload(board.players); });
     section("status", renderStatus);
     section("lot", renderLot);
     section("teamboard", renderTeamBoard);

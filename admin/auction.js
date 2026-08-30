@@ -174,6 +174,7 @@
     if (!b) return;
     $("auc-setup-hint").style.display = "none";
     keepScroll(function () {
+    section("photos", function () { OnBlockCard.preload(board.players); });
     section("status", renderStatus);
     section("alerts", renderAlerts);
     section("currentlot", renderCurrentLot);
