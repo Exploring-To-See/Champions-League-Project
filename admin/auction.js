@@ -188,6 +188,9 @@
     section("squads", renderSquads);
     section("configview", renderConfigView);
     });
+    /* After the render: a card that has just gone back to "nobody is on the
+       block" would otherwise wipe the overlay as it redraws. */
+    section("flash", function () { flash.check(board); });
   }
 
   function renderStatus() {
@@ -257,6 +260,12 @@
      lived here; the form has since moved to the Randomizer, but the same
      guard also keeps the fullscreen view from flickering every few seconds. */
   var renderedLotId = null;
+
+  /* Gavel across the On The Block card when a player settles. Mounted on
+     that card alone — the organiser asked for it there and nowhere else in
+     this console — and it works in full screen because that card IS the
+     full screen element. */
+  var flash = SoldFlash("auc-current-lot");
 
   function renderCurrentLot() {
     var host = $("auc-current-lot");

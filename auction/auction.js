@@ -13,6 +13,7 @@
 
   var api = null;
   var board = null;
+  var flash = SoldFlash("pub-lot");
 
   function $(id) { return document.getElementById(id); }
   function esc(s) {
@@ -49,6 +50,7 @@
     section("allplayers", renderAllPlayers);
     section("pool", renderPool);
     });
+    section("flash", function () { flash.check(board); });
   }
 
   function renderStatus() {

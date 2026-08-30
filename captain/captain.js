@@ -15,6 +15,7 @@
   var SESSION_KEY = "clp_captain_session";
 
   var api = null;
+  var flash = SoldFlash("cap-lot");
   var session = null;   /* { token, team_id, team_name, team_code } */
   var board = null;
 
@@ -194,6 +195,7 @@
       section("feed", renderFeed);
       section("allplayers", function () { AllPlayers.render("cap", board); });
     });
+    section("flash", function () { flash.check(board); });
   }
 
   function renderStatus() {

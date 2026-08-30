@@ -731,11 +731,17 @@ begin
                       from (select * from public.auction_bids
                              where lot_id = v_state.current_lot_id
                              order by created_at desc limit 12) b),
+    -- Ordered by id, not created_at. created_at defaults to now(), which is
+    -- transaction time, so everything written by one RPC shares a timestamp
+    -- and ties order arbitrarily — a draw and the lot_open it triggers, for
+    -- instance. id is a bigserial, so it is strictly monotonic. The id also
+    -- gives the sold/unsold gavel a key it can rely on.
     'events', (select coalesce(jsonb_agg(jsonb_build_object(
-                    'kind', e.kind, 'message', e.message, 'created_at', e.created_at
-                  ) order by e.created_at desc), '[]'::jsonb)
+                    'id', e.id, 'kind', e.kind, 'message', e.message,
+                    'created_at', e.created_at
+                  ) order by e.id desc), '[]'::jsonb)
                 from (select * from public.auction_events
-                       order by created_at desc limit 25) e)
+                       order by id desc limit 25) e)
   );
 end $$;
 
